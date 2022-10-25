@@ -1,0 +1,8 @@
+[requires]
+paho-mqtt-cpp/1.2.0
+paho-mqtt-c/1.3.9
+openssl/3.0.5
+zlib/1.2.12
+
+[generators]
+cmake

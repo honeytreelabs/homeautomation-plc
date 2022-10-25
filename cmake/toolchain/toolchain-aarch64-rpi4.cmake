@@ -1,0 +1,6 @@
+set(RASPBERRY ON)
+set(RASPBERRY_DIR_BASE $ENV{HOME}/x-tools/aarch64-rpi4-linux-musl)
+set(RASPBERRY_DIR_COMPILER ${RASPBERRY_DIR_BASE}/bin)
+
+set(CMAKE_C_COMPILER ${RASPBERRY_DIR_COMPILER}/aarch64-rpi4-linux-musl-gcc)
+set(CMAKE_CXX_COMPILER ${RASPBERRY_DIR_COMPILER}/aarch64-rpi4-linux-musl-g++)
