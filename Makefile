@@ -69,4 +69,4 @@ deploy-ground: ground
 
 .PHONY: clean
 clean:
-	rm -rf build.venv build build.rasppi
+	rm -rf build.venv build build.roof build.ground
