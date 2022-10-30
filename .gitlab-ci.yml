@@ -1,0 +1,59 @@
+---
+image: debian:bookworm
+
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+  GIT_STRATEGY: clone
+  CI_DEBUG_TRACE: "true"
+
+stages:
+  - build
+  - test
+  - deploy
+
+build:
+  stage: build
+  artifacts:
+    paths:
+      - build/
+      - conan.tgz
+  script:
+    - >
+      apt-get update && apt-get install -yy
+      cmake
+      git
+      g++
+      make
+      ninja-build
+      python3
+      python3.10-venv
+      python-is-python3
+    - make native-conan
+    - tar czpf conan.tgz -C /root .conan
+    - make native
+
+test:
+  stage: test
+  dependencies:
+    - build
+  script:
+    # we don't have a private docker image registry running yet
+    - >
+      apt-get update && apt-get install -yy
+      cmake
+      g++
+      make
+      ninja-build
+      python3
+      python3.10-venv
+      python-is-python3
+    - tar xzf conan.tgz -C /root
+    - make test
+
+deploy:
+  stage: deploy
+  dependencies:
+    - build
+  script:
+    # not yet
+    - /bin/true
