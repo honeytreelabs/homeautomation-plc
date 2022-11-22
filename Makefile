@@ -19,6 +19,7 @@ native-conan: prepare
 	cd build \
 		&& . ../build.venv/bin/activate \
 		&& conan profile update settings.compiler.libcxx=libstdc++11 default \
+		&& conan create ../deps/libmodbus \
 		&& conan install ..
 
 .PHONY: native
@@ -37,6 +38,7 @@ roof-conan: prepare
 	if ! [ -d build.roof ]; then mkdir build.roof; fi
 	cd build.roof \
 		&& . ../build.venv/bin/activate \
+		&& conan create --profile=rpi4 ../deps/libmodbus \
 		&& conan install --profile=rpi4 ..
 
 .PHONY: roof
@@ -54,6 +56,7 @@ ground-conan: prepare
 	if ! [ -d build.ground ]; then mkdir build.ground; fi
 	cd build.ground \
 		&& . ../build.venv/bin/activate \
+		&& conan create --profile=rpi2 ../deps/libmodbus \
 		&& conan install --profile=rpi2 ..
 
 .PHONY: ground
@@ -70,3 +73,18 @@ deploy-ground: ground
 .PHONY: clean
 clean:
 	rm -rf build.venv build build.roof build.ground
+
+.PHONY: basement-conan
+basement-conan:
+	if ! [ -d build.basement ]; then mkdir build.basement; fi
+	cd build.basement \
+		&& . ../build.venv/bin/activate \
+		&& conan create --profile=rpi4 ../deps/libmodbus \
+		&& conan install --profile=rpi4 ..
+
+.PHONY: basement
+basement:
+	if ! [ -d build.basement ]; then mkdir build.basement; fi
+	cd build.basement \
+		&& cmake -DCMAKE_BUILD_TYPE=RelMinSize -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchain/toolchain-aarch64-rpi4.cmake -GNinja .. \
+		&& ninja -v bin/basement

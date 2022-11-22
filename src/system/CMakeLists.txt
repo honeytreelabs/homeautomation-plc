@@ -1,5 +1,6 @@
 add_library(system STATIC
   i2c_bus.cpp
+  modbus.cpp
   signal.cpp)
 target_include_directories(system PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 target_link_libraries(system PUBLIC

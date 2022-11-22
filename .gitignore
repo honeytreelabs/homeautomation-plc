@@ -2,4 +2,6 @@ build.venv
 build
 build.roof
 build.ground
+build.basement
 compile_commands.json
+deps/libmodbus/test_package/CMakeUserPresets.json

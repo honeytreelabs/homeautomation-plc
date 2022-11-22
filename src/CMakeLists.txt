@@ -23,3 +23,4 @@ endfunction()
 
 create_logic(roof roof.cpp)
 create_logic(ground ground.cpp)
+create_logic(basement basement.cpp)
