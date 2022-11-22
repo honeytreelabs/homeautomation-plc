@@ -112,7 +112,7 @@ class LibmodbusConan(ConanFile):
     def build(self):
         self._patch_sources()
         autotools = Autotools(self)
-        autotools.configure(args=["--host=aarch64-rpi4-linux-musl"])
+        autotools.configure(args=["--host=" + os.environ['CHOST']] if 'CHOST' in os.environ.keys() else [])
         autotools.make()
 
     def package(self):
