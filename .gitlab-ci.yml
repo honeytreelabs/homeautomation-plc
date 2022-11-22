@@ -6,10 +6,9 @@ variables:
   GIT_STRATEGY: clone
   CI_DEBUG_TRACE: "true"
 
-stages:
-  - build
-  - test
-  - deploy
+stages: []
+# - build
+# - test
 
 build:
   stage: build
@@ -49,11 +48,3 @@ test:
       python-is-python3
     - tar xzf conan.tgz -C /root
     - make test
-
-deploy:
-  stage: deploy
-  dependencies:
-    - build
-  script:
-    # not yet
-    - /bin/true
