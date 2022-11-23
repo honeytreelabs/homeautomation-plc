@@ -1,7 +1,7 @@
 all: native
 
-.PHONY: prepare
-prepare:
+.PHONY: conan-install
+conan-install:
 	if [ ! -e build.venv ]; then python -m venv build.venv; fi
 	(cd build.venv \
 		&& . bin/activate \
@@ -13,19 +13,37 @@ prepare:
 		&&	cp ../.conan/rpi4.profile ~/.conan/profiles/rpi4 \
 		&&	cp ../.conan/rpi2.profile ~/.conan/profiles/rpi2)
 
-# TODO define dependencies between native and native-conan
-native-conan: prepare
-	if ! [ -d build ]; then mkdir build; fi
-	cd build \
-		&& . ../build.venv/bin/activate \
-		&& conan profile update settings.compiler.libcxx=libstdc++11 default \
-		&& conan create ../deps/libmodbus \
-		&& conan install ..
+.PHONY: conan-install-deps
+conan-install-deps:
+	if ! [ -d build.deps ]; then mkdir build.deps; fi
+	. build.venv/bin/activate
+	conan profile update settings.compiler.libcxx=libstdc++11 $(profile)
+	# build from local recipe
+	conan create --profile=$(profile) deps/libmodbus
+	# build from recipes from conan-center
+	conan install --profile=$(profile) -if build.deps -of build.deps --build=zlib --build=openssl --build=paho-mqtt-c --build=paho-mqtt-cpp --build=lua .
+	rm -rf build.deps
+
+.PHONY: conan-install-deps-native
+conan-install-deps-native: profile=default
+conan-install-deps-native: conan-install-deps
+
+.PHONY: conan-install-deps-rpi2
+conan-install-deps-rpi2: profile=rpi2
+conan-install-deps-rpi2: conan-install-deps
+
+.PHONY: conan-install-deps-rpi4
+conan-install-deps-rpi4: profile=rpi4
+conan-install-deps-rpi4: conan-install-deps
+
+.PHONY: prepare
+prepare: conan-install-deps-native conan-install-deps-rpi4 conan-install-deps-rpi2
 
 .PHONY: native
 native:
 	if ! [ -d build ]; then mkdir build; fi
 	cd build \
+		&& conan install .. \
 		&& cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchain/toolchain-native.cmake -GNinja .. \
 		&& ninja -v
 	ln -sf build/compile_commands.json
@@ -34,37 +52,29 @@ native:
 test: native
 	cd build && ctest --verbose
 
-roof-conan: prepare
-	if ! [ -d build.roof ]; then mkdir build.roof; fi
-	cd build.roof \
-		&& . ../build.venv/bin/activate \
-		&& conan create --profile=rpi4 ../deps/libmodbus \
-		&& conan install --profile=rpi4 ..
-
 .PHONY: roof
 roof:
 	if ! [ -d build.roof ]; then mkdir build.roof; fi
 	cd build.roof \
+		&& . ../build.venv/bin/activate \
+		&& conan install --profile=rpi4 .. \
 		&& cmake -DCMAKE_BUILD_TYPE=RelMinSize -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchain/toolchain-aarch64-rpi4.cmake -GNinja .. \
 		&& ninja -v bin/roof
+	ln -sf build/compile_commands.json
 
 .PHONY: deploy-roof
 deploy-roof: roof
 	scp -O build.roof/bin/roof root@raspberry-d.lan:/opt
 
-ground-conan: prepare
-	if ! [ -d build.ground ]; then mkdir build.ground; fi
-	cd build.ground \
-		&& . ../build.venv/bin/activate \
-		&& conan create --profile=rpi2 ../deps/libmodbus \
-		&& conan install --profile=rpi2 ..
-
 .PHONY: ground
 ground:
 	if ! [ -d build.ground ]; then mkdir build.ground; fi
 	cd build.ground \
+		&& . ../build.venv/bin/activate \
+		&& conan install --profile=rpi2 .. \
 		&& cmake -DCMAKE_BUILD_TYPE=RelMinSize -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchain/toolchain-armv7hf-rpi2.cmake -GNinja .. \
 		&& ninja -v bin/ground
+	ln -sf build/compile_commands.json
 
 .PHONY: deploy-ground
 deploy-ground: ground
@@ -74,17 +84,12 @@ deploy-ground: ground
 clean:
 	rm -rf build.venv build build.roof build.ground
 
-.PHONY: basement-conan
-basement-conan:
-	if ! [ -d build.basement ]; then mkdir build.basement; fi
-	cd build.basement \
-		&& . ../build.venv/bin/activate \
-		&& conan create --profile=rpi4 ../deps/libmodbus \
-		&& conan install --profile=rpi4 ..
-
 .PHONY: basement
 basement:
 	if ! [ -d build.basement ]; then mkdir build.basement; fi
 	cd build.basement \
+		&& . ../build.venv/bin/activate \
+		&& conan install --profile=rpi4 .. \
 		&& cmake -DCMAKE_BUILD_TYPE=RelMinSize -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchain/toolchain-aarch64-rpi4.cmake -GNinja .. \
 		&& ninja -v bin/basement
+	ln -sf build/compile_commands.json

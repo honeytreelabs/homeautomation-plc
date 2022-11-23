@@ -1,5 +1,7 @@
+.cache
 build.venv
 build
+build.deps
 build.roof
 build.ground
 build.basement

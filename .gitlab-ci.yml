@@ -27,7 +27,8 @@ build:
       python3
       python3.10-venv
       python-is-python3
-    - make native-conan
+    - make conan-install
+    - make conan-install-deps-native
     - tar czpf conan.tgz -C /root .conan
     - make native
 
