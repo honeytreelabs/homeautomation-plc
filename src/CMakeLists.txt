@@ -9,7 +9,8 @@ function(create_logic name)
     automation
     scheduler
     CLI11_SINGLE
-    mqtt)
+    mqtt
+    lua)
   if (RASPBERRY)
     target_link_libraries(${name} PUBLIC -static)
   endif()
