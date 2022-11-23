@@ -7,12 +7,17 @@ target_link_libraries(automation PUBLIC
   common
   spdlog::spdlog)
 
-add_library(mqtt STATIC
+add_library(mqtt-component STATIC
   mqtt.cpp)
 
-target_include_directories(mqtt PUBLIC ${CMAKE_CURRENT_LIST_DIR})
+target_include_directories(mqtt-component PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 
-target_link_libraries(mqtt PUBLIC ${CONAN_LIBS})
+target_link_libraries(mqtt-component PUBLIC ${CONAN_LIBS})
+
+add_library(lua-component STATIC
+  lua.cpp)
+
+target_link_libraries(lua-component PUBLIC sol2::sol2)
 
 if (NOT BUILD_RUN_TESTS)
   return ()
