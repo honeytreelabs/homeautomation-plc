@@ -23,6 +23,12 @@ In order to build the toolchain for the latter two, please refer to the director
 
 Building:
 
+- `make conan-install`: install the conan package manager
+- `make conan-install-deps-native`: build and install dependencies for native platform
+- `make conan-install-deps-rpi4`: build and install dependencies for Raspberry Pi 4
+- `make conan-install-deps-rpi2`: build and install dependencies for Raspberry Pi 2
+- `make native`: build tests for native platform
+- `make roof`: build PLC application for the roof Raspberry Pi 4
+- `make ground`: build PLC application for the ground Raspberry Pi 2
+- `make basement`: build PLC application for the basement Raspberry Pi 4
 - `make test`: build and run tests lokally directly on the build platform
-- `make roof`: build PLC application for the roof Raspberry Pi
-- `make ground`: build PLC application for the ground Raspberry Pi
