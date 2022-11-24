@@ -6,11 +6,11 @@ add_subdirectory(components)
 function(create_logic name)
   add_executable(${name} ${ARGN})
   target_link_libraries(${name} PRIVATE
-    automation
+    components::automation
     scheduler
     CLI11_SINGLE
-    mqtt-component
-    lua-component)
+    components::mqtt
+    components::lua)
   if (RASPBERRY)
     target_link_libraries(${name} PUBLIC -static)
   endif()
