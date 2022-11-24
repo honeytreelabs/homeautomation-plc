@@ -31,4 +31,4 @@ Building:
 - `make roof`: build PLC application for the roof Raspberry Pi 4
 - `make ground`: build PLC application for the ground Raspberry Pi 2
 - `make basement`: build PLC application for the basement Raspberry Pi 4
-- `make test`: build and run tests lokally directly on the build platform
+- `make test`: build and run tests locally directly on the build platform
