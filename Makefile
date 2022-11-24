@@ -60,7 +60,7 @@ roof:
 		&& conan install --profile=rpi4 .. \
 		&& cmake -DCMAKE_BUILD_TYPE=RelMinSize -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchain/toolchain-aarch64-rpi4.cmake -GNinja .. \
 		&& ninja -v bin/roof
-	ln -sf build/compile_commands.json
+	ln -sf build.root/compile_commands.json
 
 .PHONY: deploy-roof
 deploy-roof: roof
@@ -74,7 +74,7 @@ ground:
 		&& conan install --profile=rpi2 .. \
 		&& cmake -DCMAKE_BUILD_TYPE=RelMinSize -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchain/toolchain-armv7hf-rpi2.cmake -GNinja .. \
 		&& ninja -v bin/ground
-	ln -sf build/compile_commands.json
+	ln -sf build.ground/compile_commands.json
 
 .PHONY: deploy-ground
 deploy-ground: ground
@@ -92,4 +92,4 @@ basement:
 		&& conan install --profile=rpi4 .. \
 		&& cmake -DCMAKE_BUILD_TYPE=RelMinSize -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchain/toolchain-aarch64-rpi4.cmake -GNinja .. \
 		&& ninja -v bin/basement
-	ln -sf build/compile_commands.json
+	ln -sf build.basement/compile_commands.json
