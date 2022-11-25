@@ -20,7 +20,10 @@ add_library(components-lua STATIC
   lua.cpp)
 add_library(components::lua ALIAS components-lua)
 
-target_link_libraries(components-lua PUBLIC sol2::sol2)
+target_link_libraries(components-lua PUBLIC
+  sol2::sol2
+  lua
+)
 
 if (NOT BUILD_RUN_TESTS)
   return ()
