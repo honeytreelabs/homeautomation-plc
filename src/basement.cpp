@@ -1,3 +1,4 @@
+#include <gv.hpp>
 #include <i2c_bus.hpp>
 #include <i2c_dev.hpp>
 #include <light.hpp>
@@ -11,50 +12,37 @@
 #include <iostream>
 #include <memory>
 
-struct GV {
-  struct {
-    bool stairs_light;
-    bool kitchen_light;
-    bool charger;
-    bool deck_light;
-  } inputs;
-
-  struct {
-    bool stairs_light;
-    bool kitchen_light;
-    bool charger;
-    bool deck_light;
-  } outputs;
-};
-
 // execution context (shall run in dedicated thread with given cycle time)
 class GroundLogic : public HomeAutomation::Logic::Program {
 
 public:
-  GroundLogic(GV &gv) : gv(gv), stairs_light_trigger{}, stairs_light{} {}
+  GroundLogic(HomeAutomation::GV &gv)
+      : gv(gv), stairs_light_trigger{}, stairs_light{} {}
 
   void execute(HomeAutomation::TimeStamp now) override {
     (void)now;
 
-    if (stairs_light_trigger.execute(gv.inputs.stairs_light)) {
-      gv.outputs.stairs_light = stairs_light.toggle();
+    if (stairs_light_trigger.execute(
+            std::get<bool>(gv.inputs["stairs_light"]))) {
+      gv.outputs["stairs_light"] = stairs_light.toggle();
     }
 
-    if (kitchen_light_trigger.execute(gv.inputs.kitchen_light)) {
-      gv.outputs.kitchen_light = kitchen_light.toggle();
+    if (kitchen_light_trigger.execute(
+            std::get<bool>(gv.inputs["kitchen_light"]))) {
+      gv.outputs["kitchen_light"] = kitchen_light.toggle();
     }
 
-    if (charger_trigger.execute(gv.inputs.charger)) {
-      gv.outputs.charger = charger.toggle();
+    if (charger_trigger.execute(std::get<bool>(gv.inputs["charger"]))) {
+      gv.outputs["charger"] = charger.toggle();
     }
 
-    if (deck_trigger.execute(gv.inputs.deck_light)) {
-      gv.outputs.deck_light = deck_light.toggle();
+    if (deck_trigger.execute(std::get<bool>(gv.inputs["deck_light"]))) {
+      gv.outputs["deck_light"] = deck_light.toggle();
     }
   }
 
 private:
-  GV &gv;
+  HomeAutomation::GV &gv;
 
   // logic blocks
   HomeAutomation::Components::R_TRIG stairs_light_trigger;
@@ -97,7 +85,14 @@ int main(int argc, char *argv[]) {
   i2c_bus->RegisterOutput(&pcf8574Output_20);
 
   // global variables
-  GV gv{};
+  HomeAutomation::GV gv{{{"stairs_light", false}, // inputs
+                         {"kitchen_light", false},
+                         {"charger", false},
+                         {"deck_light", false}},
+                        {{"stairs_light", false}, // outputs
+                         {"kitchen_light", false},
+                         {"charger", false},
+                         {"deck_light", false}}};
 
   // create tasks and programs
   auto &mainTask = scheduler.createTask(
@@ -109,19 +104,24 @@ int main(int argc, char *argv[]) {
                        i2c_bus->readInputs();
 
                        // transfer into GV memory
-                       gv.inputs.stairs_light = pcf8574Input_38.getInput(1);
-                       gv.inputs.kitchen_light = pcf8574Input_38.getInput(2);
-                       gv.inputs.charger = pcf8574Input_38.getInput(3);
-                       gv.inputs.deck_light = pcf8574Input_38.getInput(4);
+                       gv.inputs["stairs_light"] = pcf8574Input_38.getInput(1);
+                       gv.inputs["kitchen_light"] = pcf8574Input_38.getInput(2);
+                       gv.inputs["charger"] = pcf8574Input_38.getInput(3);
+                       gv.inputs["deck_light"] = pcf8574Input_38.getInput(4);
                      },
                  .after =
                      [i2c_bus, &gv, &pcf8574Output_20]() {
                        // transfer from GV memory
-                       pcf8574Output_20.setOutput(0, gv.outputs.charger);
-                       pcf8574Output_20.setOutput(1, gv.outputs.stairs_light);
-                       pcf8574Output_20.setOutput(2, gv.outputs.stairs_light);
-                       pcf8574Output_20.setOutput(3, gv.outputs.kitchen_light);
-                       pcf8574Output_20.setOutput(4, gv.outputs.deck_light);
+                       pcf8574Output_20.setOutput(
+                           0, std::get<bool>(gv.outputs["charger"]));
+                       pcf8574Output_20.setOutput(
+                           1, std::get<bool>(gv.outputs["stairs_light"]));
+                       pcf8574Output_20.setOutput(
+                           2, std::get<bool>(gv.outputs["stairs_light"]));
+                       pcf8574Output_20.setOutput(
+                           3, std::get<bool>(gv.outputs["kitchen_light"]));
+                       pcf8574Output_20.setOutput(
+                           4, std::get<bool>(gv.outputs["deck_light"]));
 
                        // perform real I/O
                        i2c_bus->writeOutputs();

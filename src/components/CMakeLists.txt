@@ -17,10 +17,13 @@ target_include_directories(components-mqtt PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 target_link_libraries(components-mqtt PUBLIC ${CONAN_LIBS})
 
 add_library(components-lua STATIC
-  lua.cpp)
+  lua_block.cpp)
 add_library(components::lua ALIAS components-lua)
 
+target_include_directories(components-lua PUBLIC ${CMAKE_CURRENT_LIST_DIR})
+
 target_link_libraries(components-lua PUBLIC
+  common
   sol2::sol2
   lua
 )
@@ -35,10 +38,10 @@ function(create_components_test name lib)
   Catch2::Catch2WithMain
   ${lib})
 
-  catch_discover_tests(${name}_test)
+  catch_discover_tests(${name}_test WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
 endfunction()
 
 create_components_test(blind_state components-automation)
 create_components_test(blind components-automation)
 create_components_test(trigger components-automation)
-create_components_test(lua components-lua)
+create_components_test(lua_block components-lua)
