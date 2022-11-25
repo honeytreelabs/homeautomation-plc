@@ -29,23 +29,16 @@ if (NOT BUILD_RUN_TESTS)
   return ()
 endif()
 
-add_executable(blind_state_test blind_state_test.cpp)
-target_link_libraries(blind_state_test PRIVATE
+function(create_components_test name lib)
+  add_executable(${name}_test ${name}_test.cpp)
+  target_link_libraries(${name}_test PRIVATE
   Catch2::Catch2WithMain
-  components-automation)
+  ${lib})
 
-catch_discover_tests(blind_state_test)
+  catch_discover_tests(${name}_test)
+endfunction()
 
-add_executable(blind_test blind_test.cpp)
-target_link_libraries(blind_test PRIVATE
-  Catch2::Catch2WithMain
-  components-automation)
-
-catch_discover_tests(blind_test)
-
-add_executable(trigger_test trigger_test.cpp)
-target_link_libraries(trigger_test PRIVATE
-  Catch2::Catch2WithMain
-  components-automation)
-
-catch_discover_tests(trigger_test)
+create_components_test(blind_state components-automation)
+create_components_test(blind components-automation)
+create_components_test(trigger components-automation)
+create_components_test(lua components-lua)
