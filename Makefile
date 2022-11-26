@@ -48,7 +48,7 @@ native:
 	ln -sf build/compile_commands.json
 
 .PHONY: test
-test: native
+test:
 	cd build && ctest --verbose
 
 .PHONY: roof
