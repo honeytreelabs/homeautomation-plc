@@ -51,6 +51,10 @@ native:
 test:
 	cd build && ctest --verbose
 
+.PHONY: test-nomemcheck
+test-nomemcheck:
+	cd build && ctest --verbose -E '.*_memchecked_.*'
+
 .PHONY: roof
 roof:
 	if ! [ -d build.roof ]; then mkdir build.roof; fi
