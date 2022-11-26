@@ -32,16 +32,26 @@ if (NOT BUILD_RUN_TESTS)
   return ()
 endif()
 
-function(create_components_test name lib)
+function(create_components_test name lib memchecked)
   add_executable(${name}_test ${name}_test.cpp)
   target_link_libraries(${name}_test PRIVATE
   Catch2::Catch2WithMain
   ${lib})
 
   catch_discover_tests(${name}_test WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
+  if (${memchecked})
+    add_test(NAME ${name}_memchecked_test
+      COMMAND valgrind
+        --error-exitcode=1
+        --tool=memcheck
+        --leak-check=full
+        --errors-for-leak-kinds=definite
+        --show-leak-kinds=definite $<TARGET_FILE:${name}_test>
+      WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
+  endif()
 endfunction()
 
-create_components_test(blind_state components-automation)
-create_components_test(blind components-automation)
-create_components_test(trigger components-automation)
-create_components_test(lua_block components-lua)
+create_components_test(blind_state components-automation FALSE)
+create_components_test(blind components-automation FALSE)
+create_components_test(trigger components-automation FALSE)
+create_components_test(lua_block components-lua TRUE)
