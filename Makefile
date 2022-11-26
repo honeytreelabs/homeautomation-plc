@@ -16,12 +16,10 @@ conan-install:
 .PHONY: conan-install-deps
 conan-install-deps:
 	if ! [ -d build.deps ]; then mkdir build.deps; fi
-	. build.venv/bin/activate
-	conan profile update settings.compiler.libcxx=libstdc++11 $(profile)
-	# build from local recipe
-	conan create --profile=$(profile) deps/libmodbus
-	# build from recipes from conan-center
-	conan install --profile=$(profile) -if build.deps -of build.deps --build=zlib --build=openssl --build=paho-mqtt-c --build=paho-mqtt-cpp --build=lua .
+	. build.venv/bin/activate \
+		&& conan profile update settings.compiler.libcxx=libstdc++11 $(profile) \
+		&& conan create --profile=$(profile) deps/libmodbus \
+		&& conan install --profile=$(profile) -if build.deps -of build.deps --build=zlib --build=openssl --build=paho-mqtt-c --build=paho-mqtt-cpp --build=lua .
 	rm -rf build.deps
 
 .PHONY: conan-install-deps-native
