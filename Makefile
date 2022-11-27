@@ -63,7 +63,7 @@ roof:
 		&& conan install --profile=rpi4 .. \
 		&& cmake -DCMAKE_BUILD_TYPE=RelMinSize -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchain/toolchain-aarch64-rpi4.cmake -GNinja .. \
 		&& ninja -v bin/roof
-	ln -sf build.root/compile_commands.json
+	ln -sf build.roof/compile_commands.json
 
 .PHONY: deploy-roof
 deploy-roof: roof
