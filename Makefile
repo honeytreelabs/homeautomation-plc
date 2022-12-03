@@ -49,11 +49,11 @@ native:
 
 .PHONY: test
 test:
-	cd build && ctest --verbose
+	ctest -j 4 --test-dir build --verbose
 
 .PHONY: test-nomemcheck
 test-nomemcheck:
-	cd build && ctest --verbose -E '.*_memchecked_.*'
+	ctest --test-dir build --verbose -E '.*_memchecked_.*'
 
 .PHONY: roof
 roof:
