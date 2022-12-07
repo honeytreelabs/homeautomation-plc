@@ -68,5 +68,5 @@ In central Europe, PLCs used in typical industrial automation scenarios are prog
 I wrote a couple of articles about the protocols mentioned in this project. Unfortunately, they are in German. But most likely, it is possible to translate them with some available online tools:
 
 - [Feldbussysteme unter Linux konfigurieren und einsetzen](https://www.linux-magazin.de/ausgaben/2018/04/feldbusse/), Rainer Poisel, Linux Magazin 04/2018
-- [Hausautomatisierung auf Basis des MQTT-Protokolls](https://www.linux-magazin.de/ausgaben/2017/07/mqtt/,) Rainer Poisel, Linux Magazin 07/2017
-- [Hausautomatisierung mit I2C-Buskomponenten](https://www.linux-magazin.de/ausgaben/2016/12/i2c-bus/,) Rainer Poisel, Linux Magazin 12/2016
+- [Hausautomatisierung auf Basis des MQTT-Protokolls](https://www.linux-magazin.de/ausgaben/2017/07/mqtt/), Rainer Poisel, Linux Magazin 07/2017
+- [Hausautomatisierung mit I2C-Buskomponenten](https://www.linux-magazin.de/ausgaben/2016/12/i2c-bus/), Rainer Poisel, Linux Magazin 12/2016
