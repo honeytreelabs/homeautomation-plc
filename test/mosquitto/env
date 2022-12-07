@@ -1,0 +1,3 @@
+COMPOSE_FILE=docker-compose.yaml
+DOCKER_CONTEXT=default
+COMPOSE_PROJECT_NAME=homeautomation-plc

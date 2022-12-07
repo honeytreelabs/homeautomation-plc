@@ -1,8 +1,8 @@
 [requires]
 paho-mqtt-cpp/1.2.0
 paho-mqtt-c/1.3.9
-openssl/3.0.5
-zlib/1.2.12
+openssl/1.1.1q
+zlib/1.2.13
 libmodbus/3.1.8
 lua/5.4.4
 

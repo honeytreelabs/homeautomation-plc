@@ -7,9 +7,10 @@ conan-install:
 		&& . bin/activate \
 		&& pip install conan \
 		&&	if ! conan profile show default > /dev/null 2>&1; then \
-				conan profile new default --detect \
-					&& conan profile update settings.compiler.libcxx=libstdc++11 default; \
+				conan profile new default --detect; \
 			fi \
+		&& conan profile update settings.build_type=Debug default \
+		&& conan profile update settings.compiler.libcxx=libstdc++11 default \
 		&&	cp ../.conan/rpi4.profile ~/.conan/profiles/rpi4 \
 		&&	cp ../.conan/rpi2.profile ~/.conan/profiles/rpi2)
 
@@ -17,9 +18,12 @@ conan-install:
 conan-install-deps:
 	if ! [ -d build.deps ]; then mkdir build.deps; fi
 	. build.venv/bin/activate \
-		&& conan profile update settings.compiler.libcxx=libstdc++11 $(profile) \
 		&& conan create --profile=$(profile) deps/libmodbus \
-		&& conan install --profile=$(profile) -if build.deps -of build.deps --build=zlib --build=openssl --build=paho-mqtt-c --build=paho-mqtt-cpp --build=lua .
+		&& conan create --profile=$(profile) deps/zlib \
+		&& conan create --profile=$(profile) deps/openssl \
+		&& conan create --profile=$(profile) deps/paho-mqtt-c \
+		&& conan create --profile=$(profile) deps/paho-mqtt-cpp \
+		&& conan install --profile=$(profile) -if build.deps -of build.deps --build=lua .
 	rm -rf build.deps
 
 .PHONY: conan-install-deps-native
@@ -47,8 +51,20 @@ native:
 		&& ninja -v
 	ln -sf build/compile_commands.json
 
+.PHONY: test-up
+test-up:
+	$(MAKE) -C test/mosquitto up
+
+.PHONY: test-status
+test-status:
+	$(MAKE) -C test/mosquitto status
+
+.PHONY: test-down
+test-down:
+	$(MAKE) -C test/mosquitto down
+
 .PHONY: test
-test:
+test: test-up
 	ctest -j 4 --test-dir build --verbose
 
 .PHONY: test-nomemcheck

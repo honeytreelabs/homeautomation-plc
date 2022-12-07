@@ -14,7 +14,9 @@ add_library(components::mqtt ALIAS components-mqtt)
 
 target_include_directories(components-mqtt PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 
-target_link_libraries(components-mqtt PUBLIC ${CONAN_LIBS})
+target_link_libraries(components-mqtt PUBLIC
+  common
+  ${CONAN_LIBS})
 
 add_library(components-lua STATIC
   lua_block.cpp)
@@ -54,4 +56,6 @@ endfunction()
 create_components_test(blind_state components-automation FALSE)
 create_components_test(blind components-automation FALSE)
 create_components_test(trigger components-automation FALSE)
+create_components_test(mqtt components-mqtt TRUE)
+create_components_test(messages_buffer components-mqtt TRUE)
 create_components_test(lua_block components-lua TRUE)
