@@ -2,9 +2,7 @@
 
 ## General Description and Features
 
-This Soft PLC software provides a framework to implement home automation logic in the cyclic execution pattern typically found in PLCs.
-
-The idea is to have some execution environment with minimal dependencies to the underlying operating system (Linux for now).
+This Soft PLC software provides a framework to implement home automation logic in the cyclic execution pattern typically found in PLCs. The idea is to have some execution environment with minimal dependencies to the underlying operating system (Linux for now).
 
 Supported featuers:
 
