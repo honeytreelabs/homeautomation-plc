@@ -41,15 +41,19 @@ conan-install-deps-rpi4: conan-install-deps
 .PHONY: prepare
 prepare: conan-install-deps-native conan-install-deps-rpi4 conan-install-deps-rpi2
 
-.PHONY: native
-native:
+.PHONY: native-prepare
+native-prepare:
 	if ! [ -d build ]; then mkdir build; fi
 	cd build \
 		&& . ../build.venv/bin/activate \
 		&& conan install .. \
-		&& cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchain/toolchain-native.cmake -GNinja .. \
-		&& ninja -v
+		&& cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchain/toolchain-native.cmake -GNinja ..
 	ln -sf build/compile_commands.json
+
+.PHONY: native
+native: native-prepare
+	cd build \
+		&& ninja -v
 
 .PHONY: test-up
 test-up:
