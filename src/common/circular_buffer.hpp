@@ -51,7 +51,7 @@ public:
     using namespace std::chrono_literals;
 
     std::unique_lock<std::mutex> lock(mutex);
-    if (!cv.wait_for(lock, rel_time, [=] { return !empty_unsafe(); })) {
+    if (!cv.wait_for(lock, rel_time, [this] { return !empty_unsafe(); })) {
       return std::nullopt;
     }
 

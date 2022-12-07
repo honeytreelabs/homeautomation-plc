@@ -2,7 +2,7 @@
 
 #include <catch2/catch_all.hpp>
 
-using namespace Homeautomation::Components::MQTT;
+using namespace HomeAutomation::Components::MQTT;
 
 TEST_CASE("instantiate/destruct mqtt client", "[single-file]") {
   Client client{"tcp://localhost:1883"};

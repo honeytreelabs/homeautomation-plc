@@ -7,7 +7,7 @@
 #include <iostream>
 #include <string>
 
-namespace Homeautomation {
+namespace HomeAutomation {
 namespace Components {
 namespace MQTT {
 
@@ -139,4 +139,4 @@ void Client::sendWorkerFun() {
 
 } // namespace MQTT
 } // namespace Components
-} // namespace Homeautomation
+} // namespace HomeAutomation

@@ -69,7 +69,7 @@ test-down:
 
 .PHONY: test
 test: test-up
-	ctest -j 4 --test-dir build --verbose
+	ctest -j $$(nproc) --test-dir build --verbose
 
 .PHONY: test-nomemcheck
 test-nomemcheck:

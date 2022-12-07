@@ -9,7 +9,7 @@
 #include <thread>
 #include <vector>
 
-namespace Homeautomation {
+namespace HomeAutomation {
 namespace Components {
 namespace MQTT {
 
@@ -29,8 +29,12 @@ public:
   virtual void connection_lost(const std::string &cause) override;
   virtual void delivery_complete(mqtt::delivery_token_ptr tok) override;
   virtual void message_arrived(mqtt::const_message_ptr msg) override;
-  virtual void on_failure(const mqtt::token &asyncActionToken) override {}
-  virtual void on_success(const mqtt::token &asyncActionToken) override {}
+  virtual void on_failure(const mqtt::token &asyncActionToken) override {
+    (void)asyncActionToken;
+  }
+  virtual void on_success(const mqtt::token &asyncActionToken) override {
+    (void)asyncActionToken;
+  }
 
 private:
   void reconnect();
@@ -87,4 +91,4 @@ private:
 
 } // namespace MQTT
 } // namespace Components
-} // namespace Homeautomation
+} // namespace HomeAutomation
