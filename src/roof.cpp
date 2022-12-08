@@ -50,7 +50,7 @@ public:
     // light: ground_office
     auto msg = mqtt.receive();
     if (msg && msg->get_payload_str() == "toggle") {
-      ground_office_light.toggle();
+      gv.outputs["ground_office_light"] = ground_office_light.toggle();
     }
   }
 
@@ -144,6 +144,8 @@ int main(int argc, char *argv[]) {
                       3, std::get<bool>(gv.outputs["kizi_2_raff_up"]));
                   max7311Output.setOutput(
                       2, std::get<bool>(gv.outputs["kizi_2_raff_down"]));
+                  max7311Output.setOutput(
+                      4, std::get<bool>(gv.outputs["ground_office_light"]));
 
                   // perform real I/O
                   i2c_bus->writeOutputs();
