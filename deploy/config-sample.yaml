@@ -1,0 +1,8 @@
+---
+mqtt:
+  username: garfield
+  password: secret
+  address: tcp://hostname:1883
+  client_id: myclient
+i2c:
+  bus: /dev/i2c-1
