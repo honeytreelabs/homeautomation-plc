@@ -76,19 +76,28 @@ test: test-up
 test-nomemcheck:
 	ctest --test-dir build --verbose -E '.*_memchecked_.*'
 
-.PHONY: roof
-roof:
+.PHONY: roof-prepare
+roof-prepare:
 	if ! [ -d build.roof ]; then mkdir build.roof; fi
 	cd build.roof \
 		&& . ../build.venv/bin/activate \
 		&& conan install --profile=rpi4 .. \
-		&& cmake -DCMAKE_BUILD_TYPE=RelMinSize -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchain/toolchain-aarch64-rpi4.cmake -GNinja .. \
-		&& ninja -v bin/roof
+		&& cmake -DCMAKE_BUILD_TYPE=RelMinSize -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchain/toolchain-aarch64-rpi4.cmake -GNinja ..
 	ln -sf build.roof/compile_commands.json
+
+.PHONY: roof
+roof: roof-prepare
+	cd build.roof \
+		&& ninja -v bin/roof
 
 .PHONY: deploy-roof
 deploy-roof: roof
+	ssh root@raspberry-d.lan /etc/init.d/homeautomation disable || true
+	ssh root@raspberry-d.lan /etc/init.d/homeautomation stop || true
+	sleep 1
 	scp -O build.roof/bin/roof root@raspberry-d.lan:/opt
+	scp -O build.roof/src/homeautomation.roof root@raspberry-d.lan:/etc/init.d/homeautomation
+	ssh root@raspberry-d.lan /etc/init.d/homeautomation enable
 
 .PHONY: ground
 ground:

@@ -21,6 +21,10 @@ function(create_logic name)
     # in the furute, -Werror shall be enabled too with few exceptions to that rule
   endif()
   target_compile_features(${name} PRIVATE cxx_std_20)
+
+  set(binary ${name})
+  configure_file(${CMAKE_SOURCE_DIR}/deploy/homeautomation.init.in homeautomation.${name})
+  unset(binary)
 endfunction()
 
 create_logic(roof roof.cpp)
