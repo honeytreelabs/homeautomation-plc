@@ -1,3 +1,4 @@
+#include "catch2/catch_test_macros.hpp"
 #include <mqtt.hpp>
 
 #include <catch2/catch_all.hpp>
@@ -22,6 +23,15 @@ TEST_CASE("receive no mqtt messages", "[single-file]") {
   REQUIRE(!message);
 
   client.disconnect();
+}
+
+TEST_CASE("connect/disconnect mqtt client, no broker listening",
+          "[single-file]") {
+  // this test shows that we are currently depending on a working/reachable
+  // broker
+  Client client{"tcp://localhost:1884"};
+  REQUIRE_THROWS_AS(client.connect(), mqtt::exception);
+  REQUIRE_THROWS_AS(client.disconnect(), mqtt::exception);
 }
 
 TEST_CASE("publish/receive one mqtt message", "[single-file]") {
