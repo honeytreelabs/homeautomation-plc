@@ -50,14 +50,22 @@ public:
   static constexpr const char *DFLT_SERVER_ADDRESS{"tcp://localhost:1883"};
   static constexpr const char *DFLT_CLIENT_ID{"async_publish"};
 
-  Client(std::string address, std::string clientID)
+  static mqtt::connect_options getDefaultConnectOptions() {
+    mqtt::connect_options result;
+    result.set_keep_alive_interval(20);
+    result.set_clean_session(true);
+    return result;
+  }
+
+  Client(std::string address, std::string clientID,
+         mqtt::connect_options connOpts)
       : client(address, clientID), conntok{}, send_msgs{}, recv_msgs{},
-        quit_cond(false), topics{}, conopts{},
-        cb{client, topics, recv_msgs, conopts}, send_worker{} {
-    conopts.set_keep_alive_interval(20);
-    conopts.set_clean_session(true);
+        quit_cond(false), topics{}, connOpts{connOpts},
+        cb{client, topics, recv_msgs, connOpts}, send_worker{} {
     client.set_callback(cb);
   }
+  Client(std::string address, std::string clientID)
+      : Client(address, clientID, getDefaultConnectOptions()) {}
   Client(std::string address) : Client(address, DFLT_CLIENT_ID) {}
   Client() : Client(DFLT_SERVER_ADDRESS) {}
   virtual ~Client() {}
@@ -65,10 +73,12 @@ public:
   void connect();
   void send(mqtt::string_ref topic, mqtt::binary_ref payload, int qos);
   inline void send(mqtt::string_ref topic, mqtt::binary_ref payload) {
-    send(topic, payload, 1);
+    send(topic, payload, 1 /* QOS, TODO */);
   }
   void subscribe(mqtt::string_ref topic, int qos);
-  inline void subscribe(mqtt::string_ref topic) { subscribe(topic, 1); }
+  inline void subscribe(mqtt::string_ref topic) {
+    subscribe(topic, 1 /* QOS, TODO */);
+  }
   mqtt::const_message_ptr receive();
   void disconnect();
 
@@ -84,7 +94,7 @@ private:
   ConstMessages recv_msgs;
   std::atomic_bool quit_cond;
   Topics topics;
-  mqtt::connect_options conopts;
+  mqtt::connect_options connOpts;
   Callback cb;
   std::thread send_worker;
 };

@@ -78,7 +78,7 @@ public:
 };
 
 void Client::connect() {
-  conntok = client.connect(conopts);
+  conntok = client.connect(connOpts);
   conntok->wait();
 
   send_worker = std::thread(&Client::sendWorkerFun, this);
