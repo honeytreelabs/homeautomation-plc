@@ -2,10 +2,14 @@
 #include <gv.hpp>
 #include <i2c_bus.hpp>
 #include <i2c_dev.hpp>
+#include <light.hpp>
+#include <mqtt.hpp>
 #include <scheduler.hpp>
 #include <signal.hpp>
 
 #include <CLI/CLI.hpp>
+#include <spdlog/spdlog.h>
+#include <yaml-cpp/yaml.h>
 
 #include <chrono>
 #include <iostream>
@@ -14,33 +18,87 @@
 static constexpr auto const cfg = HomeAutomation::Components::BlindConfig{
     .periodIdle = 500ms, .periodUp = 50s, .periodDown = 50s};
 
+class Config {
+public:
+  static Config fromFile(std::string &path) {
+    Config result;
+
+    YAML::Node config = YAML::LoadFile(path);
+    result.mqtt.address = config["mqtt"]["address"].as<std::string>();
+    result.mqtt.clientID = config["mqtt"]["client_id"].as<std::string>();
+    result.mqtt.username = config["mqtt"]["username"].as<std::string>();
+    result.mqtt.password = config["mqtt"]["password"].as<std::string>();
+    result.i2c.bus = config["i2c"]["bus"].as<std::string>();
+
+    return result;
+  }
+  struct {
+    std::string address;
+    std::string clientID;
+    std::string username;
+    std::string password;
+  } mqtt;
+
+  struct {
+    std::string bus;
+  } i2c;
+
+private:
+  Config() {}
+};
+
 // execution context (shall run in dedicated thread with given cycle time)
 class RoofLogic : public HomeAutomation::Logic::Program {
 
 public:
-  RoofLogic(HomeAutomation::GV &gv)
-      : gv(gv), blind_sr(cfg, std::chrono::high_resolution_clock::now()),
-        blind_kizi_2(cfg, std::chrono::high_resolution_clock::now()) {}
+  RoofLogic(Config const &config, HomeAutomation::GV &gv)
+      : gv(gv), mqtt{config.mqtt.address, config.mqtt.clientID,
+                     getConnectOptions(config.mqtt.username,
+                                       config.mqtt.password)},
+        blind_sr(cfg, std::chrono::high_resolution_clock::now()),
+        blind_kizi_2(cfg, std::chrono::high_resolution_clock::now()) {
+    mqtt.connect();
+    mqtt.subscribe("/homeautomation/ground_office_light");
+  }
+  virtual ~RoofLogic() { mqtt.disconnect(); }
 
   void execute(HomeAutomation::TimeStamp now) override {
+    // blind: sr_raff
     auto result = blind_sr.execute(now, std::get<bool>(gv.inputs["sr_raff_up"]),
                                    std::get<bool>(gv.inputs["sr_raff_down"]));
     gv.outputs["sr_raff_up"] = result.up;
     gv.outputs["sr_raff_down"] = result.down;
 
+    // blind: kizi_2_raff
     result =
         blind_kizi_2.execute(now, std::get<bool>(gv.inputs["kizi_2_raff_up"]),
                              std::get<bool>(gv.inputs["kizi_2_raff_down"]));
     gv.outputs["kizi_2_raff_up"] = result.up;
     gv.outputs["kizi_2_raff_down"] = result.down;
+
+    // light: ground_office
+    auto msg = mqtt.receive();
+    if (msg && msg->get_payload_str() == "toggle") {
+      ground_office_light.toggle();
+    }
   }
 
 private:
+  static mqtt::connect_options getConnectOptions(std::string username,
+                                                 std::string password) {
+    auto result =
+        HomeAutomation::Components::MQTT::Client::getDefaultConnectOptions();
+    result.set_user_name(username);
+    result.set_password(password);
+    return result;
+  }
   HomeAutomation::GV &gv;
+  HomeAutomation::Components::MQTT::Client mqtt;
 
   // logic blocks
   HomeAutomation::Components::Blind blind_sr;
   HomeAutomation::Components::Blind blind_kizi_2;
+  HomeAutomation::Components::Light ground_office_light{"Ground Office"};
 };
 
 int main(int argc, char *argv[]) {
@@ -50,75 +108,88 @@ int main(int argc, char *argv[]) {
   std::string implementation = "real";
   app.add_option("-i,--implementation", implementation,
                  "Implementation variant (real, stub)");
-  std::string i2c_bus_path = "/dev/i2c-1";
-  app.add_option("-b,--bus", i2c_bus_path, "Path to the i2c bus device");
+  std::string config_file = "config.yaml";
+  app.add_option("-c,--config", config_file, "Path to the configuration file");
   CLI11_PARSE(app, argc, argv);
 
-  HomeAutomation::System::initQuitCondition();
+  try {
+    Config config = Config::fromFile(config_file);
 
-  auto scheduler = HomeAutomation::Logic::Scheduler();
+    HomeAutomation::System::initQuitCondition();
 
-  // create IO infrastructure
-  std::shared_ptr<HomeAutomation::IO::I2C::Bus> i2c_bus;
-  if (implementation == "stub") {
-    i2c_bus = std::make_shared<HomeAutomation::IO::I2C::StubBus>("ignored");
-  } else {
-    i2c_bus = std::make_shared<HomeAutomation::IO::I2C::RealBus>(i2c_bus_path);
+    auto scheduler = HomeAutomation::Logic::Scheduler();
+
+    // create IO infrastructure
+    std::shared_ptr<HomeAutomation::IO::I2C::Bus> i2c_bus;
+    if (implementation == "stub") {
+      i2c_bus = std::make_shared<HomeAutomation::IO::I2C::StubBus>("ignored");
+    } else {
+      i2c_bus =
+          std::make_shared<HomeAutomation::IO::I2C::RealBus>(config.i2c.bus);
+    }
+
+    auto pcf8574Input_3b = HomeAutomation::IO::I2C::PCF8574Input(0x3b);
+    i2c_bus->RegisterInput(&pcf8574Input_3b);
+
+    auto max7311Output = HomeAutomation::IO::I2C::MAX7311Output(0x20);
+    i2c_bus->RegisterOutput(&max7311Output);
+
+    // global variables
+    HomeAutomation::GV gv{{{"sr_raff_up", false}, // inputs
+                           {"sr_raff_down", false},
+                           {"kizi_2_raff_up", false},
+                           {"kizi_2_raff_down", false}},
+                          {{"sr_raff_up", false}, // outputs
+                           {"sr_raff_down", false},
+                           {"kizi_2_raff_up", false},
+                           {"kizi_2_raff_down", false},
+                           {"ground_office_light", false}}};
+
+    // create tasks and programs
+    auto &mainTask = scheduler.createTask(
+        100ms,
+        HomeAutomation::Logic::TaskCbs{
+            .init = [i2c_bus]() { i2c_bus->init(); },
+            .before =
+                [i2c_bus, &gv, &pcf8574Input_3b]() {
+                  // perform real I/O
+                  i2c_bus->readInputs();
+
+                  // transfer into GV memory
+                  gv.inputs["sr_raff_up"] = pcf8574Input_3b.getInput(0);
+                  gv.inputs["sr_raff_down"] = pcf8574Input_3b.getInput(1);
+                  gv.inputs["kizi_2_raff_up"] = pcf8574Input_3b.getInput(2);
+                  gv.inputs["kizi_2_raff_down"] = pcf8574Input_3b.getInput(3);
+                },
+            .after =
+                [i2c_bus, &gv, &max7311Output]() {
+                  // transfer from GV memory
+                  max7311Output.setOutput(
+                      1, std::get<bool>(gv.outputs["sr_raff_up"]));
+                  max7311Output.setOutput(
+                      0, std::get<bool>(gv.outputs["sr_raff_down"]));
+                  max7311Output.setOutput(
+                      3, std::get<bool>(gv.outputs["kizi_2_raff_up"]));
+                  max7311Output.setOutput(
+                      2, std::get<bool>(gv.outputs["kizi_2_raff_down"]));
+
+                  // perform real I/O
+                  i2c_bus->writeOutputs();
+                },
+            .shutdown = [i2c_bus]() { i2c_bus->close(); },
+            .quit = HomeAutomation::System::quitCondition});
+
+    auto roofLogic = RoofLogic(config, gv);
+    mainTask.addProgram(&roofLogic);
+    scheduler.start();
+    return scheduler.wait();
+  } catch (YAML::Exception const &exc) {
+    spdlog::error("Could not parse configuration file: {}", exc.what());
+    return 1;
+  } catch (mqtt::exception &exc) {
+    spdlog::error(
+        "Some error occurred when interacting with the MQTT broker: {}",
+        exc.what());
+    return 1;
   }
-
-  auto pcf8574Input_3b = HomeAutomation::IO::I2C::PCF8574Input(0x3b);
-  i2c_bus->RegisterInput(&pcf8574Input_3b);
-
-  auto max7311Output = HomeAutomation::IO::I2C::MAX7311Output(0x20);
-  i2c_bus->RegisterOutput(&max7311Output);
-
-  // global variables
-  HomeAutomation::GV gv{{{"sr_raff_up", false}, // inputs
-                         {"sr_raff_down", false},
-                         {"kizi_2_raff_up", false},
-                         {"kizi_2_raff_down", false}},
-                        {{"sr_raff_up", false}, // outputs
-                         {"sr_raff_down", false},
-                         {"kizi_2_raff_up", false},
-                         {"kizi_2_raff_down", false}}};
-
-  // create tasks and programs
-  auto &mainTask = scheduler.createTask(
-      100ms,
-      HomeAutomation::Logic::TaskCbs{
-          .init = [i2c_bus]() { i2c_bus->init(); },
-          .before =
-              [i2c_bus, &gv, &pcf8574Input_3b]() {
-                // perform real I/O
-                i2c_bus->readInputs();
-
-                // transfer into GV memory
-                gv.inputs["sr_raff_up"] = pcf8574Input_3b.getInput(0);
-                gv.inputs["sr_raff_down"] = pcf8574Input_3b.getInput(1);
-                gv.inputs["kizi_2_raff_up"] = pcf8574Input_3b.getInput(2);
-                gv.inputs["kizi_2_raff_down"] = pcf8574Input_3b.getInput(3);
-              },
-          .after =
-              [i2c_bus, &gv, &max7311Output]() {
-                // transfer from GV memory
-                max7311Output.setOutput(
-                    1, std::get<bool>(gv.outputs["sr_raff_up"]));
-                max7311Output.setOutput(
-                    0, std::get<bool>(gv.outputs["sr_raff_down"]));
-                max7311Output.setOutput(
-                    3, std::get<bool>(gv.outputs["kizi_2_raff_up"]));
-                max7311Output.setOutput(
-                    2, std::get<bool>(gv.outputs["kizi_2_raff_down"]));
-
-                // perform real I/O
-                i2c_bus->writeOutputs();
-              },
-          .shutdown = [i2c_bus]() { i2c_bus->close(); },
-          .quit = HomeAutomation::System::quitCondition});
-  auto roofLogic = RoofLogic(gv);
-  mainTask.addProgram(&roofLogic);
-
-  // run
-  scheduler.start();
-  return scheduler.wait();
 }
