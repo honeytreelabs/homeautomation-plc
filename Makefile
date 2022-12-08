@@ -12,18 +12,19 @@ conan-install:
 		&& conan profile update settings.build_type=Debug default \
 		&& conan profile update settings.compiler.libcxx=libstdc++11 default \
 		&&	cp ../.conan/rpi4.profile ~/.conan/profiles/rpi4 \
-		&&	cp ../.conan/rpi2.profile ~/.conan/profiles/rpi2)
+		&&	cp ../.conan/rpi2.profile ~/.conan/profiles/rpi2 \
+		&&	cp ../.conan/build.profile ~/.conan/profiles/build)
 
 .PHONY: conan-install-deps
 conan-install-deps:
 	if ! [ -d build.deps ]; then mkdir build.deps; fi
 	. build.venv/bin/activate \
-		&& conan create --profile=$(profile) deps/libmodbus \
-		&& conan create --profile=$(profile) deps/zlib \
-		&& conan create --profile=$(profile) deps/openssl \
-		&& conan create --profile=$(profile) deps/paho-mqtt-c \
-		&& conan create --profile=$(profile) deps/paho-mqtt-cpp \
-		&& conan install --profile=$(profile) -if build.deps -of build.deps --build=lua .
+		&& conan create --profile:build=build --profile:host=$(profile) deps/libmodbus \
+		&& conan create --profile:build=build --profile:host=$(profile) deps/zlib \
+		&& conan create --profile:build=build --profile:host=$(profile) deps/openssl \
+		&& conan create --profile:build=build --profile:host=$(profile) deps/paho-mqtt-c \
+		&& conan create --profile:build=build --profile:host=$(profile) deps/paho-mqtt-cpp \
+		&& conan install --profile:build=build --profile:host=$(profile) -if build.deps -of build.deps --build=lua .
 	rm -rf build.deps
 
 .PHONY: conan-install-deps-native
