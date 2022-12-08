@@ -76,53 +76,77 @@ test: test-up
 test-nomemcheck:
 	ctest --test-dir build --verbose -E '.*_memchecked_.*'
 
-.PHONY: roof-prepare
-roof-prepare:
-	if ! [ -d build.roof ]; then mkdir build.roof; fi
-	cd build.roof \
+.PHONY: executable-prepare-generic
+executable-prepare-generic:
+	if ! [ -d build.$(name) ]; then mkdir build.$(name); fi
+	cd build.$(name) \
 		&& . ../build.venv/bin/activate \
-		&& conan install --profile=rpi4 .. \
-		&& cmake -DCMAKE_BUILD_TYPE=RelMinSize -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchain/toolchain-aarch64-rpi4.cmake -GNinja ..
-	ln -sf build.roof/compile_commands.json
+		&& conan install --profile=$(profile) .. \
+		&& cmake -DCMAKE_BUILD_TYPE=RelMinSize -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchain/toolchain-$(toolchain).cmake -GNinja ..
+	ln -sf build.$(name)/compile_commands.json
+
+.PHONY: executable-generic
+executable-generic:
+	cd build.$(name) \
+		&& ninja -v bin/$(name)
+
+.PHONY: deploy-generic
+deploy-generic:
+	ssh root@$(host) /etc/init.d/homeautomation disable || true
+	ssh root@$(host) /etc/init.d/homeautomation stop || true
+	# grace period to make sure the process exits
+	sleep 1
+	scp -O build.$(name)/bin/$(name) root@$(host):/opt
+	scp -O build.$(name)/src/homeautomation.$(name) root@$(host):/etc/init.d/homeautomation
+	ssh root@$(host) /etc/init.d/homeautomation enable
+
+### roof
+
+.PHONY: roof-prepare
+roof-prepare: name=roof
+roof-prepare: profile=rpi4
+roof-prepare: toolchain=aarch64-rpi4
+roof-prepare: executable-prepare-generic
 
 .PHONY: roof
 roof: roof-prepare
-	cd build.roof \
-		&& ninja -v bin/roof
+	$(MAKE) executable-generic name=roof
 
 .PHONY: deploy-roof
 deploy-roof: roof
-	ssh root@raspberry-d.lan /etc/init.d/homeautomation disable || true
-	ssh root@raspberry-d.lan /etc/init.d/homeautomation stop || true
-	sleep 1
-	scp -O build.roof/bin/roof root@raspberry-d.lan:/opt
-	scp -O build.roof/src/homeautomation.roof root@raspberry-d.lan:/etc/init.d/homeautomation
-	ssh root@raspberry-d.lan /etc/init.d/homeautomation enable
+	$(MAKE) deploy-generic host=raspberry-d.lan name=roof
+
+### ground
+
+.PHONY: ground-prepare
+ground-prepare: name=ground
+ground-prepare: profile=rpi2
+ground-prepare: toolchain=armv7hf-rpi2
+ground-prepare: executable-prepare-generic
 
 .PHONY: ground
-ground:
-	if ! [ -d build.ground ]; then mkdir build.ground; fi
-	cd build.ground \
-		&& . ../build.venv/bin/activate \
-		&& conan install --profile=rpi2 .. \
-		&& cmake -DCMAKE_BUILD_TYPE=RelMinSize -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchain/toolchain-armv7hf-rpi2.cmake -GNinja .. \
-		&& ninja -v bin/ground
-	ln -sf build.ground/compile_commands.json
+ground: ground-prepare
+	$(MAKE) executable-generic name=ground
 
 .PHONY: deploy-ground
 deploy-ground: ground
-	scp -O build.ground/bin/ground root@raspberry-o.lan:/opt
+	$(MAKE) deploy-generic host=raspberry-o.lan name=ground
+
+### basement
+# note: needs Alpine or OpenWrt based container
+
+.PHONY: basement-prepare
+basement-prepare: name=basement
+basement-prepare: profile=rpi4
+basement-prepare: toolchain=aarch64-rpi4
+basement-prepare: executable-prepare-generic
+
+.PHONY: basement
+basement: basement-prepare
+	$(MAKE) executable-generic name=basement
+
+# currently there is no deployment step because basement execution context is different
 
 .PHONY: clean
 clean:
-	rm -rf build.venv build build.roof build.ground
-
-.PHONY: basement
-basement:
-	if ! [ -d build.basement ]; then mkdir build.basement; fi
-	cd build.basement \
-		&& . ../build.venv/bin/activate \
-		&& conan install --profile=rpi4 .. \
-		&& cmake -DCMAKE_BUILD_TYPE=RelMinSize -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchain/toolchain-aarch64-rpi4.cmake -GNinja .. \
-		&& ninja -v bin/basement
-	ln -sf build.basement/compile_commands.json
+	rm -rf build.venv build build.roof build.ground build.basement
