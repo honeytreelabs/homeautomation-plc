@@ -1,4 +1,5 @@
 #include <blind.hpp>
+#include <config.hpp>
 #include <gv.hpp>
 #include <i2c_bus.hpp>
 #include <i2c_dev.hpp>
@@ -9,7 +10,6 @@
 
 #include <CLI/CLI.hpp>
 #include <spdlog/spdlog.h>
-#include <yaml-cpp/yaml.h>
 
 #include <chrono>
 #include <iostream>
@@ -18,40 +18,11 @@
 static constexpr auto const cfg = HomeAutomation::Components::BlindConfig{
     .periodIdle = 500ms, .periodUp = 50s, .periodDown = 50s};
 
-class Config {
-public:
-  static Config fromFile(std::string &path) {
-    Config result;
-
-    YAML::Node config = YAML::LoadFile(path);
-    result.mqtt.address = config["mqtt"]["address"].as<std::string>();
-    result.mqtt.clientID = config["mqtt"]["client_id"].as<std::string>();
-    result.mqtt.username = config["mqtt"]["username"].as<std::string>();
-    result.mqtt.password = config["mqtt"]["password"].as<std::string>();
-    result.i2c.bus = config["i2c"]["bus"].as<std::string>();
-
-    return result;
-  }
-  struct {
-    std::string address;
-    std::string clientID;
-    std::string username;
-    std::string password;
-  } mqtt;
-
-  struct {
-    std::string bus;
-  } i2c;
-
-private:
-  Config() {}
-};
-
 // execution context (shall run in dedicated thread with given cycle time)
 class RoofLogic : public HomeAutomation::Logic::Program {
 
 public:
-  RoofLogic(Config const &config, HomeAutomation::GV &gv)
+  RoofLogic(HomeAutomation::Config const &config, HomeAutomation::GV &gv)
       : gv(gv), mqtt{config.mqtt.address, config.mqtt.clientID,
                      getConnectOptions(config.mqtt.username,
                                        config.mqtt.password)},
@@ -92,6 +63,7 @@ private:
     result.set_password(password);
     return result;
   }
+
   HomeAutomation::GV &gv;
   HomeAutomation::Components::MQTT::Client mqtt;
 
@@ -113,7 +85,7 @@ int main(int argc, char *argv[]) {
   CLI11_PARSE(app, argc, argv);
 
   try {
-    Config config = Config::fromFile(config_file);
+    auto config = HomeAutomation::Config::fromFile(config_file);
 
     HomeAutomation::System::initQuitCondition();
 
