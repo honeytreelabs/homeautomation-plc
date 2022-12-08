@@ -114,7 +114,7 @@ int main(int argc, char *argv[]) {
     // global variables
     HomeAutomation::GV gv{{{"stairs_light", false}, // inputs
                            {"kitchen_light", false},
-                           {"charger", true}, // TODO change
+                           {"charger", false},
                            {"deck_light", false},
                            {"ground_office_light", false}},
                           {{"stairs_light", false}, // outputs
