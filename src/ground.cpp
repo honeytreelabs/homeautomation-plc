@@ -8,7 +8,6 @@
 #include <signal.hpp>
 #include <trigger.hpp>
 
-#include <CLI/CLI.hpp>
 #include <spdlog/spdlog.h>
 
 #include <iostream>
@@ -82,16 +81,16 @@ private:
 int main(int argc, char *argv[]) {
   using namespace std::chrono_literals;
 
-  auto app = CLI::App("Ground PLC");
-  std::string implementation = "real";
-  app.add_option("-i,--implementation", implementation,
-                 "Implementation variant (real, stub)");
-  std::string config_file = "config.yaml";
-  app.add_option("-c,--config", config_file, "Path to the configuration file");
-  CLI11_PARSE(app, argc, argv);
+  if (argc != 2) {
+    spdlog::error("Usage: {} <path-to-config-file>", argv[0]);
+    return 1;
+  }
+
+  std::string const implementation = "real"; // alternative: stub
+  std::string const config_path(argv[1]);
 
   try {
-    auto config = HomeAutomation::Config::fromFile(config_file);
+    auto config = HomeAutomation::Config::fromFile(config_path);
     HomeAutomation::System::initQuitCondition();
 
     auto scheduler = HomeAutomation::Logic::Scheduler();

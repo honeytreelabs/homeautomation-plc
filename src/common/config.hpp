@@ -8,7 +8,7 @@ namespace HomeAutomation {
 
 class Config {
 public:
-  static Config fromFile(std::string &path) {
+  static Config fromFile(std::string const &path) {
     Config result;
 
     YAML::Node config = YAML::LoadFile(path);

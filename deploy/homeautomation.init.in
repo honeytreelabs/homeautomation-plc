@@ -5,7 +5,7 @@ USE_PROCD=1
 
 start_service() {
     procd_open_instance
-    procd_set_param command /opt/${binary} -c /etc/homeautomation/config.yaml
+    procd_set_param command /opt/${binary} /etc/homeautomation/config.yaml
     procd_set_param respawn 300 5 0
     procd_set_param stdout 1
     procd_set_param stderr 1

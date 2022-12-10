@@ -1,6 +1,4 @@
 add_subdirectory(spdlog)
-set(CLI11_SINGLE_FILE ON)
-add_subdirectory(CLI11)
 add_subdirectory(GSL)
 
 set(SOL2_BUILD_LUA FALSE)
