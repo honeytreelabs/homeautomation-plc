@@ -39,7 +39,7 @@ conan-install-deps-rpi2: conan-install-deps
 conan-install-deps-rpi4: profile=rpi4
 conan-install-deps-rpi4: conan-install-deps
 
-.PHONY: prepare
+.PHONY: prepare-all-deps
 prepare: conan-install-deps-native conan-install-deps-rpi4 conan-install-deps-rpi2
 
 .PHONY: native-prepare
