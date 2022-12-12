@@ -6,5 +6,3 @@ target_link_libraries(scheduler PUBLIC
   spdlog::spdlog
 )
 target_compile_features(scheduler PRIVATE cxx_std_20)
-
-
