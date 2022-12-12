@@ -63,10 +63,9 @@ int main(int argc, char *argv[]) {
   }
 
   std::string const implementation = "real"; // alternative: stub
-  std::string const config_path(argv[1]);
 
   try {
-    auto config = HomeAutomation::Config::fromFile(config_path);
+    auto config = HomeAutomation::Config::fromFile(argv[1]);
 
     HomeAutomation::System::initQuitCondition();
 

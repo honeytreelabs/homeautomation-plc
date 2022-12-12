@@ -2,13 +2,14 @@
 
 #include <yaml-cpp/yaml.h>
 
+#include <filesystem>
 #include <string>
 
 namespace HomeAutomation {
 
 class Config {
 public:
-  static Config fromFile(std::string const &path) {
+  static Config fromFile(std::filesystem::path const &path) {
     Config result;
 
     YAML::Node config = YAML::LoadFile(path);
