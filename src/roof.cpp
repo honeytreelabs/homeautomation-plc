@@ -25,8 +25,7 @@ public:
       : gv(gv), mqtt{config.mqtt.address, config.mqtt.clientID,
                      getConnectOptions(config.mqtt.username,
                                        config.mqtt.password)},
-        blind_sr(cfg, std::chrono::high_resolution_clock::now()),
-        blind_kizi_2(cfg, std::chrono::high_resolution_clock::now()) {
+        blind_sr(cfg), blind_kizi_2(cfg) {
     mqtt.connect();
     mqtt.subscribe("/homeautomation/ground_office_light");
   }

@@ -97,6 +97,8 @@ using BlindStateDown = BlindStateMove<DownOutputs, "down">;
 
 class Blind {
 public:
+  Blind(BlindConfig const &cfg)
+      : Blind(cfg, std::chrono::high_resolution_clock::now()) {}
   Blind(BlindConfig const &cfg, TimeStamp const &now);
   BlindOutputs execute(TimeStamp now, bool button_up, bool button_down);
 
