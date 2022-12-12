@@ -1,8 +1,64 @@
 ---
+global_vars:
+  inputs:
+    sr_raff_up:
+      type: bool
+      init_val: false
+    sr_raff_down:
+      type: bool
+      init_val: false
+    kizi_2_raff_up:
+      type: bool
+      init_val: false
+    kizi_2_raff_down:
+      type: bool
+      init_val: false
+  outputs:
+    sr_raff_up:
+      type: bool
+      init_val: false
+    sr_raff_down:
+      type: bool
+      init_val: false
+    kizi_2_raff_up:
+      type: bool
+      init_val: false
+    kizi_2_raff_down:
+      type: bool
+      init_val: false
+    ground_office_light:
+      type: bool
+      init_val: false
+tasks:
+  - name: main
+    interval: 25000  # us
+    mqtt: primary
+    io:
+      - type: i2c
+        bus: /dev/i2c-1
+        components:
+          3b:  # i2c address
+            type: pcf8574
+            direction: input
+            inputs:
+              0: sr_raff_up
+              1: sr_raff_down
+              2: kizi_2_raff_up
+              3: kizi_2_raff_down
+          20:  # i2c address
+            type: max7311
+            direction: output
+            outputs:
+              0: sr_raff_down
+              1: sr_raff_up
+              2: kizi_2_raff_down
+              3: kizi_2_raff_up
+              4: ground_office_light
 mqtt:
-  username: garfield
-  password: secret
-  address: tcp://hostname:1883
-  client_id: myclient
-i2c:
-  bus: /dev/i2c-1
+  primary:
+    username: garfield
+    password: secret
+    address: tcp://hostname:1883
+    client_id: myclient
+    topics:
+      - /homeautomation/ground_office_light
