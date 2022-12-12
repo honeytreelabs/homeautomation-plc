@@ -4,6 +4,8 @@
 
 #include <sol/sol.hpp>
 
+#include <filesystem>
+
 namespace HomeAutomation {
 namespace Scheduler {
 
@@ -14,7 +16,7 @@ public:
   virtual void execute(TimeStamp now) {}
 
 private:
-  LuaProgram();
+  LuaProgram(std::filesystem::path const &script);
 };
 
 } // namespace Scheduler
