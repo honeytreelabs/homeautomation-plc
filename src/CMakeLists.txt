@@ -8,6 +8,7 @@ function(create_logic name)
   target_link_libraries(${name} PRIVATE
     components::automation
     scheduler
+    system
     components::mqtt
     components::lua)
   if (RASPBERRY)
