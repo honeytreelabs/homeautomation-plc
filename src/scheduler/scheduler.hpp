@@ -11,7 +11,7 @@
 #include <thread>
 
 namespace HomeAutomation {
-namespace Logic {
+namespace Scheduler {
 
 using milliseconds = std::chrono::duration<double, std::milli>;
 
@@ -107,5 +107,5 @@ private:
   std::list<std::thread> threads;
 };
 
-} // namespace Logic
+} // namespace Scheduler
 } // namespace HomeAutomation

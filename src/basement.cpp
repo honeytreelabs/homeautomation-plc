@@ -12,7 +12,7 @@
 #include <memory>
 
 // execution context (shall run in dedicated thread with given cycle time)
-class GroundLogic : public HomeAutomation::Logic::Program {
+class GroundLogic : public HomeAutomation::Scheduler::Program {
 
 public:
   GroundLogic(HomeAutomation::GV &gv)
@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
 
     HomeAutomation::System::initQuitCondition();
 
-    auto scheduler = HomeAutomation::Logic::Scheduler();
+    auto scheduler = HomeAutomation::Scheduler::Scheduler();
 
     // create IO infrastructure
     std::shared_ptr<HomeAutomation::IO::I2C::Bus> i2c_bus;
@@ -100,7 +100,7 @@ int main(int argc, char *argv[]) {
     // create tasks and programs
     auto &mainTask = scheduler.createTask(
         100ms,
-        HomeAutomation::Logic::TaskCbs{
+        HomeAutomation::Scheduler::TaskCbs{
             .init = [i2c_bus]() { i2c_bus->init(); },
             .before =
                 [i2c_bus, &gv, &pcf8574Input_38]() {

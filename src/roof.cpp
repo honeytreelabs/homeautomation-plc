@@ -18,7 +18,7 @@ static constexpr auto const cfg = HomeAutomation::Components::BlindConfig{
     .periodIdle = 500ms, .periodUp = 50s, .periodDown = 50s};
 
 // execution context (shall run in dedicated thread with given cycle time)
-class RoofLogic : public HomeAutomation::Logic::Program {
+class RoofLogic : public HomeAutomation::Scheduler::Program {
 
 public:
   RoofLogic(HomeAutomation::Config const &config, HomeAutomation::GV &gv)
@@ -88,7 +88,7 @@ int main(int argc, char *argv[]) {
 
     HomeAutomation::System::initQuitCondition();
 
-    auto scheduler = HomeAutomation::Logic::Scheduler();
+    auto scheduler = HomeAutomation::Scheduler::Scheduler();
 
     // create IO infrastructure
     std::shared_ptr<HomeAutomation::IO::I2C::Bus> i2c_bus;
@@ -119,7 +119,7 @@ int main(int argc, char *argv[]) {
     // create tasks and programs
     auto &mainTask = scheduler.createTask(
         100ms,
-        HomeAutomation::Logic::TaskCbs{
+        HomeAutomation::Scheduler::TaskCbs{
             .init = [i2c_bus]() { i2c_bus->init(); },
             .before =
                 [i2c_bus, &gv, &pcf8574Input_3b]() {
