@@ -1,4 +1,5 @@
 #include "mqtt/exception.h"
+#include "mqtt/types.h"
 #include <mqtt.hpp>
 
 #include <chrono>
@@ -91,10 +92,11 @@ void Client::send(mqtt::string_ref topic, mqtt::binary_ref payload, int qos) {
   send_msgs.put(pubmsg);
 }
 
-void Client::subscribe(mqtt::string_ref topic, int qos) {
-  topics.emplace_back(std::move(topic.str()));
+void Client::subscribe(std::string_view const &topic, int qos) {
+  mqtt::string mqtt_topic{topic};
+  topics.emplace_back(mqtt_topic);
   if (true /* is connected */) {
-    client.subscribe(topic.str(), qos);
+    client.subscribe(mqtt_topic, qos);
   }
 }
 

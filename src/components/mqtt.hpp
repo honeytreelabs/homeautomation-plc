@@ -75,8 +75,8 @@ public:
   inline void send(mqtt::string_ref topic, mqtt::binary_ref payload) {
     send(topic, payload, 1 /* QOS, TODO */);
   }
-  void subscribe(mqtt::string_ref topic, int qos);
-  inline void subscribe(mqtt::string_ref topic) {
+  void subscribe(std::string_view const &topic, int qos);
+  inline void subscribe(std::string_view const &topic) {
     subscribe(topic, 1 /* QOS, TODO */);
   }
   mqtt::const_message_ptr receive();
