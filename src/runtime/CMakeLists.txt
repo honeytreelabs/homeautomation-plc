@@ -21,6 +21,9 @@ if (NOT BUILD_RUN_TESTS)
 endif()
 
 create_memchecked_test(gv_factory runtime TRUE)
+create_memchecked_test(io_factory runtime TRUE)
+# additional include directories needed for this whitebox test
+target_include_directories(io_factory_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/private)
 create_memchecked_test(scheduler_factory runtime TRUE)
 # additional include directories needed for this whitebox test
 target_include_directories(scheduler_factory_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/private)
