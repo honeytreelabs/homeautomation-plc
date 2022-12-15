@@ -12,7 +12,7 @@ namespace IO {
 namespace I2C {
 
 // https://datasheets.maximintegrated.com/en/ds/MAX7311.pdf
-class MAX7311Output : public HomeAutomation::IO::I2C::OutputModule {
+class MAX7311Output : public HomeAutomation::IO::I2C::DigitalOutputModule {
 public:
   MAX7311Output(std::uint8_t address)
       : address(address), outputs{}, last_outputs(outputs) {}
@@ -57,7 +57,7 @@ private:
 };
 
 // https://www.nxp.com/docs/en/data-sheet/PCF8574_PCF8574A.pdf
-class PCF8574Input : public HomeAutomation::IO::I2C::InputModule {
+class PCF8574Input : public HomeAutomation::IO::I2C::DigitalInputModule {
 public:
   PCF8574Input(std::uint8_t address) : address(address), inputs{0x00} {}
   void init(IReadWrite *io) override { read(io); }
@@ -78,7 +78,7 @@ private:
   std::uint8_t inputs;
 };
 
-class PCF8574Output : public HomeAutomation::IO::I2C::OutputModule {
+class PCF8574Output : public HomeAutomation::IO::I2C::DigitalOutputModule {
 public:
   PCF8574Output(std::uint8_t address)
       : address{address}, outputs{}, last_outputs{outputs} {}

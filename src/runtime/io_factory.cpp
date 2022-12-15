@@ -10,33 +10,33 @@ namespace HomeAutomation {
 namespace Runtime {
 
 struct CopyInstructionInput {
-  std::shared_ptr<HomeAutomation::IO::I2C::InputModule> input;
+  std::shared_ptr<HomeAutomation::IO::DigitalInputModule> input;
   HomeAutomation::VarValue *value;
   std::uint8_t pin;
 };
 using CopySequenceInput = std::list<CopyInstructionInput>;
 struct CopyInstructionOutput {
-  std::shared_ptr<HomeAutomation::IO::I2C::OutputModule> output;
+  std::shared_ptr<HomeAutomation::IO::DigitalOutputModule> output;
   HomeAutomation::VarValue *value;
   std::uint8_t pin;
 };
 using CopySequenceOutput = std::list<CopyInstructionOutput>;
 
-class I2CLogic : public HomeAutomation::Scheduler::TaskIOLogic {
+class BusIOLogic : public HomeAutomation::Scheduler::TaskIOLogic {
 public:
-  I2CLogic(HomeAutomation::IO::I2C::RealBus &&bus,
-           CopySequenceInput &&inputSequence,
-           CopySequenceOutput &&outputSequence)
-      : bus{std::move(bus)}, inputSequence{std::move(inputSequence)},
+  BusIOLogic(std::shared_ptr<HomeAutomation::IO::Bus> bus,
+             CopySequenceInput &&inputSequence,
+             CopySequenceOutput &&outputSequence)
+      : bus{bus}, inputSequence{std::move(inputSequence)},
         outputSequence{std::move(outputSequence)} {}
-  virtual ~I2CLogic() = default;
+  virtual ~BusIOLogic() = default;
 
-  void init() override { bus.init(); }
+  void init() override { bus->init(); }
 
-  void shutdown() override { bus.close(); }
+  void shutdown() override { bus->close(); }
 
   void before() override {
-    bus.readInputs();
+    bus->readInputs();
     for (auto &instr : inputSequence) {
       *instr.value = instr.input->getInput(instr.pin);
     }
@@ -46,11 +46,11 @@ public:
     for (auto &instr : outputSequence) {
       instr.output->setOutput(instr.pin, std::get<bool>(*instr.value));
     }
-    bus.writeOutputs();
+    bus->writeOutputs();
   }
 
 private:
-  HomeAutomation::IO::I2C::RealBus bus;
+  std::shared_ptr<HomeAutomation::IO::Bus> bus;
   CopySequenceInput inputSequence;
   CopySequenceOutput outputSequence;
 };
@@ -78,7 +78,9 @@ public:
   static void createIOs(YAML::Node const &ioNode,
                         std::shared_ptr<TaskIOLogicImpl> ioLogic,
                         HomeAutomation::GV &gv) {
-    HomeAutomation::IO::I2C::RealBus bus{ioNode["bus"].as<std::string>()};
+    std::shared_ptr<HomeAutomation::IO::I2C::RealBus> bus =
+        std::make_shared<HomeAutomation::IO::I2C::RealBus>(
+            ioNode["bus"].as<std::string>());
 
     CopySequenceInput inputSequence{};
     CopySequenceOutput outputSequence{};
@@ -91,19 +93,19 @@ public:
       auto const &componentNode = componentsIt->second;
 
       if (componentNode["direction"].as<std::string>() == "input") {
-        std::shared_ptr<HomeAutomation::IO::I2C::InputModule> input;
+        std::shared_ptr<HomeAutomation::IO::I2C::DigitalInputModule> input;
         if (componentNode["type"].as<std::string>() == "pcf8574") {
           input =
               std::make_shared<HomeAutomation::IO::I2C::PCF8574Input>(address);
         } else {
           throw std::invalid_argument("unknown i2c component type");
         }
-        bus.RegisterInput(input);
+        bus->RegisterInput(input);
         insertCopySequence(inputSequence, gv.inputs, input,
                            componentNode["inputs"]);
         // TODO insertCopySequenceInput
       } else if (componentNode["direction"].as<std::string>() == "output") {
-        std::shared_ptr<HomeAutomation::IO::I2C::OutputModule> output;
+        std::shared_ptr<HomeAutomation::IO::I2C::DigitalOutputModule> output;
         if (componentNode["type"].as<std::string>() == "pcf8574") {
           output =
               std::make_shared<HomeAutomation::IO::I2C::PCF8574Output>(address);
@@ -113,7 +115,7 @@ public:
         } else {
           throw std::invalid_argument("unknown i2c component type");
         }
-        bus.RegisterOutput(output);
+        bus->RegisterOutput(output);
         insertCopySequence(outputSequence, gv.outputs, output,
                            componentNode["outputs"]);
       } else {
@@ -121,8 +123,8 @@ public:
       }
     }
 
-    auto i2cLogic = std::make_shared<I2CLogic>(
-        std::move(bus), std::move(inputSequence), std::move(outputSequence));
+    auto i2cLogic = std::make_shared<BusIOLogic>(bus, std::move(inputSequence),
+                                                 std::move(outputSequence));
     ioLogic->addIOSystem(i2cLogic);
   }
 };

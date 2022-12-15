@@ -1,5 +1,7 @@
 #pragma once
 
+#include <io_if.hpp>
+
 #include <spdlog/spdlog.h>
 
 #include <linux/i2c-dev.h>
@@ -38,45 +40,43 @@ public:
   virtual ~IReadWrite() {}
 };
 
-class InputModule {
+class DigitalInputModule : public HomeAutomation::IO::DigitalInputModule {
 public:
-  virtual ~InputModule() = default;
+  virtual ~DigitalInputModule() = default;
   virtual void init(IReadWrite *ireadwrite) = 0;
   virtual void read(IReadWrite *iread) = 0;
-  virtual bool getInput(std::uint8_t pos) const = 0;
 };
 
-class OutputModule {
+class DigitalOutputModule : public HomeAutomation::IO::DigitalOutputModule {
 public:
-  virtual ~OutputModule() = default;
+  virtual ~DigitalOutputModule() = default;
   virtual void init(IReadWrite *io) = 0;
   virtual void write(IReadWrite *io) = 0;
-  virtual void setOutput(std::uint8_t pos, bool value) = 0;
 };
 
-class Bus : public IReadWrite {
+class Bus : public IReadWrite, public HomeAutomation::IO::Bus {
 public:
   Bus(std::string &path) : path(path), inputs{}, outputs{} {}
 
-  void RegisterInput(std::shared_ptr<InputModule> module) {
+  void RegisterInput(std::shared_ptr<DigitalInputModule> module) {
     inputs.push_back(module);
   }
-  void RegisterOutput(std::shared_ptr<OutputModule> module) {
+  void RegisterOutput(std::shared_ptr<DigitalOutputModule> module) {
     outputs.push_back(module);
   }
 
-  void readInputs() {
+  void readInputs() override {
     for (auto input : inputs) {
       input->read(this);
     }
   }
-  void writeOutputs() {
+  void writeOutputs() override {
     for (auto output : outputs) {
       output->write(this);
     }
   }
 
-  void init() {
+  void init() override {
     open();
 
     for (auto input : inputs) {
@@ -88,7 +88,6 @@ public:
   }
 
   virtual void open() = 0;
-  virtual void close() = 0;
 
   virtual void setAddress(std::uint8_t address) = 0;
 
@@ -96,8 +95,8 @@ protected:
   std::string path;
 
 private:
-  std::vector<std::shared_ptr<InputModule>> inputs;
-  std::vector<std::shared_ptr<OutputModule>> outputs;
+  std::vector<std::shared_ptr<DigitalInputModule>> inputs;
+  std::vector<std::shared_ptr<DigitalOutputModule>> outputs;
 };
 
 // https://github.com/Digilent/linux-userspace-examples/blob/master/i2c_example_linux/src/i2c.c

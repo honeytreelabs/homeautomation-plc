@@ -105,12 +105,12 @@ int main(int argc, char *argv[]) {
 
     auto pcf8574Input_38 = HomeAutomation::IO::I2C::PCF8574Input(0x38);
     i2c_bus->RegisterInput(
-        std::shared_ptr<HomeAutomation::IO::I2C::InputModule>(
+        std::shared_ptr<HomeAutomation::IO::I2C::DigitalInputModule>(
             &pcf8574Input_38));
 
     auto pcf8574Output_20 = HomeAutomation::IO::I2C::PCF8574Output(0x20);
     i2c_bus->RegisterOutput(
-        std::shared_ptr<HomeAutomation::IO::I2C::OutputModule>(
+        std::shared_ptr<HomeAutomation::IO::I2C::DigitalOutputModule>(
             &pcf8574Output_20));
 
     // global variables
