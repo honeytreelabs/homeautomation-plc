@@ -1,6 +1,6 @@
 #include <trigger.hpp>
 
-#include <catch2/catch_all.hpp>
+#include <catch2/catch_test_macros.hpp>
 
 TEST_CASE("rising trigger normal operation", "[single-file]") {
   HomeAutomation::Components::R_TRIG trigger;

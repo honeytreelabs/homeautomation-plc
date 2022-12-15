@@ -1,11 +1,12 @@
 #include <gv_factory.hpp>
 #include <scheduler_factory.hpp>
 
-#include <stdexcept>
-#include <utility>
 #include <yaml-cpp/yaml.h>
 
-#include <catch2/catch_all.hpp>
+#include <catch2/catch_test_macros.hpp>
+
+#include <stdexcept>
+#include <utility>
 
 using namespace HomeAutomation::Runtime;
 

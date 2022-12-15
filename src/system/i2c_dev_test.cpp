@@ -1,6 +1,6 @@
 #include <i2c_dev.hpp>
 
-#include <catch2/catch_all.hpp>
+#include <catch2/catch_test_macros.hpp>
 
 TEST_CASE("PCF8574 output test", "[single-file]") {
   auto pcf8574 = HomeAutomation::IO::I2C::PCF8574Output(0x20);
