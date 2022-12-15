@@ -2,11 +2,13 @@ add_subdirectory(common)
 add_subdirectory(system)
 add_subdirectory(scheduler)
 add_subdirectory(components)
+add_subdirectory(runtime)
 
 function(create_logic name)
   add_executable(${name} ${ARGN})
   target_link_libraries(${name} PRIVATE
     components::automation
+    runtime
     scheduler
     system
     components::mqtt

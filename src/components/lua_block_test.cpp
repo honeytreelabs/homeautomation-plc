@@ -10,8 +10,11 @@ TEST_CASE("execute simple lua script", "[single-file]") {
   VarValue in_b{std::in_place_type<bool>, true};
   VarValue out_i{std::in_place_type<int>, 23};
   VarValue out_b{std::in_place_type<bool>, false};
-  GV gv{{{"i", std::move(in_i)}, {"b", std::move(in_b)}},
-        {{"i", std::move(out_i)}, {"b", std::move(out_b)}}};
+  GV gv{};
+  gv.inputs.emplace("i", std::move(in_i));
+  gv.inputs.emplace("b", std::move(in_b));
+  gv.outputs.emplace("i", std::move(out_i));
+  gv.outputs.emplace("b", std::move(out_b));
   Lua lua_block("test/assignment.lua");
 
   lua_block.execute(gv);

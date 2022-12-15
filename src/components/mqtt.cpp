@@ -1,5 +1,3 @@
-#include "mqtt/exception.h"
-#include "mqtt/types.h"
 #include <mqtt.hpp>
 
 #include <chrono>
@@ -20,7 +18,7 @@ void Callback::connected(const std::string & /*cause*/) {
 
 void Callback::reconnect() {
   using namespace std::chrono_literals;
-  std::this_thread::sleep_for(2500ms);
+  std::this_thread::sleep_for(2500ms); // TODO make interruptable
   client.connect(connOpts, nullptr, *this);
 }
 
@@ -78,34 +76,35 @@ public:
   bool is_done() const { return done_; }
 };
 
-void Client::connect() {
+void ClientPaho::connect() {
   conntok = client.connect(connOpts);
   conntok->wait();
 
-  send_worker = std::thread(&Client::sendWorkerFun, this);
+  send_worker = std::thread(&ClientPaho::sendWorkerFun, this);
 }
 
-void Client::send(mqtt::string_ref topic, mqtt::binary_ref payload, int qos) {
+void ClientPaho::send(mqtt::string_ref topic, mqtt::binary_ref payload,
+                      int qos) {
   mqtt::message_ptr pubmsg =
       mqtt::make_message(std::move(topic), std::move(payload));
   pubmsg->set_qos(qos);
   send_msgs.put(pubmsg);
 }
 
-void Client::subscribe(std::string_view const &topic, int qos) {
+void ClientPaho::subscribe(std::string_view const &topic, int qos) {
   mqtt::string mqtt_topic{topic};
   topics.emplace_back(mqtt_topic);
-  if (true /* is connected */) {
+  if (client.is_connected()) {
     client.subscribe(mqtt_topic, qos);
   }
 }
 
-mqtt::const_message_ptr Client::receive() {
+mqtt::const_message_ptr ClientPaho::receive() {
   auto msg = recv_msgs.get();
   return msg.value_or(mqtt::const_message_ptr(0));
 }
 
-void Client::disconnect() {
+void ClientPaho::disconnect() {
   quit_cond = true;
   if (send_worker.joinable()) {
     send_worker.join();
@@ -122,7 +121,7 @@ void Client::disconnect() {
   conntok->wait();
 }
 
-void Client::sendWorkerFun() {
+void ClientPaho::sendWorkerFun() {
   using namespace std::chrono_literals;
   while (!quit_cond) {
     //   wait for queue with timeout

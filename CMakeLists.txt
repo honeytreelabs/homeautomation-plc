@@ -11,4 +11,5 @@ include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup()
 
 add_subdirectory(deps)
+include(cmake/test_helper.cmake)
 add_subdirectory(src)

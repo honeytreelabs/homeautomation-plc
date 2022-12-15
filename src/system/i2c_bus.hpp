@@ -43,6 +43,7 @@ public:
   virtual ~InputModule() = default;
   virtual void init(IReadWrite *ireadwrite) = 0;
   virtual void read(IReadWrite *iread) = 0;
+  virtual bool getInput(std::uint8_t pos) const = 0;
 };
 
 class OutputModule {
@@ -50,14 +51,19 @@ public:
   virtual ~OutputModule() = default;
   virtual void init(IReadWrite *io) = 0;
   virtual void write(IReadWrite *io) = 0;
+  virtual void setOutput(std::uint8_t pos, bool value) = 0;
 };
 
 class Bus : public IReadWrite {
 public:
   Bus(std::string &path) : path(path), inputs{}, outputs{} {}
 
-  void RegisterInput(InputModule *module) { inputs.push_back(module); }
-  void RegisterOutput(OutputModule *module) { outputs.push_back(module); }
+  void RegisterInput(std::shared_ptr<InputModule> module) {
+    inputs.push_back(module);
+  }
+  void RegisterOutput(std::shared_ptr<OutputModule> module) {
+    outputs.push_back(module);
+  }
 
   void readInputs() {
     for (auto input : inputs) {
@@ -90,8 +96,8 @@ protected:
   std::string path;
 
 private:
-  std::vector<InputModule *> inputs;
-  std::vector<OutputModule *> outputs;
+  std::vector<std::shared_ptr<InputModule>> inputs;
+  std::vector<std::shared_ptr<OutputModule>> outputs;
 };
 
 // https://github.com/Digilent/linux-userspace-examples/blob/master/i2c_example_linux/src/i2c.c

@@ -81,12 +81,17 @@ int main(int argc, char *argv[]) {
     }
 
     auto pcf8574Input_38 = HomeAutomation::IO::I2C::PCF8574Input(0x38);
-    i2c_bus->RegisterInput(&pcf8574Input_38);
+    i2c_bus->RegisterInput(
+        std::shared_ptr<HomeAutomation::IO::I2C::InputModule>(
+            &pcf8574Input_38));
 
     auto pcf8574Output_20 = HomeAutomation::IO::I2C::PCF8574Output(0x20);
-    i2c_bus->RegisterOutput(&pcf8574Output_20);
+    i2c_bus->RegisterOutput(
+        std::shared_ptr<HomeAutomation::IO::I2C::OutputModule>(
+            &pcf8574Output_20));
 
     // global variables
+#if 0
     HomeAutomation::GV gv{{{"stairs_light", false}, // inputs
                            {"kitchen_light", false},
                            {"charger", false},
@@ -95,10 +100,14 @@ int main(int argc, char *argv[]) {
                            {"kitchen_light", false},
                            {"charger", false},
                            {"deck_light", false}}};
+#else
+    HomeAutomation::GV gv{};
+#endif
 
-    // create tasks and programs
-    auto &mainTask = scheduler.createTask(
-        100ms,
+// create tasks and programs
+#if 0
+    scheduler.createTask(
+        "main", 100ms,
         HomeAutomation::Scheduler::TaskCbs{
             .init = [i2c_bus]() { i2c_bus->init(); },
             .before =
@@ -131,11 +140,12 @@ int main(int argc, char *argv[]) {
                 },
             .shutdown = [i2c_bus]() { i2c_bus->close(); },
             .quit = HomeAutomation::System::quitCondition});
+#endif
     auto groundLogic = GroundLogic(gv);
-    mainTask.addProgram(&groundLogic);
+    scheduler.addProgram("main", &groundLogic);
 
     // run
-    scheduler.start();
+    scheduler.start(HomeAutomation::System::quitCondition);
     return scheduler.wait();
   } catch (YAML::Exception const &exc) {
     spdlog::error("Could not parse configuration file: {}", exc.what());

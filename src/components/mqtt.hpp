@@ -1,6 +1,5 @@
 #pragma once
 
-#include "mqtt/connect_options.h"
 #include <circular_buffer.hpp>
 
 #include <mqtt/async_client.h>
@@ -45,7 +44,7 @@ private:
   mqtt::connect_options &connOpts;
 };
 
-class Client {
+class ClientPaho {
 public:
   static constexpr const char *DFLT_SERVER_ADDRESS{"tcp://localhost:1883"};
   static constexpr const char *DFLT_CLIENT_ID{"async_publish"};
@@ -57,18 +56,18 @@ public:
     return result;
   }
 
-  Client(std::string address, std::string clientID,
-         mqtt::connect_options connOpts)
+  ClientPaho(std::string address, std::string clientID,
+             mqtt::connect_options connOpts)
       : client(address, clientID), conntok{}, send_msgs{}, recv_msgs{},
         quit_cond(false), topics{}, connOpts{connOpts},
         cb{client, topics, recv_msgs, connOpts}, send_worker{} {
     client.set_callback(cb);
   }
-  Client(std::string address, std::string clientID)
-      : Client(address, clientID, getDefaultConnectOptions()) {}
-  Client(std::string address) : Client(address, DFLT_CLIENT_ID) {}
-  Client() : Client(DFLT_SERVER_ADDRESS) {}
-  virtual ~Client() {}
+  ClientPaho(std::string address, std::string clientID)
+      : ClientPaho(address, clientID, getDefaultConnectOptions()) {}
+  ClientPaho(std::string address) : ClientPaho(address, DFLT_CLIENT_ID) {}
+  ClientPaho() : ClientPaho(DFLT_SERVER_ADDRESS) {}
+  virtual ~ClientPaho() {}
 
   void connect();
   void send(mqtt::string_ref topic, mqtt::binary_ref payload, int qos);
@@ -83,8 +82,8 @@ public:
   void disconnect();
 
 private:
-  Client(Client const &);
-  Client &operator=(Client const &);
+  ClientPaho(ClientPaho const &);
+  ClientPaho &operator=(ClientPaho const &);
 
   void sendWorkerFun();
 

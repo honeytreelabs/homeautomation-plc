@@ -29,15 +29,10 @@ public:
     outputs = BitHelpers::bitflip(bytes[0]); // bits are inverted
   }
 
-  void setOutputs(std::uint8_t values) { outputs = values; }
   std::uint8_t getOutputs() const { return outputs; }
-  void setOutput(std::uint8_t pos, bool value) {
+  void setOutput(std::uint8_t pos, bool value) override {
     outputs = BitHelpers::bitset(outputs, pos, value);
   }
-  bool getOutput(std::uint8_t pos) const {
-    return BitHelpers::bitget(outputs, pos);
-  }
-
   void write(HomeAutomation::IO::I2C::IReadWrite *io) override {
     // writing is only necessary if there is change in outputs states
     if (outputs == last_outputs) {
@@ -67,7 +62,7 @@ public:
   PCF8574Input(std::uint8_t address) : address(address), inputs{0x00} {}
   void init(IReadWrite *io) override { read(io); }
   std::uint8_t getInputs() const { return inputs; };
-  bool getInput(std::uint8_t pos) const {
+  bool getInput(std::uint8_t pos) const override {
     return BitHelpers::bitget(inputs, pos);
   }
 
@@ -101,7 +96,7 @@ public:
     io->write(address, bytes);
     last_outputs = outputs;
   }
-  void setOutput(std::uint8_t pos, bool value) {
+  void setOutput(std::uint8_t pos, bool value) override {
     outputs = BitHelpers::bitset(outputs, pos, value);
   }
 

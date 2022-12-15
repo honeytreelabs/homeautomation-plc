@@ -11,6 +11,11 @@ using GvSegment = std::map<std::string, VarValue>;
 struct GV {
   GvSegment inputs;
   GvSegment outputs;
+  GV() = default;
+  GV(GV &) = delete;
+  GV(GV &&) = default;
+  GV &operator=(GV &) = delete;
+  GV &operator=(GV &&) = delete;
 };
 
 } // namespace HomeAutomation

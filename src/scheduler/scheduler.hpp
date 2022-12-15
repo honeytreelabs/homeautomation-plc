@@ -7,8 +7,11 @@
 #include <chrono>
 #include <functional>
 #include <list>
+#include <map>
 #include <optional>
+#include <stdexcept>
 #include <thread>
+#include <utility>
 
 namespace HomeAutomation {
 namespace Scheduler {
@@ -22,71 +25,61 @@ public:
   virtual void execute(TimeStamp now) = 0;
 };
 
-using TaskCb = std::optional<std::function<void()>>;
 using QuitCb = std::function<bool()>;
 
-struct TaskCbs {
-  TaskCb init;
-  TaskCb before;
-  TaskCb after;
-  TaskCb shutdown;
-  QuitCb quit;
+class TaskIOLogic {
+public:
+  TaskIOLogic() = default;
+  virtual ~TaskIOLogic() = default;
+
+  virtual void init() = 0;
+  virtual void shutdown() = 0;
+  virtual void before() = 0;
+  virtual void after() = 0;
 };
 
-class Task {
-public:
-  // https://www.internalpointers.com/post/c-rvalue-references-and-move-semantics-beginners
-  Task(milliseconds ms, TaskCbs const &&taskCbs)
-      : ms(ms), taskCbs(taskCbs), programs{} {}
-  void addProgram(Program *program) { programs.push_back(program); }
-
-  void thrdfun() {
-    if (taskCbs.init) {
-      taskCbs.init.value()();
-    }
-    while (!taskCbs.quit()) {
-      spdlog::debug("Task::tick()");
-      if (taskCbs.before) {
-        taskCbs.before.value()();
-      }
-      for (auto program : programs) {
-        program->execute(std::chrono::high_resolution_clock::now());
-      }
-      if (taskCbs.after) {
-        taskCbs.after.value()();
-      }
-
-      // this should account for the actual program execution period
-      std::this_thread::sleep_for(ms);
-    }
-    if (taskCbs.shutdown) {
-      taskCbs.shutdown.value()();
-    }
-  }
-
-private:
-  Task(Task &) = delete;
-  Task &operator=(Task &) = delete;
-  Task(Task &&) = delete;
-  Task &operator=(Task &&) = delete;
-
-  milliseconds ms;
-  TaskCbs const taskCbs;
+using Programs = std::list<Program *>;
+struct Task {
+  std::shared_ptr<TaskIOLogic> taskLogic;
   std::list<Program *> programs;
+  milliseconds interval;
 };
 
-class Scheduler {
+class Scheduler final {
 public:
-  Scheduler() : tasks(), threads() {}
+  Scheduler() = default;
+  Scheduler(Scheduler &&) = default;
 
-  // priority: https://yeahexp.com/setting-thread-priority-in-c11/
-  Task &createTask(milliseconds ms, TaskCbs const &&taskCbs) {
-    return tasks.emplace_back(ms, std::move(taskCbs));
+  void installTask(std::string const &name,
+                   std::shared_ptr<TaskIOLogic> taskLogic,
+                   milliseconds interval) {
+    if (tasks.find(name) != tasks.end()) {
+      throw std::invalid_argument("task with given name already exists");
+    }
+    tasks[name] = {.taskLogic = taskLogic, .programs{}, .interval = interval};
   }
 
-  void start() {
+  void addProgram(std::string const &name, Program *program) {
+    auto const &it = tasks.find(name);
+    if (it == tasks.end()) {
+      throw std::invalid_argument("task with given name does not exist");
+    }
+    auto &taskInfo = it->second;
+    taskInfo.programs.push_back(program);
+  }
+
+  Task *getTask(std::string const &name) {
+    auto const &it = tasks.find(name);
+    if (it == tasks.end()) {
+      throw std::invalid_argument("task with given name does not exist");
+    }
+    auto &taskInfo = it->second;
+    return &taskInfo;
+  }
+
+  void start(QuitCb quitCb) {
     for (auto &task : tasks) {
-      threads.emplace_back(&Task::thrdfun, &task);
+      threads.emplace_back(Scheduler::thrdFun, std::cref(task.second), quitCb);
     }
   }
 
@@ -98,12 +91,27 @@ public:
   }
 
 private:
+  static void thrdFun(Task const &taskInfo, QuitCb quitCb) {
+    taskInfo.taskLogic->init();
+    while (!quitCb()) {
+      spdlog::debug("Task::tick()");
+      taskInfo.taskLogic->before();
+      for (auto &program : taskInfo.programs) {
+        program->execute(std::chrono::high_resolution_clock::now());
+      }
+      taskInfo.taskLogic->after();
+
+      // TODO this should account for the actual program execution period
+      std::this_thread::sleep_for(taskInfo.interval);
+    }
+    taskInfo.taskLogic->shutdown();
+  }
+
   Scheduler(Scheduler &) = delete;
   Scheduler &operator=(Scheduler &) = delete;
-  Scheduler(Scheduler &&) = delete;
   Scheduler &operator=(Scheduler &&) = delete;
 
-  std::list<Task> tasks;
+  std::map<std::string, Task> tasks;
   std::list<std::thread> threads;
 };
 
