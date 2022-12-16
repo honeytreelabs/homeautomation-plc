@@ -99,6 +99,7 @@ deploy-generic:
 	scp -O build.$(name)/bin/$(name) root@$(host):/opt
 	scp -O build.$(name)/src/homeautomation.$(name) root@$(host):/etc/init.d/homeautomation
 	ssh root@$(host) /etc/init.d/homeautomation enable
+	if [ -e deploy/$(name).yaml ]; then sed -f deploy/replacements.sed deploy/$(name).yaml | ssh root@$(host) "cat > /etc/homeautomation/config.yaml"; fi
 
 ### roof
 

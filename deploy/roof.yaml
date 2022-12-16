@@ -56,9 +56,9 @@ tasks:
               4: ground_office_light
 mqtt:
   primary:
-    username: garfield
-    password: secret
-    address: tcp://hostname:1883
-    client_id: myclient
+    username: "{{ mqtt_username }}"
+    password: "{{ mqtt_password }}"
+    address: "{{ mqtt_url }}"
+    client_id: roof
     topics:
       - /homeautomation/ground_office_light

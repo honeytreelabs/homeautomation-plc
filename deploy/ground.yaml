@@ -1,0 +1,64 @@
+---
+global_vars:
+  inputs:
+    stairs_light:
+      type: bool
+      init_val: false
+    kitchen_light:
+      type: bool
+      init_val: false
+    charger:
+      type: bool
+      init_val: false
+    deck_light:
+      type: bool
+      init_val: false
+    ground_office_light:
+      type: bool
+      init_val: false
+  outputs:
+    stairs_light:
+      type: bool
+      init_val: false
+    kitchen_light:
+      type: bool
+      init_val: false
+    charger:
+      type: bool
+      init_val: false
+    deck_light:
+      type: bool
+      init_val: false
+tasks:
+  - name: main
+    interval: 25000  # us
+    mqtt: primary
+    io:
+      - type: i2c
+        bus: /dev/i2c-1
+        components:
+          38:  # i2c address
+            type: pcf8574
+            direction: input
+            inputs:
+              1: stairs_light
+              2: kitchen_light
+              3: charger
+              4: deck_light
+              5: ground_office_light
+          20:  # i2c address
+            type: pcf8574
+            direction: output
+            outputs:
+              0: charger
+              1: stairs_light
+              2: stairs_light
+              3: kitchen_light
+              4: deck_light
+mqtt:
+  primary:
+    username: "{{ mqtt_username }}"
+    password: "{{ mqtt_password }}"
+    address: "{{ mqtt_url }}"
+    client_id: ground
+    topics: []
