@@ -142,7 +142,9 @@ int main(int argc, char *argv[]) {
             .quit = HomeAutomation::System::quitCondition});
 #endif
     auto groundLogic = GroundLogic(gv);
-    scheduler.addProgram("main", &groundLogic);
+    scheduler.addProgram(
+        "main",
+        std::shared_ptr<HomeAutomation::Scheduler::Program>(&groundLogic));
 
     // run
     scheduler.start(HomeAutomation::System::quitCondition);

@@ -80,6 +80,12 @@ mqtt: {}
   REQUIRE(std::get<bool>(runtime->GV()->outputs["nine"]) == true);
 }
 
+class CountProgram : public HomeAutomation::Scheduler::Program {
+public:
+  void execute(HomeAutomation::TimeStamp now) override { cnt++; }
+  int cnt = 0;
+};
+
 TEST_CASE("instantiate and execute runtime", "[single-file]") {
   using namespace std::chrono_literals;
 
@@ -94,13 +100,9 @@ mqtt: {}
   std::atomic_bool quit_cond = false;
   auto runtime = RuntimeFactory::fromString(yaml);
 
-  class : public HomeAutomation::Scheduler::Program {
-  public:
-    void execute(HomeAutomation::TimeStamp now) override { cnt++; }
-    int cnt = 0;
-  } testProgram;
+  auto testProgram = std::make_shared<CountProgram>();
 
-  runtime->Scheduler()->getTask("main")->addProgram(&testProgram);
+  runtime->Scheduler()->getTask("main")->addProgram(testProgram);
 
   runtime->start([&quit_cond]() -> bool { return quit_cond; });
 
@@ -108,7 +110,7 @@ mqtt: {}
   quit_cond = true;
 
   REQUIRE(runtime->wait() == EXIT_SUCCESS);
-  REQUIRE(testProgram.cnt > 0);
+  REQUIRE(testProgram->cnt > 0);
 }
 
 TEST_CASE("instantiate and execute runtime missing broker", "[single-file]") {

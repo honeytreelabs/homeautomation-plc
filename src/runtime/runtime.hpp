@@ -16,7 +16,8 @@ public:
   virtual ~Task() = default;
 
   virtual Components::MQTT::ClientPaho *MQTT() = 0;
-  virtual void addProgram(HomeAutomation::Scheduler::Program *program) = 0;
+  virtual void
+  addProgram(std::shared_ptr<HomeAutomation::Scheduler::Program> program) = 0;
 };
 
 class Scheduler {

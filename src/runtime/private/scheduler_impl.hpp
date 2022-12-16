@@ -57,7 +57,8 @@ public:
 
   Components::MQTT::ClientPaho *MQTT() override { return mqttClient; }
 
-  void addProgram(HomeAutomation::Scheduler::Program *program) override {
+  void addProgram(
+      std::shared_ptr<HomeAutomation::Scheduler::Program> program) override {
     task.programs.push_back(program);
   }
 

@@ -8,6 +8,7 @@
 #include <functional>
 #include <list>
 #include <map>
+#include <memory>
 #include <optional>
 #include <stdexcept>
 #include <thread>
@@ -38,10 +39,10 @@ public:
   virtual void after() = 0;
 };
 
-using Programs = std::list<Program *>;
+using Programs = std::list<std::shared_ptr<Program>>;
 struct Task {
   std::shared_ptr<TaskIOLogic> taskLogic;
-  std::list<Program *> programs;
+  std::list<std::shared_ptr<Program>> programs;
   milliseconds interval;
 };
 
@@ -59,7 +60,7 @@ public:
     tasks[name] = {.taskLogic = taskLogic, .programs{}, .interval = interval};
   }
 
-  void addProgram(std::string const &name, Program *program) {
+  void addProgram(std::string const &name, std::shared_ptr<Program> program) {
     auto const &it = tasks.find(name);
     if (it == tasks.end()) {
       throw std::invalid_argument("task with given name does not exist");

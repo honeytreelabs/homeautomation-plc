@@ -23,6 +23,10 @@ tasks: []
       SchedulerFactory::createScheduler(rootNode["tasks"], gv, mqttClients));
 }
 
+class NullProgram : public HomeAutomation::Scheduler::Program {
+  void execute(HomeAutomation::TimeStamp now) {}
+};
+
 TEST_CASE("one task", "[single-file]") {
   using namespace std::chrono_literals;
 
@@ -39,10 +43,8 @@ tasks:
   auto scheduler =
       SchedulerFactory::createScheduler(rootNode["tasks"], gv, mqttClients);
 
-  class : public HomeAutomation::Scheduler::Program {
-    void execute(HomeAutomation::TimeStamp now) {}
-  } program;
-  REQUIRE_NOTHROW(scheduler->getTask("main")->addProgram(&program));
+  auto program = std::make_shared<NullProgram>();
+  REQUIRE_NOTHROW(scheduler->getTask("main")->addProgram(program));
 }
 
 TEST_CASE("task referencing not-existing mqtt client", "[single-file]") {
