@@ -1,33 +1,36 @@
 #include <gv_factory.hpp>
 
 #include <stdexcept>
+#include <variant>
 
 namespace HomeAutomation {
 namespace Runtime {
 
-static void fillSegment(HomeAutomation::GvSegment &segment,
-                        YAML::Node const &node) {
+// only variables of type bool are supported
+static void initializeSegment(HomeAutomation::GvSegment &segment,
+                              YAML::Node const &node) {
   for (YAML::const_iterator it = node.begin(); it != node.end(); ++it) {
-    auto var_type = it->second["type"].as<std::string>();
-    if (var_type == "bool") {
-      segment.emplace(it->first.as<std::string>(),
-                      it->second["init_val"].as<bool>());
-    } else if (var_type == "int") {
-      segment.emplace(it->first.as<std::string>(),
-                      it->second["init_val"].as<int>());
-    } else {
-      throw std::invalid_argument{"type unsupported"};
+    // GVs must exist
+    auto const gvName = it->first.as<std::string>();
+    if (segment.find(gvName) == segment.end()) {
+      throw std::invalid_argument("referenced variable does not exist");
     }
+    if (!std::holds_alternative<bool>(segment[gvName])) {
+      throw std::invalid_argument("referenced variable is not of type bool");
+    }
+    auto const gvVal = it->second["init_val"].as<bool>();
+    segment[gvName] = gvVal;
   }
 }
 
-HomeAutomation::GV GVFactory::generateGVs(YAML::Node const &gvNode) {
-  HomeAutomation::GV result{};
+void GVFactory::initializeGVs(YAML::Node const &gvNode,
+                              HomeAutomation::GV &gv) {
+  if (!gvNode.IsDefined()) {
+    return;
+  }
 
-  fillSegment(result.inputs, gvNode["inputs"]);
-  fillSegment(result.outputs, gvNode["outputs"]);
-
-  return result;
+  initializeSegment(gv.inputs, gvNode["inputs"]);
+  initializeSegment(gv.outputs, gvNode["outputs"]);
 }
 
 } // namespace Runtime

@@ -55,20 +55,22 @@ private:
   CopySequenceOutput outputSequence;
 };
 
+static VarValue &createMissingGVBool(HomeAutomation::GvSegment &gvSegment,
+                                     std::string const &name) {
+  gvSegment[name] = false;
+  return gvSegment[name];
+}
+
 template <typename SequenceType, typename IOType>
-static void
-insertCopySequence(SequenceType &sequence, HomeAutomation::GvSegment &gvSegment,
-                   std::shared_ptr<IOType> io, YAML::Node const &node) {
+static void insertCopySequenceBool(SequenceType &sequence,
+                                   HomeAutomation::GvSegment &gvSegment,
+                                   std::shared_ptr<IOType> io,
+                                   YAML::Node const &node) {
   for (YAML::const_iterator it = node.begin(); it != node.end(); ++it) {
-    auto const &gvIt = gvSegment.find(it->second.as<std::string>());
-    if (gvIt == gvSegment.end()) {
-      throw std::invalid_argument("global output variable not found");
-    }
-    auto &gvVal = gvIt->second;
-    if (!std::holds_alternative<bool>(gvVal)) {
-      throw std::invalid_argument("unsupported gv variable type");
-    }
+    auto const gvName = it->second.as<std::string>();
     uint8_t pin = it->first.as<uint8_t>();
+
+    auto &gvVal = createMissingGVBool(gvSegment, gvName);
     sequence.emplace_back(io, &gvVal, pin);
   }
 }
@@ -101,8 +103,8 @@ public:
           throw std::invalid_argument("unknown i2c component type");
         }
         bus->RegisterInput(input);
-        insertCopySequence(inputSequence, gv.inputs, input,
-                           componentNode["inputs"]);
+        insertCopySequenceBool(inputSequence, gv.inputs, input,
+                               componentNode["inputs"]);
         // TODO insertCopySequenceInput
       } else if (componentNode["direction"].as<std::string>() == "output") {
         std::shared_ptr<HomeAutomation::IO::I2C::DigitalOutputModule> output;
@@ -116,8 +118,8 @@ public:
           throw std::invalid_argument("unknown i2c component type");
         }
         bus->RegisterOutput(output);
-        insertCopySequence(outputSequence, gv.outputs, output,
-                           componentNode["outputs"]);
+        insertCopySequenceBool(outputSequence, gv.outputs, output,
+                               componentNode["outputs"]);
       } else {
         throw std::invalid_argument("unknown i2c component direction");
       }

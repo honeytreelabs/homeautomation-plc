@@ -6,10 +6,11 @@ namespace HomeAutomation {
 namespace Runtime {
 
 static RuntimeImpl *initRuntime(YAML::Node const &rootNode) {
-  auto gv = GVFactory::generateGVs(rootNode["global_vars"]);
+  HomeAutomation::GV gv;
   auto mqttClients = MQTTFactory::generateClients(rootNode["mqtt"]);
   auto scheduler =
       SchedulerFactory::createScheduler(rootNode["tasks"], gv, mqttClients);
+  GVFactory::initializeGVs(rootNode["global_vars"], gv);
 
   return new RuntimeImpl{std::move(gv), std::move(mqttClients), scheduler};
 }

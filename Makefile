@@ -76,6 +76,10 @@ test: test-up
 test-nomemcheck:
 	ctest --test-dir build --verbose -E '.*_memchecked_.*'
 
+.PHONY: test-failed
+test-failed:
+	ctest --test-dir build --verbose --rerun-failed --output-on-failure -E '.*_memchecked_.*'
+
 .PHONY: executable-prepare-generic
 executable-prepare-generic:
 	if ! [ -d build.$(name) ]; then mkdir build.$(name); fi

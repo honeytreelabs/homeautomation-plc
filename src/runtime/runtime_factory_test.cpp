@@ -1,6 +1,7 @@
 #include <gv_factory.hpp>
 #include <runtime_factory.hpp>
 
+#include <stdexcept>
 #include <yaml-cpp/yaml.h>
 
 #include <catch2/catch_test_macros.hpp>
@@ -36,48 +37,31 @@ TEST_CASE("instantiate runtime from YAML", "[single-file]") {
 global_vars:
   inputs:
     one:
-      type: bool
       init_val: false
     two:
-      type: bool
       init_val: false
     three:
-      type: bool
       init_val: true
     four:
-      type: bool
       init_val: true
   outputs:
     five:
-      type: bool
       init_val: false
     six:
-      type: bool
       init_val: false
     seven:
-      type: bool
       init_val: true
     eight:
-      type: bool
       init_val: true
     nine:
-      type: bool
       init_val: true
 tasks: []
 mqtt: {}
 )";
 
-  auto runtime = RuntimeFactory::fromString(yaml);
-
-  REQUIRE(std::get<bool>(runtime->GV()->inputs["one"]) == false);
-  REQUIRE(std::get<bool>(runtime->GV()->inputs["two"]) == false);
-  REQUIRE(std::get<bool>(runtime->GV()->inputs["three"]) == true);
-  REQUIRE(std::get<bool>(runtime->GV()->inputs["four"]) == true);
-  REQUIRE(std::get<bool>(runtime->GV()->outputs["five"]) == false);
-  REQUIRE(std::get<bool>(runtime->GV()->outputs["six"]) == false);
-  REQUIRE(std::get<bool>(runtime->GV()->outputs["seven"]) == true);
-  REQUIRE(std::get<bool>(runtime->GV()->outputs["eight"]) == true);
-  REQUIRE(std::get<bool>(runtime->GV()->outputs["nine"]) == true);
+  // referenced variables do not exist
+  REQUIRE_THROWS_AS(HomeAutomation::Runtime::RuntimeFactory::fromString(yaml),
+                    std::invalid_argument);
 }
 
 class CountProgram : public HomeAutomation::Scheduler::Program {
@@ -140,37 +124,17 @@ mqtt:
 }
 
 TEST_CASE("instantiate runtime with all features", "[single-file]") {
-  std::string yaml = R"(---
+
+  std::shared_ptr<HomeAutomation::Runtime::Runtime> runtime;
+  REQUIRE_NOTHROW([&runtime]() {
+    std::string yaml = R"(---
 global_vars:
   inputs:
-    sr_raff_up:
-      type: bool
-      init_val: false
-    sr_raff_down:
-      type: bool
-      init_val: false
-    kizi_2_raff_up:
-      type: bool
-      init_val: false
-    kizi_2_raff_down:
-      type: bool
-      init_val: false
+    anything:
+      init_val: true
   outputs:
-    sr_raff_up:
-      type: bool
-      init_val: false
-    sr_raff_down:
-      type: bool
-      init_val: false
-    kizi_2_raff_up:
-      type: bool
-      init_val: false
-    kizi_2_raff_down:
-      type: bool
-      init_val: false
     ground_office_light:
-      type: bool
-      init_val: false
+      init_val: true
 tasks:
   - name: main
     interval: 25000  # us
@@ -187,6 +151,7 @@ tasks:
               1: sr_raff_down
               2: kizi_2_raff_up
               3: kizi_2_raff_down
+              4: anything
           20:  # i2c address
             type: max7311
             direction: output
@@ -205,6 +170,19 @@ mqtt:
     topics:
       - /homeautomation/ground_office_light
 )";
+    runtime = RuntimeFactory::fromString(yaml);
+  }());
 
-  REQUIRE_NOTHROW(RuntimeFactory::fromString(yaml));
+  REQUIRE(std::get<bool>(runtime->GV()->inputs["sr_raff_down"]) == false);
+  REQUIRE(std::get<bool>(runtime->GV()->inputs["sr_raff_up"]) == false);
+  REQUIRE(std::get<bool>(runtime->GV()->inputs["kizi_2_raff_up"]) == false);
+  REQUIRE(std::get<bool>(runtime->GV()->inputs["kizi_2_raff_down"]) == false);
+  REQUIRE(std::get<bool>(runtime->GV()->inputs["anything"]) == true);
+
+  REQUIRE(std::get<bool>(runtime->GV()->outputs["sr_raff_up"]) == false);
+  REQUIRE(std::get<bool>(runtime->GV()->outputs["sr_raff_down"]) == false);
+  REQUIRE(std::get<bool>(runtime->GV()->outputs["kizi_2_raff_up"]) == false);
+  REQUIRE(std::get<bool>(runtime->GV()->outputs["kizi_2_raff_down"]) == false);
+  REQUIRE(std::get<bool>(runtime->GV()->outputs["ground_office_light"]) ==
+          true);
 }

@@ -10,7 +10,7 @@ namespace Runtime {
 
 class GVFactory {
 public:
-  static HomeAutomation::GV generateGVs(YAML::Node const &gvNode);
+  static void initializeGVs(YAML::Node const &gvNode, HomeAutomation::GV &gv);
 
 private:
   GVFactory() = delete;

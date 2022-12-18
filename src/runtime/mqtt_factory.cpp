@@ -6,6 +6,10 @@ namespace Runtime {
 MQTTClients MQTTFactory::generateClients(YAML::Node const &mqttNode) {
   auto clients = MQTTClients{};
 
+  if (!mqttNode.IsDefined()) {
+    return clients;
+  }
+
   for (YAML::const_iterator it = mqttNode.begin(); it != mqttNode.end(); ++it) {
     auto const &mqtt = it->second;
     auto mqtt_options =
