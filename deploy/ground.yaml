@@ -31,4 +31,3 @@ mqtt:
     password: "{{ mqtt_password }}"
     address: "{{ mqtt_url }}"
     client_id: ground
-    topics: []

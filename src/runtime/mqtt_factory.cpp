@@ -30,9 +30,12 @@ MQTTClients MQTTFactory::generateClients(YAML::Node const &mqttNode) {
     auto &mqttClient = inserted.first->second;
 
     if (isInserted) {
-      for (YAML::const_iterator it = mqtt["topics"].begin();
-           it != mqtt["topics"].end(); ++it) {
-        mqttClient.subscribe(it->as<std::string>());
+      auto const &topicsNode = mqtt["topics"];
+      if (topicsNode.IsDefined()) {
+        for (YAML::const_iterator it = topicsNode.begin();
+             it != topicsNode.end(); ++it) {
+          mqttClient.subscribe(it->as<std::string>());
+        }
       }
     }
   }
