@@ -7,12 +7,11 @@
 namespace HomeAutomation {
 namespace Runtime {
 
-class IOFactory {
+class IOFactoryI2C {
 public:
   static void createIOs(YAML::Node const &ioNode,
                         std::shared_ptr<TaskIOLogicImpl> ioLogic,
-                        HomeAutomation::GV *gv, MQTTClients *mqttClients);
+                        HomeAutomation::GV *gv);
 };
-
 } // namespace Runtime
 } // namespace HomeAutomation

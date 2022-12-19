@@ -39,8 +39,7 @@ public:
     }
   }
 
-  void addIOSystem(
-      std::shared_ptr<HomeAutomation::Scheduler::TaskIOLogic> ioSystem) {
+  void add(std::shared_ptr<HomeAutomation::Scheduler::TaskIOLogic> ioSystem) {
     ioSystems.push_back(ioSystem);
   }
 

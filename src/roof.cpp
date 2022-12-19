@@ -38,9 +38,7 @@ public:
     gv->outputs["kizi_2_raff_down"] = result.down;
 
     // light: ground_office
-    auto msg = mqtt->receive();
-    if (msg && msg->get_topic() == "/homeautomation/ground_office_light" &&
-        msg->get_payload_str() == "toggle") {
+    if (std::get<bool>(gv->inputs["ground_office_light"])) {
       gv->outputs["ground_office_light"] = ground_office_light.toggle();
     }
   }

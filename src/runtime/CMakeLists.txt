@@ -1,10 +1,13 @@
 add_library(runtime STATIC
   gv_factory.cpp
-  mqtt_factory.cpp
+  i2c_factory.cpp
   io_factory.cpp
+  mqtt_factory.cpp
+  mqtt_impl.cpp
+  mqtt_io_factory.cpp
   program_factory.cpp
-  scheduler_factory.cpp
-  runtime_factory.cpp)
+  runtime_factory.cpp
+  scheduler_factory.cpp)
 
 target_include_directories(runtime PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 target_include_directories(runtime PRIVATE ${CMAKE_CURRENT_LIST_DIR}/private)

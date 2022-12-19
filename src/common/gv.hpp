@@ -6,8 +6,9 @@
 
 namespace HomeAutomation {
 
+using VarName = std::string;
 using VarValue = std::variant<bool, int>;
-using GvSegment = std::map<std::string, VarValue>;
+using GvSegment = std::map<VarName, VarValue>;
 struct GV {
   GvSegment inputs;
   GvSegment outputs;

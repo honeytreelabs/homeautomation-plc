@@ -35,7 +35,7 @@ SchedulerFactory::createScheduler(YAML::Node const &schedulerNode,
     // IO
     auto taskIOLogic = std::make_shared<TaskIOLogicImpl>();
     auto const &ioNode = taskNode["io"];
-    IOFactory::createIOs(ioNode, taskIOLogic, gv);
+    IOFactory::createIOs(ioNode, taskIOLogic, gv, mqttClients);
 
     // install task
     auto const &taskName = taskNode["name"].as<std::string>();

@@ -19,6 +19,7 @@ public:
 
 class Bus {
 public:
+  virtual ~Bus() = default;
   virtual void init() = 0;
   virtual void close() = 0;
   virtual void readInputs() = 0;

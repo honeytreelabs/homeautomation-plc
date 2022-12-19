@@ -42,10 +42,8 @@ public:
       gv->outputs["deck_light"] = deck_light.toggle();
     }
 
-    if (ground_office_trigger.execute(
-            std::get<bool>(gv->inputs["ground_office_light"]))) {
-      mqtt->send("/homeautomation/ground_office_light", "toggle", 1);
-    }
+    gv->outputs["ground_office_light"] = ground_office_trigger.execute(
+        std::get<bool>(gv->inputs["ground_office_light"]));
   }
 
 private:

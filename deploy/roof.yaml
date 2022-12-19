@@ -7,6 +7,11 @@ tasks:
         type: C++
     mqtt: primary
     io:
+      - type: mqtt
+        client: primary
+        inputs:
+          /homeautomation/ground_office_light: ground_office_light
+        outputs: {}
       - type: i2c
         bus: /dev/i2c-1
         components:
@@ -33,5 +38,3 @@ mqtt:
     password: "{{ mqtt_password }}"
     address: "{{ mqtt_url }}"
     client_id: roof
-    topics:
-      - /homeautomation/ground_office_light

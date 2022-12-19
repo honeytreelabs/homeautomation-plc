@@ -7,7 +7,7 @@
 namespace HomeAutomation {
 namespace Runtime {
 
-class IOFactory {
+class MQTTIOFactory {
 public:
   static void createIOs(YAML::Node const &ioNode,
                         std::shared_ptr<TaskIOLogicImpl> ioLogic,
