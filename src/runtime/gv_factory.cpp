@@ -24,13 +24,13 @@ static void initializeSegment(HomeAutomation::GvSegment &segment,
 }
 
 void GVFactory::initializeGVs(YAML::Node const &gvNode,
-                              HomeAutomation::GV &gv) {
+                              HomeAutomation::GV *gv) {
   if (!gvNode.IsDefined()) {
     return;
   }
 
-  initializeSegment(gv.inputs, gvNode["inputs"]);
-  initializeSegment(gv.outputs, gvNode["outputs"]);
+  initializeSegment(gv->inputs, gvNode["inputs"]);
+  initializeSegment(gv->outputs, gvNode["outputs"]);
 }
 
 } // namespace Runtime

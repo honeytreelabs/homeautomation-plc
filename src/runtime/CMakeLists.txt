@@ -2,6 +2,7 @@ add_library(runtime STATIC
   gv_factory.cpp
   mqtt_factory.cpp
   io_factory.cpp
+  program_factory.cpp
   scheduler_factory.cpp
   runtime_factory.cpp)
 

@@ -11,12 +11,15 @@
 #include <spdlog/spdlog.h>
 
 // execution context (shall run in dedicated thread with given cycle time)
-class GroundLogic final : public HomeAutomation::Scheduler::Program {
+class GroundLogic final : public HomeAutomation::Scheduler::CppProgram {
 
 public:
   GroundLogic(HomeAutomation::GV *gv,
               HomeAutomation::Components::MQTT::ClientPaho *mqtt)
-      : gv(gv), mqtt(mqtt), stairs_light_trigger{}, stairs_light{} {}
+      : CppProgram(gv, mqtt), stairs_light_trigger{}, kitchen_light_trigger{},
+        charger_trigger{}, deck_trigger{}, ground_office_trigger{},
+        stairs_light{"Stairs"}, kitchen_light{"Kitchen"}, charger{"Charger"},
+        deck_light{"Deck"} {}
 
   void execute(HomeAutomation::TimeStamp now) override {
     (void)now;
@@ -46,9 +49,6 @@ public:
   }
 
 private:
-  HomeAutomation::GV *gv;
-  HomeAutomation::Components::MQTT::ClientPaho *mqtt;
-
   // logic blocks
   HomeAutomation::Components::R_TRIG stairs_light_trigger;
   HomeAutomation::Components::R_TRIG kitchen_light_trigger;
@@ -62,13 +62,17 @@ private:
 };
 
 namespace HomeAutomation {
-namespace Entry {
+namespace Runtime {
 
-void entry(std::shared_ptr<HomeAutomation::Runtime::Runtime> runtime) {
-  auto groundLogic = std::make_shared<GroundLogic>(
-      runtime->GV(), runtime->Scheduler()->getTask("main")->MQTT());
-  runtime->Scheduler()->getTask("main")->addProgram(groundLogic);
+std::shared_ptr<HomeAutomation::Scheduler::CppProgram>
+createCppProgram(std::string const &name, HomeAutomation::GV *gv,
+                 HomeAutomation::Components::MQTT::ClientPaho *mqtt) {
+  if (name == "GroundLogic") {
+    return std::make_shared<GroundLogic>(gv, mqtt);
+  }
+  spdlog::error("Unknown program named {} requested.", name);
+  return std::shared_ptr<HomeAutomation::Scheduler::CppProgram>();
 }
 
-} // namespace Entry
+} // namespace Runtime
 } // namespace HomeAutomation

@@ -79,7 +79,7 @@ class IOFactoryI2C {
 public:
   static void createIOs(YAML::Node const &ioNode,
                         std::shared_ptr<TaskIOLogicImpl> ioLogic,
-                        HomeAutomation::GV &gv) {
+                        HomeAutomation::GV *gv) {
     std::shared_ptr<HomeAutomation::IO::I2C::RealBus> bus =
         std::make_shared<HomeAutomation::IO::I2C::RealBus>(
             ioNode["bus"].as<std::string>());
@@ -103,7 +103,7 @@ public:
           throw std::invalid_argument("unknown i2c component type");
         }
         bus->RegisterInput(input);
-        insertCopySequenceBool(inputSequence, gv.inputs, input,
+        insertCopySequenceBool(inputSequence, gv->inputs, input,
                                componentNode["inputs"]);
         // TODO insertCopySequenceInput
       } else if (componentNode["direction"].as<std::string>() == "output") {
@@ -118,7 +118,7 @@ public:
           throw std::invalid_argument("unknown i2c component type");
         }
         bus->RegisterOutput(output);
-        insertCopySequenceBool(outputSequence, gv.outputs, output,
+        insertCopySequenceBool(outputSequence, gv->outputs, output,
                                componentNode["outputs"]);
       } else {
         throw std::invalid_argument("unknown i2c component direction");
@@ -133,7 +133,11 @@ public:
 
 void IOFactory::createIOs(YAML::Node const &ioNode,
                           std::shared_ptr<TaskIOLogicImpl> ioLogic,
-                          HomeAutomation::GV &gv) {
+                          HomeAutomation::GV *gv) {
+  if (!ioNode.IsDefined()) {
+    return;
+  }
+
   for (YAML::const_iterator systemIt = ioNode.begin(); systemIt != ioNode.end();
        ++systemIt) {
     auto const &ioEntry = *systemIt;

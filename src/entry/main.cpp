@@ -21,8 +21,7 @@ int main(int argc, char *argv[]) {
 
     auto runtime = HomeAutomation::Runtime::RuntimeFactory::fromFile(argv[1]);
 
-    HomeAutomation::Entry::entry(runtime);
-
+    spdlog::info("Starting runtime");
     runtime->start(HomeAutomation::System::quitCondition);
     return runtime->wait();
   } catch (YAML::Exception const &exc) {

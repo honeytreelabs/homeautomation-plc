@@ -29,8 +29,8 @@ io:
   auto taskIoLogicImpl =
       std::make_shared<HomeAutomation::Runtime::TaskIOLogicImpl>();
   REQUIRE_NOTHROW(HomeAutomation::Runtime::IOFactory::createIOs(
-      rootNode["io"], taskIoLogicImpl, gv));
+      rootNode["io"], taskIoLogicImpl, &gv));
   REQUIRE_THROWS_AS(HomeAutomation::Runtime::GVFactory::initializeGVs(
-                        rootNode["global_vars"], gv),
+                        rootNode["global_vars"], &gv),
                     std::invalid_argument);
 }

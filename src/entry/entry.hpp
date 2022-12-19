@@ -1,13 +1,4 @@
 #pragma once
 
+#include <program_factory.hpp>
 #include <runtime.hpp>
-
-#include <memory>
-
-namespace HomeAutomation {
-namespace Entry {
-
-void entry(std::shared_ptr<HomeAutomation::Runtime::Runtime> runtime);
-
-}
-} // namespace HomeAutomation

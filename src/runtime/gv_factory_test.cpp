@@ -32,7 +32,7 @@ global_vars:
 
   YAML::Node root_node = YAML::Load(yaml);
 
-  GVFactory::initializeGVs(root_node["global_vars"], gv);
+  GVFactory::initializeGVs(root_node["global_vars"], &gv);
 
   REQUIRE(std::get<bool>(gv.inputs["three"]) == true);
   REQUIRE(std::get<bool>(gv.inputs["four"]) == true);

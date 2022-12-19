@@ -14,12 +14,13 @@ static constexpr auto const cfg = HomeAutomation::Components::BlindConfig{
     .periodIdle = 500ms, .periodUp = 50s, .periodDown = 50s};
 
 // execution context (shall run in dedicated thread with given cycle time)
-class RoofLogic final : public HomeAutomation::Scheduler::Program {
+class RoofLogic final : public HomeAutomation::Scheduler::CppProgram {
 
 public:
   RoofLogic(HomeAutomation::GV *gv,
             HomeAutomation::Components::MQTT::ClientPaho *mqtt)
-      : gv(gv), mqtt{mqtt}, blind_sr(cfg), blind_kizi_2(cfg) {}
+      : HomeAutomation::Scheduler::CppProgram(gv, mqtt), blind_sr(cfg),
+        blind_kizi_2(cfg) {}
 
   void execute(HomeAutomation::TimeStamp now) override {
     // blind: sr_raff
@@ -45,9 +46,6 @@ public:
   }
 
 private:
-  HomeAutomation::GV *gv;
-  HomeAutomation::Components::MQTT::ClientPaho *mqtt;
-
   // logic blocks
   HomeAutomation::Components::Blind blind_sr;
   HomeAutomation::Components::Blind blind_kizi_2;
@@ -55,13 +53,17 @@ private:
 };
 
 namespace HomeAutomation {
-namespace Entry {
+namespace Runtime {
 
-void entry(std::shared_ptr<HomeAutomation::Runtime::Runtime> runtime) {
-  auto roofLogic = std::make_shared<RoofLogic>(
-      runtime->GV(), runtime->Scheduler()->getTask("main")->MQTT());
-  runtime->Scheduler()->getTask("main")->addProgram(roofLogic);
+std::shared_ptr<HomeAutomation::Scheduler::CppProgram>
+createCppProgram(std::string const &name, HomeAutomation::GV *gv,
+                 HomeAutomation::Components::MQTT::ClientPaho *mqtt) {
+  if (name == "RoofLogic") {
+    return std::make_shared<RoofLogic>(gv, mqtt);
+  }
+  spdlog::error("Unknown program named {} requested.", name);
+  return std::shared_ptr<HomeAutomation::Scheduler::CppProgram>();
 }
 
-} // namespace Entry
+} // namespace Runtime
 } // namespace HomeAutomation

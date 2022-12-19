@@ -12,7 +12,8 @@ namespace Runtime {
 
 class MQTTFactory {
 public:
-  static MQTTClients generateClients(YAML::Node const &mqttNode);
+  static std::shared_ptr<MQTTClients>
+  generateClients(YAML::Node const &mqttNode);
 
 private:
   MQTTFactory() = delete;

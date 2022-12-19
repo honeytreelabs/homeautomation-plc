@@ -1,4 +1,5 @@
 #include <gv_factory.hpp>
+#include <program_factory.hpp>
 #include <scheduler_factory.hpp>
 
 #include <yaml-cpp/yaml.h>
@@ -10,6 +11,14 @@
 
 using namespace HomeAutomation::Runtime;
 
+namespace HomeAutomation::Runtime {
+std::shared_ptr<HomeAutomation::Scheduler::CppProgram>
+createCppProgram(std::string const &name, HomeAutomation::GV *gv,
+                 HomeAutomation::Components::MQTT::ClientPaho *mqtt) {
+  return std::shared_ptr<HomeAutomation::Scheduler::CppProgram>();
+}
+} // namespace HomeAutomation::Runtime
+
 TEST_CASE("empty", "[single-file]") {
   std::string yaml = R"(---
 tasks: []
@@ -20,7 +29,7 @@ tasks: []
   HomeAutomation::Runtime::MQTTClients mqttClients{};
 
   REQUIRE_NOTHROW(
-      SchedulerFactory::createScheduler(rootNode["tasks"], gv, mqttClients));
+      SchedulerFactory::createScheduler(rootNode["tasks"], &gv, &mqttClients));
 }
 
 class NullProgram : public HomeAutomation::Scheduler::Program {
@@ -41,7 +50,7 @@ tasks:
   HomeAutomation::GV gv;
   HomeAutomation::Runtime::MQTTClients mqttClients{};
   auto scheduler =
-      SchedulerFactory::createScheduler(rootNode["tasks"], gv, mqttClients);
+      SchedulerFactory::createScheduler(rootNode["tasks"], &gv, &mqttClients);
 
   auto program = std::make_shared<NullProgram>();
   REQUIRE_NOTHROW(scheduler->getTask("main")->addProgram(program));
@@ -62,6 +71,6 @@ tasks:
   HomeAutomation::GV gv;
   HomeAutomation::Runtime::MQTTClients mqttClients{};
   REQUIRE_THROWS_AS(
-      SchedulerFactory::createScheduler(rootNode["tasks"], gv, mqttClients),
+      SchedulerFactory::createScheduler(rootNode["tasks"], &gv, &mqttClients),
       std::invalid_argument);
 }

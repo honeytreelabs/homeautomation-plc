@@ -1,4 +1,5 @@
 #include <gv_factory.hpp>
+#include <program_factory.hpp>
 #include <runtime_factory.hpp>
 
 #include <stdexcept>
@@ -9,6 +10,26 @@
 #include <atomic>
 
 using namespace HomeAutomation::Runtime;
+
+class CountProgram : public HomeAutomation::Scheduler::CppProgram {
+public:
+  CountProgram(HomeAutomation::GV *gv,
+               HomeAutomation::Components::MQTT::ClientPaho *mqtt)
+      : CppProgram(gv, mqtt), cnt{0} {}
+  void execute(HomeAutomation::TimeStamp now) override { cnt++; }
+  int cnt;
+};
+
+namespace HomeAutomation::Runtime {
+std::shared_ptr<HomeAutomation::Scheduler::CppProgram>
+createCppProgram(std::string const &name, HomeAutomation::GV *gv,
+                 HomeAutomation::Components::MQTT::ClientPaho *mqtt) {
+  if (name == "Count") {
+    return std::make_shared<CountProgram>(gv, mqtt);
+  }
+  return std::shared_ptr<HomeAutomation::Scheduler::CppProgram>();
+}
+} // namespace HomeAutomation::Runtime
 
 TEST_CASE("empty", "[single-file]") {
   std::string yaml = R"(---
@@ -64,12 +85,6 @@ mqtt: {}
                     std::invalid_argument);
 }
 
-class CountProgram : public HomeAutomation::Scheduler::Program {
-public:
-  void execute(HomeAutomation::TimeStamp now) override { cnt++; }
-  int cnt = 0;
-};
-
 TEST_CASE("instantiate and execute runtime", "[single-file]") {
   using namespace std::chrono_literals;
 
@@ -84,7 +99,8 @@ mqtt: {}
   std::atomic_bool quit_cond = false;
   auto runtime = RuntimeFactory::fromString(yaml);
 
-  auto testProgram = std::make_shared<CountProgram>();
+  HomeAutomation::GV gv;
+  auto testProgram = std::make_shared<CountProgram>(&gv, nullptr);
 
   runtime->Scheduler()->getTask("main")->addProgram(testProgram);
 
@@ -123,6 +139,30 @@ mqtt:
       mqtt::exception);
 }
 
+TEST_CASE("instantiate runtime with some programs", "[single-file]") {
+  using namespace std::chrono_literals;
+
+  REQUIRE_NOTHROW([]() {
+    std::string yaml = R"(---
+tasks:
+  - name: main
+    interval: 25000  # us
+    programs:
+      - name: Count
+        type: C++
+)";
+    std::atomic_bool quit_cond = false;
+    auto runtime = RuntimeFactory::fromString(yaml);
+
+    runtime->start([&quit_cond]() -> bool { return quit_cond; });
+
+    std::this_thread::sleep_for(100ms);
+    quit_cond = true;
+
+    REQUIRE(runtime->wait() == EXIT_SUCCESS);
+  }());
+}
+
 TEST_CASE("instantiate runtime with all features", "[single-file]") {
 
   std::shared_ptr<HomeAutomation::Runtime::Runtime> runtime;
@@ -138,6 +178,13 @@ global_vars:
 tasks:
   - name: main
     interval: 25000  # us
+    programs:
+      - name: First
+        type: C++
+      - name: Second
+        type: C++
+      - name: Third
+        type: C++
     mqtt: primary
     io:
       - type: i2c

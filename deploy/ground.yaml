@@ -2,6 +2,9 @@
 tasks:
   - name: main
     interval: 25000  # us
+    programs:
+      - name: GroundLogic
+        type: C++
     mqtt: primary
     io:
       - type: i2c

@@ -11,20 +11,20 @@ namespace Runtime {
 
 class RuntimeImpl : public Runtime {
 public:
-  RuntimeImpl(HomeAutomation::GV &&gv, MQTTClients &&mqttClients,
+  RuntimeImpl(std::shared_ptr<HomeAutomation::GV> gv,
+              std::shared_ptr<MQTTClients> mqttClients,
               std::shared_ptr<HomeAutomation::Runtime::SchedulerImpl> scheduler)
-      : gv{std::move(gv)},
-        mqttClients{std::move(mqttClients)}, scheduler{scheduler} {}
+      : gv{gv}, mqttClients{mqttClients}, scheduler{scheduler} {}
 
 public:
-  HomeAutomation::GV *GV() override { return &gv; }
+  HomeAutomation::GV *GV() override { return gv.get(); }
 
   HomeAutomation::Runtime::Scheduler *Scheduler() override {
     return scheduler.get();
   }
 
   void start(HomeAutomation::Scheduler::QuitCb quitCb) override {
-    for (auto &client : mqttClients) {
+    for (auto &client : *mqttClients) {
       client.second.connect();
     }
     scheduler->start(quitCb);
@@ -32,16 +32,16 @@ public:
 
   int wait() override {
     auto result = scheduler->wait();
-    for (auto &client : mqttClients) {
+    for (auto &client : *mqttClients) {
       client.second.disconnect();
     }
     return result;
   }
 
 private:
-  HomeAutomation::GV gv;
+  std::shared_ptr<HomeAutomation::GV> gv;
   std::shared_ptr<HomeAutomation::Runtime::SchedulerImpl> scheduler;
-  MQTTClients mqttClients;
+  std::shared_ptr<MQTTClients> mqttClients;
 };
 
 } // namespace Runtime

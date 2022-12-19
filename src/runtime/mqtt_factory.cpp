@@ -3,8 +3,9 @@
 namespace HomeAutomation {
 namespace Runtime {
 
-MQTTClients MQTTFactory::generateClients(YAML::Node const &mqttNode) {
-  auto clients = MQTTClients{};
+std::shared_ptr<MQTTClients>
+MQTTFactory::generateClients(YAML::Node const &mqttNode) {
+  auto clients = std::make_shared<MQTTClients>();
 
   if (!mqttNode.IsDefined()) {
     return clients;
@@ -20,12 +21,12 @@ MQTTClients MQTTFactory::generateClients(YAML::Node const &mqttNode) {
       mqtt_options.set_user_name(mqtt["username"].as<std::string>());
       mqtt_options.set_password(mqtt["password"].as<std::string>());
     }
-    auto inserted =
-        clients.emplace(std::piecewise_construct,
-                        std::forward_as_tuple(it->first.as<std::string>()),
-                        std::forward_as_tuple(
-                            mqtt["address"].as<std::string>(),
-                            mqtt["client_id"].as<std::string>(), mqtt_options));
+    auto inserted = clients->emplace(
+        std::piecewise_construct,
+        std::forward_as_tuple(it->first.as<std::string>()),
+        std::forward_as_tuple(mqtt["address"].as<std::string>(),
+                              mqtt["client_id"].as<std::string>(),
+                              mqtt_options));
     auto const &isInserted = inserted.second;
     auto &mqttClient = inserted.first->second;
 
