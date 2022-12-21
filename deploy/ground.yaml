@@ -24,6 +24,7 @@ tasks:
               3: charger
               4: deck_light
               5: ground_office_light
+              6: u_light
           20:  # i2c address
             type: pcf8574
             direction: output
@@ -33,6 +34,7 @@ tasks:
               2: stairs_light
               3: kitchen_light
               4: deck_light
+              5: u_light
 mqtt:
   primary:
     username: "{{ mqtt_username }}"

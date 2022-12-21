@@ -42,6 +42,10 @@ public:
       gv->outputs["deck_light"] = deck_light.toggle();
     }
 
+    if (u_light_trigger.execute(std::get<bool>(gv->inputs["u_light"]))) {
+      gv->outputs["u_light"] = u_light.toggle();
+    }
+
     gv->outputs["ground_office_light"] = ground_office_trigger.execute(
         std::get<bool>(gv->inputs["ground_office_light"]));
   }
@@ -53,10 +57,12 @@ private:
   HomeAutomation::Components::R_TRIG charger_trigger;
   HomeAutomation::Components::R_TRIG deck_trigger;
   HomeAutomation::Components::R_TRIG ground_office_trigger;
+  HomeAutomation::Components::R_TRIG u_light_trigger;
   HomeAutomation::Components::Light stairs_light;
   HomeAutomation::Components::Light kitchen_light;
   HomeAutomation::Components::Light charger;
   HomeAutomation::Components::Light deck_light;
+  HomeAutomation::Components::Light u_light;
 };
 
 namespace HomeAutomation {
