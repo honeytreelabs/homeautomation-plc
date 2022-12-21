@@ -15,10 +15,6 @@ else()
 endif()
 target_compile_features(system PRIVATE cxx_std_20)
 
-if (NOT BUILD_RUN_TESTS)
-  return ()
-endif()
-
 create_memchecked_test(i2c_dev system TRUE)
 create_memchecked_test(mqtt system TRUE)
 create_memchecked_test(messages_buffer system TRUE)

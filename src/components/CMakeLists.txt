@@ -20,10 +20,6 @@ target_link_libraries(components-lua PUBLIC
   lua
 )
 
-if (NOT BUILD_RUN_TESTS)
-  return ()
-endif()
-
 create_memchecked_test(blind_state components-automation FALSE)
 create_memchecked_test(blind components-automation FALSE)
 create_memchecked_test(trigger components-automation FALSE)

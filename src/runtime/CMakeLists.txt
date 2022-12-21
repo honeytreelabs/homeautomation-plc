@@ -19,15 +19,15 @@ target_link_libraries(runtime PUBLIC
   scheduler
   system)
 
-if (NOT BUILD_RUN_TESTS)
-  return ()
-endif()
-
 create_memchecked_test(gv_factory runtime TRUE)
 create_memchecked_test(io_factory runtime TRUE)
 # additional include directories needed for this whitebox test
-target_include_directories(io_factory_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/private)
+if (TARGET io_factory_test)
+  target_include_directories(io_factory_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/private)
+endif ()
 create_memchecked_test(scheduler_factory runtime TRUE)
 # additional include directories needed for this whitebox test
-target_include_directories(scheduler_factory_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/private)
+if (TARGET scheduler_factory_test)
+  target_include_directories(scheduler_factory_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/private)
+endif ()
 create_memchecked_test(runtime_factory runtime TRUE)
