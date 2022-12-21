@@ -15,7 +15,6 @@ target_include_directories(runtime PRIVATE ${CMAKE_CURRENT_LIST_DIR}/private)
 target_compile_features(runtime PUBLIC cxx_std_20)
 
 target_link_libraries(runtime PUBLIC
-  components-mqtt
   common
   scheduler
   system)

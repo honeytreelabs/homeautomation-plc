@@ -15,7 +15,6 @@ function(create_logic name)
     runtime
     scheduler
     system
-    components::mqtt
     components::lua)
   if (RASPBERRY)
     target_link_libraries(${name} PUBLIC -static)
