@@ -7,7 +7,7 @@ using namespace std::literals;
 static constexpr auto const cfg = HomeAutomation::Components::BlindConfig{
     .periodIdle = 500ms, .periodUp = 30s, .periodDown = 30s};
 
-TEST_CASE("states of inputs unchanged", "[single-file]") {
+TEST_CASE("blind: states of inputs unchanged", "[single-file]") {
   spdlog::set_level(spdlog::level::debug);
 
   auto start = std::chrono::high_resolution_clock::now();
@@ -22,7 +22,7 @@ TEST_CASE("states of inputs unchanged", "[single-file]") {
   REQUIRE(relay_states.down == false);
 }
 
-TEST_CASE("blind move up", "[single-file]") {
+TEST_CASE("blind: move up", "[single-file]") {
   spdlog::set_level(spdlog::level::debug);
 
   auto start = std::chrono::high_resolution_clock::now();
@@ -44,7 +44,7 @@ TEST_CASE("blind move up", "[single-file]") {
   REQUIRE(relay_states.down == false);
 }
 
-TEST_CASE("both inputs true", "[single-file]") {
+TEST_CASE("blind: both inputs true", "[single-file]") {
   spdlog::set_level(spdlog::level::debug);
 
   auto start = std::chrono::high_resolution_clock::now();
@@ -64,7 +64,7 @@ TEST_CASE("both inputs true", "[single-file]") {
   REQUIRE(relay_states.down == false);
 }
 
-TEST_CASE("complete run", "[single-file]") {
+TEST_CASE("blind: complete run", "[single-file]") {
   spdlog::set_level(spdlog::level::debug);
 
   auto start = std::chrono::high_resolution_clock::now();

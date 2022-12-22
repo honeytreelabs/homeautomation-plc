@@ -31,7 +31,7 @@ createCppProgram(std::string const &name, HomeAutomation::GV *gv,
 }
 } // namespace HomeAutomation::Runtime
 
-TEST_CASE("empty", "[single-file]") {
+TEST_CASE("runtime factory: empty", "[single-file]") {
   std::string yaml = R"(---
 global_vars: {}
 tasks: []
@@ -41,7 +41,7 @@ mqtt: {}
   REQUIRE_NOTHROW(RuntimeFactory::fromString(yaml));
 }
 
-TEST_CASE("instantiate runtime only tasks", "[single-file]") {
+TEST_CASE("runtime factory: instantiate runtime only tasks", "[single-file]") {
   std::string yaml = R"(---
 global_vars: {}
 tasks:
@@ -53,7 +53,7 @@ mqtt: {}
   REQUIRE_NOTHROW(RuntimeFactory::fromString(yaml));
 }
 
-TEST_CASE("instantiate runtime from YAML", "[single-file]") {
+TEST_CASE("runtime factory: instantiate runtime from YAML", "[single-file]") {
   std::string yaml = R"(---
 global_vars:
   inputs:
@@ -85,7 +85,7 @@ mqtt: {}
                     std::invalid_argument);
 }
 
-TEST_CASE("instantiate and execute runtime", "[single-file]") {
+TEST_CASE("runtime factory: instantiate and execute runtime", "[single-file]") {
   using namespace std::chrono_literals;
 
   std::string yaml = R"(---
@@ -113,7 +113,8 @@ mqtt: {}
   REQUIRE(testProgram->cnt > 0);
 }
 
-TEST_CASE("instantiate and execute runtime missing broker", "[single-file]") {
+TEST_CASE("runtime factory: instantiate and execute runtime missing broker",
+          "[single-file]") {
   std::string yaml = R"(---
 global_vars: {}
 tasks:
@@ -139,7 +140,8 @@ mqtt:
       mqtt::exception);
 }
 
-TEST_CASE("instantiate runtime with some programs", "[single-file]") {
+TEST_CASE("runtime factory: instantiate runtime with some programs",
+          "[single-file]") {
   using namespace std::chrono_literals;
 
   REQUIRE_NOTHROW([]() {
@@ -163,7 +165,8 @@ tasks:
   }());
 }
 
-TEST_CASE("instantiate runtime with all features", "[single-file]") {
+TEST_CASE("runtime factory: instantiate runtime with all features",
+          "[single-file]") {
 
   std::shared_ptr<HomeAutomation::Runtime::Runtime> runtime;
   REQUIRE_NOTHROW([&runtime]() {

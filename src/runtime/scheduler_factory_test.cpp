@@ -19,7 +19,7 @@ createCppProgram(std::string const &name, HomeAutomation::GV *gv,
 }
 } // namespace HomeAutomation::Runtime
 
-TEST_CASE("empty", "[single-file]") {
+TEST_CASE("scheduler factory: empty", "[single-file]") {
   std::string yaml = R"(---
 tasks: []
 )";
@@ -36,7 +36,7 @@ class NullProgram : public HomeAutomation::Scheduler::Program {
   void execute(HomeAutomation::TimeStamp now) {}
 };
 
-TEST_CASE("one task", "[single-file]") {
+TEST_CASE("scheduler factory: one task", "[single-file]") {
   using namespace std::chrono_literals;
 
   std::string yaml = R"(---
@@ -56,7 +56,8 @@ tasks:
   REQUIRE_NOTHROW(scheduler->getTask("main")->addProgram(program));
 }
 
-TEST_CASE("task referencing not-existing mqtt client", "[single-file]") {
+TEST_CASE("scheduler factory: task referencing not-existing mqtt client",
+          "[single-file]") {
   using namespace std::chrono_literals;
 
   std::string yaml = R"(---

@@ -7,7 +7,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-TEST_CASE("initialize non-existing global var", "[single-file]") {
+TEST_CASE("io factory: initialize non-existing global var", "[single-file]") {
   HomeAutomation::GV gv;
   HomeAutomation::Runtime::MQTTClients mqttClients{};
 

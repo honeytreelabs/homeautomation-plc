@@ -7,18 +7,18 @@
 
 using namespace HomeAutomation::Components::MQTT;
 
-TEST_CASE("messages buffer empty", "[single-file]") {
+TEST_CASE("messages buffer: empty", "[single-file]") {
   Messages buf;
   REQUIRE(buf.empty() == true);
 }
 
-TEST_CASE("messages buffer get", "[single-file]") {
+TEST_CASE("messages buffer: get", "[single-file]") {
   Messages buf;
   auto elem = buf.get();
   REQUIRE(elem == std::nullopt);
 }
 
-TEST_CASE("messages buffer get_for empty", "[single-file]") {
+TEST_CASE("messages buffer: get_for empty", "[single-file]") {
   using namespace std::chrono_literals;
 
   Messages buf;
@@ -26,7 +26,7 @@ TEST_CASE("messages buffer get_for empty", "[single-file]") {
   REQUIRE(elem == std::nullopt);
 }
 
-TEST_CASE("messages buffer get_for existing", "[single-file]") {
+TEST_CASE("messages buffer: get_for existing", "[single-file]") {
   using namespace std::chrono_literals;
 
   Messages buf;
@@ -41,7 +41,7 @@ TEST_CASE("messages buffer get_for existing", "[single-file]") {
   t1.join();
 }
 
-TEST_CASE("messages buffer get_for existing multi", "[single-file]") {
+TEST_CASE("messages buffer: get_for existing multi", "[single-file]") {
   using namespace std::chrono_literals;
 
   constexpr int ROUNDS = 100;

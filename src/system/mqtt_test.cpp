@@ -5,17 +5,17 @@
 
 using namespace HomeAutomation::Components::MQTT;
 
-TEST_CASE("instantiate/destruct mqtt client", "[single-file]") {
+TEST_CASE("mqtt: instantiate/destruct mqtt client", "[single-file]") {
   ClientPaho client{"tcp://localhost:1883"};
 }
 
-TEST_CASE("connect/disconnect mqtt client", "[single-file]") {
+TEST_CASE("mqtt: connect/disconnect mqtt client", "[single-file]") {
   ClientPaho client{"tcp://localhost:1883"};
   client.connect();
   client.disconnect();
 }
 
-TEST_CASE("receive no mqtt messages", "[single-file]") {
+TEST_CASE("mqtt: receive no mqtt messages", "[single-file]") {
   ClientPaho client{"tcp://localhost:1883"};
   client.connect();
 
@@ -25,7 +25,7 @@ TEST_CASE("receive no mqtt messages", "[single-file]") {
   client.disconnect();
 }
 
-TEST_CASE("connect/disconnect mqtt client, no broker listening",
+TEST_CASE("mqtt: connect/disconnect mqtt client, no broker listening",
           "[single-file]") {
   // this test shows that we are currently depending on a working/reachable
   // broker
@@ -34,7 +34,7 @@ TEST_CASE("connect/disconnect mqtt client, no broker listening",
   REQUIRE_THROWS_AS(client.disconnect(), mqtt::exception);
 }
 
-TEST_CASE("publish/receive one mqtt message", "[single-file]") {
+TEST_CASE("mqtt: publish/receive one mqtt message", "[single-file]") {
   using namespace std::chrono_literals;
 
   ClientPaho client_first{"tcp://localhost:1883", "client-first"};

@@ -6,7 +6,7 @@
 
 using namespace HomeAutomation::Runtime;
 
-TEST_CASE("initialize GVs from YAML", "[single-file]") {
+TEST_CASE("gv factory: initialize GVs from YAML", "[single-file]") {
   HomeAutomation::GV gv;
   gv.inputs["three"] = false;
   gv.inputs["four"] = false;

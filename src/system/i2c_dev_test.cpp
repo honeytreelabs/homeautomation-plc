@@ -2,7 +2,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-TEST_CASE("PCF8574 output test", "[single-file]") {
+TEST_CASE("i2c dev: PCF8574 output test", "[single-file]") {
   auto pcf8574 = HomeAutomation::IO::I2C::PCF8574Output(0x20);
 
   // IO mock

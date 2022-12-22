@@ -5,7 +5,7 @@
 using namespace HomeAutomation;
 using namespace HomeAutomation::Components;
 
-TEST_CASE("execute simple lua script", "[single-file]") {
+TEST_CASE("lua block: execute simple lua script", "[single-file]") {
   VarValue in_i{std::in_place_type<int>, 42};
   VarValue in_b{std::in_place_type<bool>, true};
   VarValue out_i{std::in_place_type<int>, 23};
