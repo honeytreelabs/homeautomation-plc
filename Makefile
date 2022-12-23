@@ -103,6 +103,7 @@ deploy-generic:
 	scp -O build.$(name)/bin/$(name) root@$(host):/opt
 	scp -O build.$(name)/src/homeautomation.$(name) root@$(host):/etc/init.d/homeautomation
 	ssh root@$(host) /etc/init.d/homeautomation enable
+	ssh root@$(host) "mkdir -p /etc/homeautomation"
 	if [ -e deploy/$(name).yaml ]; then sed -f deploy/replacements.sed deploy/$(name).yaml | ssh root@$(host) "cat > /etc/homeautomation/config.yaml"; fi
 
 ### roof
@@ -149,6 +150,10 @@ basement-prepare: executable-prepare-generic
 .PHONY: basement
 basement: basement-prepare
 	$(MAKE) executable-generic name=basement
+
+.PHONY: deploy-basement
+deploy-basement: basement
+	$(MAKE) deploy-generic host=raspberry-u.lan name=basement
 
 # currently there is no deployment step because basement execution context is different
 

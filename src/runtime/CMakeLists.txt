@@ -2,6 +2,7 @@ add_library(runtime STATIC
   gv_factory.cpp
   i2c_factory.cpp
   io_factory.cpp
+  modbus_factory.cpp
   mqtt_factory.cpp
   mqtt_impl.cpp
   mqtt_io_factory.cpp
@@ -24,6 +25,11 @@ create_memchecked_test(io_factory runtime TRUE)
 # additional include directories needed for this whitebox test
 if (TARGET io_factory_test)
   target_include_directories(io_factory_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/private)
+endif ()
+create_memchecked_test(modbus_factory runtime TRUE)
+# additional include directories needed for this whitebox test
+if (TARGET modbus_factory_test)
+  target_include_directories(modbus_factory_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/private)
 endif ()
 create_memchecked_test(scheduler_factory runtime TRUE)
 # additional include directories needed for this whitebox test

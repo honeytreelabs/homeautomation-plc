@@ -56,13 +56,13 @@ public:
 
 class Bus : public IReadWrite, public HomeAutomation::IO::Bus {
 public:
-  Bus(std::string &path) : path(path), inputs{}, outputs{} {}
+  Bus(std::string const &path) : path(path), inputs{}, outputs{} {}
 
-  void RegisterInput(std::shared_ptr<DigitalInputModule> module) {
-    inputs.push_back(module);
+  void RegisterInput(std::shared_ptr<DigitalInputModule> i2cModule) {
+    inputs.push_back(i2cModule);
   }
-  void RegisterOutput(std::shared_ptr<DigitalOutputModule> module) {
-    outputs.push_back(module);
+  void RegisterOutput(std::shared_ptr<DigitalOutputModule> i2cModule) {
+    outputs.push_back(i2cModule);
   }
 
   void readInputs() override {
@@ -92,7 +92,7 @@ public:
   virtual void setAddress(std::uint8_t address) = 0;
 
 protected:
-  std::string path;
+  std::string const path;
 
 private:
   std::vector<std::shared_ptr<DigitalInputModule>> inputs;
@@ -102,7 +102,7 @@ private:
 // https://github.com/Digilent/linux-userspace-examples/blob/master/i2c_example_linux/src/i2c.c
 class RealBus : public Bus {
 public:
-  RealBus(std::string path) : Bus(path), fd{} {}
+  RealBus(std::string const &path) : Bus(path), fd{} {}
 
   void open() override {
     // open handle for this bus
@@ -152,7 +152,7 @@ private:
 
 class StubBus : public Bus {
 public:
-  StubBus(std::string path) : Bus(path) {}
+  StubBus(std::string const &path) : Bus(path) {}
 
   void open() override { spdlog::info("open()"); }
 

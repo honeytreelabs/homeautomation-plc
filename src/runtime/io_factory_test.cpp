@@ -1,4 +1,3 @@
-#include "scheduler_impl.hpp"
 #include <gv_factory.hpp>
 #include <io_factory.hpp>
 
