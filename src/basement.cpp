@@ -1,5 +1,6 @@
 // components
 #include <light.hpp>
+#include <trigger.hpp>
 
 // PLC runtime
 #include <entry.hpp>
@@ -20,34 +21,42 @@ public:
   void execute(HomeAutomation::TimeStamp now) override {
     (void)now;
 
-    if (std::get<bool>(gv->inputs["workshop_1"])) {
+    if (workshop_1_trigger.execute(std::get<bool>(gv->inputs["workshop_1"]))) {
       gv->outputs["workshop_1"] = workshop_1_light.toggle();
     }
-    if (std::get<bool>(gv->inputs["workshop_2"])) {
+    if (workshop_2_trigger.execute(std::get<bool>(gv->inputs["workshop_2"]))) {
       gv->outputs["workshop_2"] = workshop_2_light.toggle();
     }
-    if (std::get<bool>(gv->inputs["room_1"])) {
+    if (room_1_trigger.execute(std::get<bool>(gv->inputs["room_1"]))) {
       gv->outputs["room_1"] = room_1_light.toggle();
     }
-    if (std::get<bool>(gv->inputs["room_2"])) {
+    if (room_2_trigger.execute(std::get<bool>(gv->inputs["room_2"]))) {
       gv->outputs["room_2"] = room_2_light.toggle();
     }
-    if (std::get<bool>(gv->inputs["room_3"])) {
+    if (room_3_trigger.execute(std::get<bool>(gv->inputs["room_3"]))) {
       gv->outputs["room_3"] = room_3_light.toggle();
     }
-    if (std::get<bool>(gv->inputs["room_4"])) {
+    if (room_4_trigger.execute(std::get<bool>(gv->inputs["room_4"]))) {
       gv->outputs["room_4"] = room_4_light.toggle();
     }
-    if (std::get<bool>(gv->inputs["room_5"])) {
+    if (room_5_trigger.execute(std::get<bool>(gv->inputs["room_5"]))) {
       gv->outputs["room_5"] = room_5_light.toggle();
     }
-    if (std::get<bool>(gv->inputs["room_6"])) {
+    if (room_6_trigger.execute(std::get<bool>(gv->inputs["room_6"]))) {
       gv->outputs["room_6"] = room_6_light.toggle();
     }
   }
 
 private:
   // logic blocks
+  HomeAutomation::Components::R_TRIG workshop_1_trigger;
+  HomeAutomation::Components::R_TRIG workshop_2_trigger;
+  HomeAutomation::Components::R_TRIG room_1_trigger;
+  HomeAutomation::Components::R_TRIG room_2_trigger;
+  HomeAutomation::Components::R_TRIG room_3_trigger;
+  HomeAutomation::Components::R_TRIG room_4_trigger;
+  HomeAutomation::Components::R_TRIG room_5_trigger;
+  HomeAutomation::Components::R_TRIG room_6_trigger;
   HomeAutomation::Components::Light workshop_1_light{"Workshop 1"};
   HomeAutomation::Components::Light workshop_2_light{"Workshop 2"};
   HomeAutomation::Components::Light room_1_light{"Room 1"};
