@@ -105,6 +105,7 @@ deploy-generic:
 	ssh root@$(host) /etc/init.d/homeautomation enable
 	ssh root@$(host) "mkdir -p /etc/homeautomation"
 	if [ -e deploy/$(name).yaml ]; then sed -f deploy/replacements.sed deploy/$(name).yaml | ssh root@$(host) "cat > /etc/homeautomation/config.yaml"; fi
+	ssh root@$(host) /etc/init.d/homeautomation start
 
 ### roof
 
