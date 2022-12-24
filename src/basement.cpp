@@ -14,9 +14,8 @@
 class BasementLogic final : public HomeAutomation::Scheduler::CppProgram {
 
 public:
-  BasementLogic(HomeAutomation::GV *gv,
-                HomeAutomation::Components::MQTT::ClientPaho *mqtt)
-      : HomeAutomation::Scheduler::CppProgram(gv, mqtt) {}
+  BasementLogic(HomeAutomation::GV *gv)
+      : HomeAutomation::Scheduler::CppProgram(gv) {}
 
   void execute(HomeAutomation::TimeStamp now) override {
     (void)now;
@@ -71,10 +70,9 @@ namespace HomeAutomation {
 namespace Runtime {
 
 std::shared_ptr<HomeAutomation::Scheduler::CppProgram>
-createCppProgram(std::string const &name, HomeAutomation::GV *gv,
-                 HomeAutomation::Components::MQTT::ClientPaho *mqtt) {
+createCppProgram(std::string const &name, HomeAutomation::GV *gv) {
   if (name == "BasementLogic") {
-    return std::make_shared<BasementLogic>(gv, mqtt);
+    return std::make_shared<BasementLogic>(gv);
   }
   spdlog::error("Unknown program named {} requested.", name);
   return std::shared_ptr<HomeAutomation::Scheduler::CppProgram>();

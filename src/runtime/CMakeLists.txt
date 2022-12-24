@@ -3,7 +3,6 @@ add_library(runtime STATIC
   i2c_factory.cpp
   io_factory.cpp
   modbus_factory.cpp
-  mqtt_factory.cpp
   mqtt_impl.cpp
   mqtt_io_factory.cpp
   program_factory.cpp
@@ -20,20 +19,16 @@ target_link_libraries(runtime PUBLIC
   scheduler
   system)
 
+function(create_memchecked_whitebox_test name lib)
+  create_memchecked_test(${name} ${lib} TRUE)
+  if (TARGET ${name}_test)
+    # additional include directories needed for this whitebox test
+    target_include_directories(${name}_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/private)
+  endif ()
+endfunction()
 create_memchecked_test(gv_factory runtime TRUE)
-create_memchecked_test(io_factory runtime TRUE)
-# additional include directories needed for this whitebox test
-if (TARGET io_factory_test)
-  target_include_directories(io_factory_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/private)
-endif ()
-create_memchecked_test(modbus_factory runtime TRUE)
-# additional include directories needed for this whitebox test
-if (TARGET modbus_factory_test)
-  target_include_directories(modbus_factory_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/private)
-endif ()
-create_memchecked_test(scheduler_factory runtime TRUE)
-# additional include directories needed for this whitebox test
-if (TARGET scheduler_factory_test)
-  target_include_directories(scheduler_factory_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/private)
-endif ()
+create_memchecked_whitebox_test(io_factory runtime TRUE)
+create_memchecked_whitebox_test(mqtt_io_factory runtime TRUE)
+create_memchecked_whitebox_test(modbus_factory runtime TRUE)
+create_memchecked_whitebox_test(scheduler_factory runtime TRUE)
 create_memchecked_test(runtime_factory runtime TRUE)

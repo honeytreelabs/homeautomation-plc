@@ -12,7 +12,7 @@ namespace Runtime {
 
 void IOFactory::createIOs(YAML::Node const &ioNode,
                           std::shared_ptr<TaskIOLogicImpl> ioLogic,
-                          HomeAutomation::GV *gv, MQTTClients *mqttClients) {
+                          HomeAutomation::GV *gv) {
   if (!ioNode.IsDefined()) {
     return;
   }
@@ -25,7 +25,7 @@ void IOFactory::createIOs(YAML::Node const &ioNode,
     if (ioType == "i2c") {
       IOFactoryI2C::createIOs(ioEntry, ioLogic, gv);
     } else if (ioType == "mqtt") {
-      MQTTIOFactory::createIOs(ioEntry, ioLogic, gv, mqttClients);
+      MQTTIOFactory::createIOs(ioEntry, ioLogic, gv);
     } else if (ioType == "modbus-rtu") {
       ModbusRTUFactory::createIOs(ioEntry, ioLogic, gv);
     } else {

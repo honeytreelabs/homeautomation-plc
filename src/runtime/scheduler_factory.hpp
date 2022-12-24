@@ -11,8 +11,7 @@ namespace Runtime {
 class SchedulerFactory {
 public:
   static std::shared_ptr<SchedulerImpl>
-  createScheduler(YAML::Node const &schedulerNode, HomeAutomation::GV *gv,
-                  MQTTClients *mqttClients);
+  createScheduler(YAML::Node const &schedulerNode, HomeAutomation::GV *gv);
 
 private:
   SchedulerFactory() = delete;

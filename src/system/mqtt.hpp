@@ -56,16 +56,17 @@ public:
     return result;
   }
 
-  ClientPaho(std::string address, std::string clientID,
+  ClientPaho(std::string const &address, std::string const &clientID,
              mqtt::connect_options connOpts)
       : client(address, clientID), conntok{}, send_msgs{}, recv_msgs{},
         quit_cond(false), topics{}, connOpts{connOpts},
         cb{client, topics, recv_msgs, connOpts}, send_worker{} {
     client.set_callback(cb);
   }
-  ClientPaho(std::string address, std::string clientID)
+  ClientPaho(std::string const &address, std::string const &clientID)
       : ClientPaho(address, clientID, getDefaultConnectOptions()) {}
-  ClientPaho(std::string address) : ClientPaho(address, DFLT_CLIENT_ID) {}
+  ClientPaho(std::string const &address)
+      : ClientPaho(address, DFLT_CLIENT_ID) {}
   ClientPaho() : ClientPaho(DFLT_SERVER_ADDRESS) {}
   virtual ~ClientPaho() {}
 

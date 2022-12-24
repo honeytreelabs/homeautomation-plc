@@ -5,10 +5,13 @@ tasks:
     programs:
       - name: GroundLogic
         type: C++
-    mqtt: primary
     io:
       - type: mqtt
-        client: primary
+        client:
+          username: "{{ mqtt_username }}"
+          password: "{{ mqtt_password }}"
+          address: "{{ mqtt_url }}"
+          client_id: ground::main
         inputs: {}
         outputs:
           /homeautomation/ground_office_light: ground_office_light
@@ -35,9 +38,3 @@ tasks:
               3: kitchen_light
               4: deck_light
               5: u_light
-mqtt:
-  primary:
-    username: "{{ mqtt_username }}"
-    password: "{{ mqtt_password }}"
-    address: "{{ mqtt_url }}"
-    client_id: ground

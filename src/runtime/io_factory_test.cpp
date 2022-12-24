@@ -8,7 +8,6 @@
 
 TEST_CASE("io factory: initialize non-existing global var", "[single-file]") {
   HomeAutomation::GV gv;
-  HomeAutomation::Runtime::MQTTClients mqttClients{};
 
   auto const &rootNode = YAML::Load(R"(---
 global_vars:
@@ -29,7 +28,7 @@ io:
   auto taskIoLogicImpl =
       std::make_shared<HomeAutomation::Runtime::TaskIOLogicImpl>();
   REQUIRE_NOTHROW(HomeAutomation::Runtime::IOFactory::createIOs(
-      rootNode["io"], taskIoLogicImpl, &gv, &mqttClients));
+      rootNode["io"], taskIoLogicImpl, &gv));
   REQUIRE_THROWS_AS(HomeAutomation::Runtime::GVFactory::initializeGVs(
                         rootNode["global_vars"], &gv),
                     std::invalid_argument);

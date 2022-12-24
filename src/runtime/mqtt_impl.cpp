@@ -4,7 +4,7 @@ namespace HomeAutomation {
 namespace Runtime {
 
 void MQTTIOLogic::init() {
-  // client will be connected by runtime
+  mqttClient->connect();
   for (auto const &[topic, varName] : inputs) {
     mqttClient->subscribe(topic);
   }
@@ -13,7 +13,7 @@ void MQTTIOLogic::init() {
   }
 }
 
-void MQTTIOLogic::shutdown() {}
+void MQTTIOLogic::shutdown() { mqttClient->disconnect(); }
 
 void MQTTIOLogic::before() {
   for (auto const &[topic, varName] : inputs) {

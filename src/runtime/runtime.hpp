@@ -1,21 +1,16 @@
 #pragma once
 
 #include <gv.hpp>
-#include <mqtt.hpp>
 #include <scheduler.hpp>
 
 namespace HomeAutomation {
 namespace Runtime {
-
-using MQTTClients =
-    std::map<std::string, HomeAutomation::Components::MQTT::ClientPaho>;
 
 class Task {
 public:
   Task() = default;
   virtual ~Task() = default;
 
-  virtual Components::MQTT::ClientPaho *MQTT() = 0;
   virtual void
   addProgram(std::shared_ptr<HomeAutomation::Scheduler::Program> program) = 0;
 };

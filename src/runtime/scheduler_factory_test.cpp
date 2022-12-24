@@ -13,8 +13,7 @@ using namespace HomeAutomation::Runtime;
 
 namespace HomeAutomation::Runtime {
 std::shared_ptr<HomeAutomation::Scheduler::CppProgram>
-createCppProgram(std::string const &name, HomeAutomation::GV *gv,
-                 HomeAutomation::Components::MQTT::ClientPaho *mqtt) {
+createCppProgram(std::string const &name, HomeAutomation::GV *gv) {
   return std::shared_ptr<HomeAutomation::Scheduler::CppProgram>();
 }
 } // namespace HomeAutomation::Runtime
@@ -26,10 +25,8 @@ tasks: []
 
   auto const &rootNode = YAML::Load(yaml);
   HomeAutomation::GV gv;
-  HomeAutomation::Runtime::MQTTClients mqttClients{};
 
-  REQUIRE_NOTHROW(
-      SchedulerFactory::createScheduler(rootNode["tasks"], &gv, &mqttClients));
+  REQUIRE_NOTHROW(SchedulerFactory::createScheduler(rootNode["tasks"], &gv));
 }
 
 class NullProgram : public HomeAutomation::Scheduler::Program {
@@ -48,30 +45,8 @@ tasks:
   auto const &rootNode = YAML::Load(yaml);
 
   HomeAutomation::GV gv;
-  HomeAutomation::Runtime::MQTTClients mqttClients{};
-  auto scheduler =
-      SchedulerFactory::createScheduler(rootNode["tasks"], &gv, &mqttClients);
+  auto scheduler = SchedulerFactory::createScheduler(rootNode["tasks"], &gv);
 
   auto program = std::make_shared<NullProgram>();
   REQUIRE_NOTHROW(scheduler->getTask("main")->addProgram(program));
-}
-
-TEST_CASE("scheduler factory: task referencing not-existing mqtt client",
-          "[single-file]") {
-  using namespace std::chrono_literals;
-
-  std::string yaml = R"(---
-tasks:
-  - name: main
-    interval: 25000
-    mqtt: doesnotexist
-)";
-
-  auto const &rootNode = YAML::Load(yaml);
-
-  HomeAutomation::GV gv;
-  HomeAutomation::Runtime::MQTTClients mqttClients{};
-  REQUIRE_THROWS_AS(
-      SchedulerFactory::createScheduler(rootNode["tasks"], &gv, &mqttClients),
-      std::invalid_argument);
 }

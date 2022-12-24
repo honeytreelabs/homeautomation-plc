@@ -1,5 +1,7 @@
 #include <mqtt.hpp>
 
+#include <spdlog/spdlog.h>
+
 #include <chrono>
 #include <cstdlib>
 #include <cstring>
@@ -77,10 +79,16 @@ public:
 };
 
 void ClientPaho::connect() {
-  conntok = client.connect(connOpts);
-  conntok->wait();
+  // client should be resilient to MQTT broker outages (e.g. retry)
+  // but this is not implemented yet
+  try {
+    conntok = client.connect(connOpts);
+    conntok->wait();
 
-  send_worker = std::thread(&ClientPaho::sendWorkerFun, this);
+    send_worker = std::thread(&ClientPaho::sendWorkerFun, this);
+  } catch (mqtt::exception const &exc) {
+    spdlog::error("Could not connect to MQTT broker: {}", exc.what());
+  }
 }
 
 void ClientPaho::send(mqtt::string_ref topic, mqtt::binary_ref payload,
@@ -117,8 +125,12 @@ void ClientPaho::disconnect() {
   }
 
   // Disconnect
-  conntok = client.disconnect();
-  conntok->wait();
+  try {
+    conntok = client.disconnect();
+    conntok->wait();
+  } catch (mqtt::exception const &exc) {
+    spdlog::error("could not disconnect mqtt client: {}", exc.what());
+  }
 }
 
 void ClientPaho::sendWorkerFun() {

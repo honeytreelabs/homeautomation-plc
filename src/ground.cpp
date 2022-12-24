@@ -14,9 +14,8 @@
 class GroundLogic final : public HomeAutomation::Scheduler::CppProgram {
 
 public:
-  GroundLogic(HomeAutomation::GV *gv,
-              HomeAutomation::Components::MQTT::ClientPaho *mqtt)
-      : CppProgram(gv, mqtt), stairs_light_trigger{}, kitchen_light_trigger{},
+  GroundLogic(HomeAutomation::GV *gv)
+      : CppProgram(gv), stairs_light_trigger{}, kitchen_light_trigger{},
         charger_trigger{}, deck_trigger{}, ground_office_trigger{},
         stairs_light{"Stairs"}, kitchen_light{"Kitchen"}, charger{"Charger"},
         deck_light{"Deck"} {}
@@ -69,10 +68,9 @@ namespace HomeAutomation {
 namespace Runtime {
 
 std::shared_ptr<HomeAutomation::Scheduler::CppProgram>
-createCppProgram(std::string const &name, HomeAutomation::GV *gv,
-                 HomeAutomation::Components::MQTT::ClientPaho *mqtt) {
+createCppProgram(std::string const &name, HomeAutomation::GV *gv) {
   if (name == "GroundLogic") {
-    return std::make_shared<GroundLogic>(gv, mqtt);
+    return std::make_shared<GroundLogic>(gv);
   }
   spdlog::error("Unknown program named {} requested.", name);
   return std::shared_ptr<HomeAutomation::Scheduler::CppProgram>();

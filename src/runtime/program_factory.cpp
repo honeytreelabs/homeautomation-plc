@@ -2,10 +2,9 @@
 
 namespace HomeAutomation {
 namespace Runtime {
-void ProgramFactory::installPrograms(
-    HomeAutomation::Runtime::Task *task, HomeAutomation::GV *gv,
-    HomeAutomation::Components::MQTT::ClientPaho *mqtt,
-    YAML::Node const &programsNode) {
+void ProgramFactory::installPrograms(HomeAutomation::Runtime::Task *task,
+                                     HomeAutomation::GV *gv,
+                                     YAML::Node const &programsNode) {
   if (!programsNode.IsDefined()) {
     spdlog::info("No programs defined.");
     return;
@@ -18,7 +17,7 @@ void ProgramFactory::installPrograms(
     std::string const cppProgramTypeName = "C++";
     if (programType == cppProgramTypeName) {
       spdlog::info("Creating {} program {}", cppProgramTypeName, programName);
-      auto program = createCppProgram(programName, gv, mqtt);
+      auto program = createCppProgram(programName, gv);
       if (program) {
         spdlog::info("Installing {} program {}", cppProgramTypeName,
                      programName);

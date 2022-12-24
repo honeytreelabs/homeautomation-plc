@@ -5,10 +5,13 @@ tasks:
     programs:
       - name: RoofLogic
         type: C++
-    mqtt: primary
     io:
       - type: mqtt
-        client: primary
+        client:
+          username: "{{ mqtt_username }}"
+          password: "{{ mqtt_password }}"
+          address: "{{ mqtt_url }}"
+          client_id: roof::main
         inputs:
           /homeautomation/ground_office_light: ground_office_light
         outputs: {}
@@ -32,9 +35,3 @@ tasks:
               2: kizi_2_raff_down
               3: kizi_2_raff_up
               4: ground_office_light
-mqtt:
-  primary:
-    username: "{{ mqtt_username }}"
-    password: "{{ mqtt_password }}"
-    address: "{{ mqtt_url }}"
-    client_id: roof

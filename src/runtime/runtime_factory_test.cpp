@@ -1,4 +1,5 @@
 #include <gv_factory.hpp>
+#include <mqtt.hpp>
 #include <program_factory.hpp>
 #include <runtime_factory.hpp>
 
@@ -13,19 +14,16 @@ using namespace HomeAutomation::Runtime;
 
 class CountProgram : public HomeAutomation::Scheduler::CppProgram {
 public:
-  CountProgram(HomeAutomation::GV *gv,
-               HomeAutomation::Components::MQTT::ClientPaho *mqtt)
-      : CppProgram(gv, mqtt), cnt{0} {}
+  CountProgram(HomeAutomation::GV *gv) : CppProgram(gv), cnt{0} {}
   void execute(HomeAutomation::TimeStamp now) override { cnt++; }
   int cnt;
 };
 
 namespace HomeAutomation::Runtime {
 std::shared_ptr<HomeAutomation::Scheduler::CppProgram>
-createCppProgram(std::string const &name, HomeAutomation::GV *gv,
-                 HomeAutomation::Components::MQTT::ClientPaho *mqtt) {
+createCppProgram(std::string const &name, HomeAutomation::GV *gv) {
   if (name == "Count") {
-    return std::make_shared<CountProgram>(gv, mqtt);
+    return std::make_shared<CountProgram>(gv);
   }
   return std::shared_ptr<HomeAutomation::Scheduler::CppProgram>();
 }
@@ -35,7 +33,6 @@ TEST_CASE("runtime factory: empty", "[single-file]") {
   std::string yaml = R"(---
 global_vars: {}
 tasks: []
-mqtt: {}
 )";
 
   REQUIRE_NOTHROW(RuntimeFactory::fromString(yaml));
@@ -47,7 +44,6 @@ global_vars: {}
 tasks:
   - name: main
     interval: 25000
-mqtt: {}
 )";
 
   REQUIRE_NOTHROW(RuntimeFactory::fromString(yaml));
@@ -77,7 +73,6 @@ global_vars:
     nine:
       init_val: true
 tasks: []
-mqtt: {}
 )";
 
   // referenced variables do not exist
@@ -93,14 +88,13 @@ global_vars: {}
 tasks:
   - name: main
     interval: 25000
-mqtt: {}
 )";
 
   std::atomic_bool quit_cond = false;
   auto runtime = RuntimeFactory::fromString(yaml);
 
   HomeAutomation::GV gv;
-  auto testProgram = std::make_shared<CountProgram>(&gv, nullptr);
+  auto testProgram = std::make_shared<CountProgram>(&gv);
 
   runtime->Scheduler()->getTask("main")->addProgram(testProgram);
 
@@ -120,24 +114,26 @@ global_vars: {}
 tasks:
   - name: main
     interval: 25000
-    mqtt: primary
-mqtt:
-  primary:
-    username: someone
-    password: secret
-    address: tcp://hostdoesnotexist:1883
-    client_id: faultyclient
-    topics: []
+    programs:
+      - name: Count
+        type: C++
+    io:
+      - type: mqtt
+        client:
+          username: someone
+          password: secret
+          address: tcp://hostdoesnotexist:1883
+          client_id: faultyclient
+        inputs: {}
+        output: {}
 )";
 
   auto runtime = RuntimeFactory::fromString(yaml);
 
-  REQUIRE_THROWS_AS(
-      [&runtime]() {
-        runtime->start([]() -> bool { return false; });
-        runtime->wait();
-      }(),
-      mqtt::exception);
+  REQUIRE_NOTHROW([&runtime]() {
+    runtime->start([]() -> bool { return true; });
+    runtime->wait();
+  }());
 }
 
 TEST_CASE("runtime factory: instantiate runtime with some programs",
@@ -188,8 +184,35 @@ tasks:
         type: C++
       - name: Third
         type: C++
-    mqtt: primary
     io:
+      - type: mqtt
+        client:
+          username: garfield
+          password: secret
+          address: tcp://localhost:1883
+          client_id: test::main
+        inputs: {}
+        outputs:
+          /homeautomation/something: something
+      - type: modbus-rtu
+        path: /dev/ttyUSB0
+        baud: 9600
+        data_bit: 8
+        parity: N
+        stop_bit: 1
+        components:
+          - type: WP8026ADAM
+            slave: 1
+            inputs:
+              0: one
+              1: two
+              2: three
+          - type: R4S8CRMB
+            slave: 1
+            outputs:
+              0: one
+              1: two
+              2: three
       - type: i2c
         bus: /dev/i2c-1
         components:
@@ -211,14 +234,6 @@ tasks:
               2: kizi_2_raff_up
               3: kizi_2_raff_down
               4: ground_office_light
-mqtt:
-  primary:
-    username: garfield
-    password: secret
-    address: tcp://localhost:1883
-    client_id: myclient
-    topics:
-      - /homeautomation/ground_office_light
 )";
     runtime = RuntimeFactory::fromString(yaml);
   }());

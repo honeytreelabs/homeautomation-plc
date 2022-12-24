@@ -30,8 +30,8 @@ TEST_CASE("mqtt: connect/disconnect mqtt client, no broker listening",
   // this test shows that we are currently depending on a working/reachable
   // broker
   ClientPaho client{"tcp://localhost:1884"};
-  REQUIRE_THROWS_AS(client.connect(), mqtt::exception);
-  REQUIRE_THROWS_AS(client.disconnect(), mqtt::exception);
+  REQUIRE_NOTHROW(client.connect());
+  REQUIRE_NOTHROW(client.disconnect());
 }
 
 TEST_CASE("mqtt: publish/receive one mqtt message", "[single-file]") {

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <list>
-#include <mqtt_factory.hpp>
 #include <runtime.hpp>
 #include <scheduler.hpp>
 #include <tuple>
@@ -49,12 +48,8 @@ private:
 
 class TaskImpl : public Task {
 public:
-  TaskImpl(HomeAutomation::Scheduler::Task &task,
-           HomeAutomation::Components::MQTT::ClientPaho *mqttClient)
-      : task{task}, mqttClient{mqttClient} {}
+  TaskImpl(HomeAutomation::Scheduler::Task &task) : task{task} {}
   virtual ~TaskImpl() = default;
-
-  Components::MQTT::ClientPaho *MQTT() override { return mqttClient; }
 
   void addProgram(
       std::shared_ptr<HomeAutomation::Scheduler::Program> program) override {
@@ -63,8 +58,6 @@ public:
 
 private:
   HomeAutomation::Scheduler::Task &task;
-  // MQTT client is optional
-  HomeAutomation::Components::MQTT::ClientPaho *mqttClient;
 };
 
 class SchedulerImpl final : public Scheduler {
@@ -73,12 +66,11 @@ public:
 
   void installTask(std::string const &name,
                    std::shared_ptr<TaskIOLogicImpl> taskLogic,
-                   HomeAutomation::Scheduler::milliseconds interval,
-                   HomeAutomation::Components::MQTT::ClientPaho *mqttClient) {
+                   HomeAutomation::Scheduler::milliseconds interval) {
     scheduler.installTask(name, taskLogic, interval);
     auto task = scheduler.getTask(name);
     tasks.emplace(std::piecewise_construct, std::forward_as_tuple(name),
-                  std::forward_as_tuple(*task, mqttClient));
+                  std::forward_as_tuple(*task));
   }
 
   Task *getTask(std::string const &name) override {

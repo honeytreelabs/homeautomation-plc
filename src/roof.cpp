@@ -17,9 +17,8 @@ static constexpr auto const cfg = HomeAutomation::Components::BlindConfig{
 class RoofLogic final : public HomeAutomation::Scheduler::CppProgram {
 
 public:
-  RoofLogic(HomeAutomation::GV *gv,
-            HomeAutomation::Components::MQTT::ClientPaho *mqtt)
-      : HomeAutomation::Scheduler::CppProgram(gv, mqtt), blind_sr(cfg),
+  RoofLogic(HomeAutomation::GV *gv)
+      : HomeAutomation::Scheduler::CppProgram(gv), blind_sr(cfg),
         blind_kizi_2(cfg) {}
 
   void execute(HomeAutomation::TimeStamp now) override {
@@ -54,10 +53,9 @@ namespace HomeAutomation {
 namespace Runtime {
 
 std::shared_ptr<HomeAutomation::Scheduler::CppProgram>
-createCppProgram(std::string const &name, HomeAutomation::GV *gv,
-                 HomeAutomation::Components::MQTT::ClientPaho *mqtt) {
+createCppProgram(std::string const &name, HomeAutomation::GV *gv) {
   if (name == "RoofLogic") {
-    return std::make_shared<RoofLogic>(gv, mqtt);
+    return std::make_shared<RoofLogic>(gv);
   }
   spdlog::error("Unknown program named {} requested.", name);
   return std::shared_ptr<HomeAutomation::Scheduler::CppProgram>();
