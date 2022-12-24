@@ -17,6 +17,9 @@ void ModbusRTUFactory::createIOs(YAML::Node const &ioNode,
   auto baud = Helper::getRequiredField<int>(ioNode, "baud");
   auto data_bit = Helper::getRequiredField<int>(ioNode, "data_bit");
   auto parity = Helper::getRequiredField<char>(ioNode, "parity");
+  if (!(parity == 'N' || parity == 'E' || parity == 'O')) {
+    throw std::invalid_argument("parity must be N, E, or O");
+  }
   auto stop_bit = Helper::getRequiredField<int>(ioNode, "stop_bit");
   auto modbus = std::make_shared<HomeAutomation::IO::Modbus::BusRTU>(
       path, baud, parity, data_bit, stop_bit);

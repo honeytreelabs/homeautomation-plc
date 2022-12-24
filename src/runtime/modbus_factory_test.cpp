@@ -50,6 +50,28 @@ io:
                     std::invalid_argument);
 }
 
+TEST_CASE("modbus factory: initialize modbus with invalid parity setting",
+          "[single-file]") {
+  HomeAutomation::GV gv;
+
+  auto const &rootNode = YAML::Load(R"(---
+io:
+  - type: modbus
+    path: /dev/ttyUSB0
+    baud: 9600
+    data_bit: 8
+    parity: I  # invalid setting
+    stop_bit: 1
+    components: []
+)");
+
+  auto taskIoLogicImpl =
+      std::make_shared<HomeAutomation::Runtime::TaskIOLogicImpl>();
+  REQUIRE_THROWS_AS(HomeAutomation::Runtime::ModbusRTUFactory::createIOs(
+                        rootNode["io"][0], taskIoLogicImpl, &gv),
+                    std::invalid_argument);
+}
+
 TEST_CASE("modbus factory: initialize modbus with all required arguments and "
           "components",
           "[single-file]") {
