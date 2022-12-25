@@ -81,9 +81,10 @@ public:
   void addProgram(std::shared_ptr<HomeAutomation::Runtime::Program> program) {
     programs.push_back(program);
   }
-  void
-  for_each_program(std::function<void(std::shared_ptr<Program>)> func) const {
-    std::for_each(programs.begin(), programs.end(), func);
+  void executePrograms() const {
+    for (auto const &program : programs) {
+      program->execute(std::chrono::high_resolution_clock::now());
+    }
   }
   std::shared_ptr<TaskIOLogic> getTaskIOLogic() const { return taskIOLogic; }
   milliseconds getInterval() const { return interval; }
@@ -146,9 +147,7 @@ private:
     while (!quitCb()) {
       spdlog::debug("Task::tick()");
       task.getTaskIOLogic()->before();
-      task.for_each_program([](std::shared_ptr<Program> program) {
-        program->execute(std::chrono::high_resolution_clock::now());
-      });
+      task.executePrograms();
       task.getTaskIOLogic()->after();
 
       // TODO this should account for the actual program execution period
