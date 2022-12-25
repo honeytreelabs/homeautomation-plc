@@ -4,7 +4,7 @@
 
 // PLC runtime
 #include <gv.hpp>
-#include <program_factory.hpp>
+#include <program.hpp>
 
 #include <spdlog/spdlog.h>
 

@@ -1,14 +1,13 @@
 #pragma once
 
 #include <common.hpp>
+#include <program.hpp>
 
 #include <spdlog/spdlog.h>
 
 #include <chrono>
 #include <functional>
-#include <list>
 #include <map>
-#include <memory>
 #include <optional>
 #include <stdexcept>
 #include <thread>
@@ -18,14 +17,6 @@ namespace HomeAutomation {
 namespace Runtime {
 
 using milliseconds = std::chrono::duration<double, std::milli>;
-
-// Programs shall only operate on GV memory
-class Program {
-public:
-  virtual ~Program() {}
-  virtual void execute(TimeStamp now) = 0;
-};
-using Programs = std::list<std::shared_ptr<Program>>;
 
 using QuitCb = std::function<bool()>;
 

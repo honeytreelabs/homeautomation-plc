@@ -1,3 +1,4 @@
+#include "spdlog/spdlog.h"
 #include <factory_helpers.hpp>
 #include <program_factory.hpp>
 
@@ -25,6 +26,8 @@ void ProgramFactory::installPrograms(HomeAutomation::Runtime::Task *task,
         spdlog::info("Installing {} program {}", cppProgramTypeName,
                      programName);
         task->addProgram(program);
+      } else {
+        spdlog::warn("Program {} not installed.", programName);
       }
     } else {
       throw std::invalid_argument("unsupported program type given");
