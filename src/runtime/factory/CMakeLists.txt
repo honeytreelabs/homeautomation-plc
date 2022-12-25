@@ -1,4 +1,4 @@
-add_library(runtime STATIC
+add_library(factory STATIC
   gv_factory.cpp
   i2c_factory.cpp
   io_factory.cpp
@@ -8,19 +8,19 @@ add_library(runtime STATIC
   runtime_factory.cpp
   scheduler_factory.cpp)
 
-target_include_directories(runtime PUBLIC ${CMAKE_CURRENT_LIST_DIR})
+target_include_directories(factory PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 
-target_compile_features(runtime PUBLIC cxx_std_20)
+target_compile_features(factory PUBLIC cxx_std_20)
 
-target_link_libraries(runtime PUBLIC
+target_link_libraries(factory PUBLIC
   common
   components::automation
   components::lua
-  scheduler)
+  runtime)
 
-create_memchecked_test(gv_factory runtime TRUE)
-create_memchecked_test(io_factory runtime TRUE)
-create_memchecked_test(mqtt_io_factory runtime TRUE)
-create_memchecked_test(modbus_factory runtime TRUE)
-create_memchecked_test(scheduler_factory runtime TRUE)
-create_memchecked_test(runtime_factory runtime TRUE)
+create_memchecked_test(gv_factory factory TRUE)
+create_memchecked_test(io_factory factory TRUE)
+create_memchecked_test(mqtt_io_factory factory TRUE)
+create_memchecked_test(modbus_factory factory TRUE)
+create_memchecked_test(scheduler_factory factory TRUE)
+create_memchecked_test(runtime_factory factory TRUE)

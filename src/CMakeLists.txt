@@ -4,7 +4,7 @@ function(create_logic name)
   add_executable(${name} ${ARGN})
   target_link_libraries(${name} PRIVATE
     entry
-    runtime)
+    factory)
   if (RASPBERRY)
     target_link_libraries(${name} PUBLIC -static)
   endif()
