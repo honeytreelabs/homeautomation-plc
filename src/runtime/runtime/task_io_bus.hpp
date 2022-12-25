@@ -2,7 +2,7 @@
 
 #include <gv.hpp>
 #include <io_if.hpp>
-#include <scheduler.hpp>
+#include <task_io.hpp>
 
 namespace HomeAutomation {
 
