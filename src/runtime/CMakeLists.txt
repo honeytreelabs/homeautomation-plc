@@ -1,3 +1,11 @@
+add_subdirectory(test)
+
+add_subdirectory(common)
+add_subdirectory(system)
+add_subdirectory(scheduler)
+add_subdirectory(components)
+add_subdirectory(entry)
+
 add_library(runtime STATIC
   gv_factory.cpp
   i2c_factory.cpp
@@ -16,6 +24,8 @@ target_compile_features(runtime PUBLIC cxx_std_20)
 
 target_link_libraries(runtime PUBLIC
   common
+  components::automation
+  components::lua
   scheduler
   system)
 
