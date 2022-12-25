@@ -27,7 +27,7 @@ generateClient(YAML::Node const &clientNode) {
 
 void MQTTIOFactory::createIOs(
     YAML::Node const &ioNode,
-    std::shared_ptr<HomeAutomation::Scheduler::TaskIOLogicComposite> ioLogic,
+    std::shared_ptr<HomeAutomation::Runtime::TaskIOLogicComposite> ioLogic,
     HomeAutomation::GV *gv) {
   auto const &mqttClientNode = ioNode["client"];
   if (!mqttClientNode.IsDefined()) {

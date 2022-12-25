@@ -12,7 +12,7 @@
 
 using namespace HomeAutomation::Runtime;
 
-class CountProgram : public HomeAutomation::Scheduler::CppProgram {
+class CountProgram : public HomeAutomation::Runtime::CppProgram {
 public:
   CountProgram(HomeAutomation::GV *gv) : CppProgram(gv), cnt{0} {}
   void execute(HomeAutomation::TimeStamp now) override { cnt++; }
@@ -20,12 +20,12 @@ public:
 };
 
 namespace HomeAutomation::Runtime {
-std::shared_ptr<HomeAutomation::Scheduler::CppProgram>
+std::shared_ptr<HomeAutomation::Runtime::CppProgram>
 createCppProgram(std::string const &name, HomeAutomation::GV *gv) {
   if (name == "Count") {
     return std::make_shared<CountProgram>(gv);
   }
-  return std::shared_ptr<HomeAutomation::Scheduler::CppProgram>();
+  return std::shared_ptr<HomeAutomation::Runtime::CppProgram>();
 }
 } // namespace HomeAutomation::Runtime
 

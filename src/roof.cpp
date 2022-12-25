@@ -12,11 +12,11 @@ static constexpr auto const cfg = HomeAutomation::Components::BlindConfig{
     .periodIdle = 500ms, .periodUp = 50s, .periodDown = 50s};
 
 // execution context (shall run in dedicated thread with given cycle time)
-class RoofLogic final : public HomeAutomation::Scheduler::CppProgram {
+class RoofLogic final : public HomeAutomation::Runtime::CppProgram {
 
 public:
   RoofLogic(HomeAutomation::GV *gv)
-      : HomeAutomation::Scheduler::CppProgram(gv), blind_sr(cfg),
+      : HomeAutomation::Runtime::CppProgram(gv), blind_sr(cfg),
         blind_kizi_2(cfg) {}
 
   void execute(HomeAutomation::TimeStamp now) override {
@@ -50,13 +50,13 @@ private:
 namespace HomeAutomation {
 namespace Runtime {
 
-std::shared_ptr<HomeAutomation::Scheduler::CppProgram>
+std::shared_ptr<HomeAutomation::Runtime::CppProgram>
 createCppProgram(std::string const &name, HomeAutomation::GV *gv) {
   if (name == "RoofLogic") {
     return std::make_shared<RoofLogic>(gv);
   }
   spdlog::error("Unknown program named {} requested.", name);
-  return std::shared_ptr<HomeAutomation::Scheduler::CppProgram>();
+  return std::shared_ptr<HomeAutomation::Runtime::CppProgram>();
 }
 
 } // namespace Runtime

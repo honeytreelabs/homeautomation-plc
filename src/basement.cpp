@@ -9,11 +9,11 @@
 #include <spdlog/spdlog.h>
 
 // execution context (shall run in dedicated thread with given cycle time)
-class BasementLogic final : public HomeAutomation::Scheduler::CppProgram {
+class BasementLogic final : public HomeAutomation::Runtime::CppProgram {
 
 public:
   BasementLogic(HomeAutomation::GV *gv)
-      : HomeAutomation::Scheduler::CppProgram(gv) {}
+      : HomeAutomation::Runtime::CppProgram(gv) {}
 
   void execute(HomeAutomation::TimeStamp now) override {
     (void)now;
@@ -67,13 +67,13 @@ private:
 namespace HomeAutomation {
 namespace Runtime {
 
-std::shared_ptr<HomeAutomation::Scheduler::CppProgram>
+std::shared_ptr<HomeAutomation::Runtime::CppProgram>
 createCppProgram(std::string const &name, HomeAutomation::GV *gv) {
   if (name == "BasementLogic") {
     return std::make_shared<BasementLogic>(gv);
   }
   spdlog::error("Unknown program named {} requested.", name);
-  return std::shared_ptr<HomeAutomation::Scheduler::CppProgram>();
+  return std::shared_ptr<HomeAutomation::Runtime::CppProgram>();
 }
 
 } // namespace Runtime

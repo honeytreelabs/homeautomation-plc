@@ -21,7 +21,7 @@ struct CopyInstructionOutput {
 };
 using CopySequenceOutput = std::list<CopyInstructionOutput>;
 
-class BusIOLogic : public HomeAutomation::Scheduler::TaskIOLogic {
+class BusIOLogic : public HomeAutomation::Runtime::TaskIOLogic {
 public:
   BusIOLogic(std::shared_ptr<HomeAutomation::IO::Bus> bus,
              CopySequenceInput &&inputSequence,

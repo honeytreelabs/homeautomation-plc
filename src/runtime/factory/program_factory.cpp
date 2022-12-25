@@ -3,7 +3,7 @@
 
 namespace HomeAutomation {
 namespace Runtime {
-void ProgramFactory::installPrograms(HomeAutomation::Scheduler::Task *task,
+void ProgramFactory::installPrograms(HomeAutomation::Runtime::Task *task,
                                      HomeAutomation::GV *gv,
                                      YAML::Node const &programsNode) {
   if (!programsNode.IsDefined()) {

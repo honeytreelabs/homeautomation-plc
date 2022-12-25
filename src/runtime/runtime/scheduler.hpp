@@ -15,7 +15,7 @@
 #include <utility>
 
 namespace HomeAutomation {
-namespace Scheduler {
+namespace Runtime {
 
 using milliseconds = std::chrono::duration<double, std::milli>;
 
@@ -78,7 +78,7 @@ class Task final {
 public:
   Task(std::shared_ptr<TaskIOLogic> taskIOLogic, milliseconds interval)
       : taskIOLogic{taskIOLogic}, interval{interval} {}
-  void addProgram(std::shared_ptr<HomeAutomation::Scheduler::Program> program) {
+  void addProgram(std::shared_ptr<HomeAutomation::Runtime::Program> program) {
     programs.push_back(program);
   }
   void
@@ -165,5 +165,5 @@ private:
   std::list<std::thread> threads;
 };
 
-} // namespace Scheduler
+} // namespace Runtime
 } // namespace HomeAutomation

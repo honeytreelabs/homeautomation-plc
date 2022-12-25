@@ -8,12 +8,12 @@
 namespace HomeAutomation {
 namespace Runtime {
 
-std::shared_ptr<HomeAutomation::Scheduler::Scheduler>
+std::shared_ptr<HomeAutomation::Runtime::Scheduler>
 SchedulerFactory::createScheduler(YAML::Node const &schedulerNode,
                                   HomeAutomation::GV *gv) {
   using namespace std::chrono_literals;
 
-  auto scheduler = std::make_shared<HomeAutomation::Scheduler::Scheduler>();
+  auto scheduler = std::make_shared<HomeAutomation::Runtime::Scheduler>();
 
   for (YAML::const_iterator it = schedulerNode.begin();
        it != schedulerNode.end(); ++it) {
@@ -21,7 +21,7 @@ SchedulerFactory::createScheduler(YAML::Node const &schedulerNode,
 
     // IO
     auto taskIOLogic =
-        std::make_shared<HomeAutomation::Scheduler::TaskIOLogicComposite>();
+        std::make_shared<HomeAutomation::Runtime::TaskIOLogicComposite>();
     auto const &ioNode = taskNode["io"];
     IOFactory::createIOs(ioNode, taskIOLogic, gv);
 

@@ -12,9 +12,9 @@
 using namespace HomeAutomation::Runtime;
 
 namespace HomeAutomation::Runtime {
-std::shared_ptr<HomeAutomation::Scheduler::CppProgram>
+std::shared_ptr<HomeAutomation::Runtime::CppProgram>
 createCppProgram(std::string const &name, HomeAutomation::GV *gv) {
-  return std::shared_ptr<HomeAutomation::Scheduler::CppProgram>();
+  return std::shared_ptr<HomeAutomation::Runtime::CppProgram>();
 }
 } // namespace HomeAutomation::Runtime
 
@@ -29,7 +29,7 @@ tasks: []
   REQUIRE_NOTHROW(SchedulerFactory::createScheduler(rootNode["tasks"], &gv));
 }
 
-class NullProgram : public HomeAutomation::Scheduler::Program {
+class NullProgram : public HomeAutomation::Runtime::Program {
   void execute(HomeAutomation::TimeStamp now) {}
 };
 

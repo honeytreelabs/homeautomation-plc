@@ -9,17 +9,17 @@ namespace Runtime {
 class RuntimeImpl : public Runtime {
 public:
   RuntimeImpl(std::shared_ptr<HomeAutomation::GV> gv,
-              std::shared_ptr<HomeAutomation::Scheduler::Scheduler> scheduler)
+              std::shared_ptr<HomeAutomation::Runtime::Scheduler> scheduler)
       : gv{gv}, scheduler{scheduler} {}
 
 public:
   HomeAutomation::GV *GV() override { return gv.get(); }
 
-  HomeAutomation::Scheduler::Scheduler *Scheduler() override {
+  HomeAutomation::Runtime::Scheduler *Scheduler() override {
     return scheduler.get();
   }
 
-  void start(HomeAutomation::Scheduler::QuitCb quitCb) override {
+  void start(HomeAutomation::Runtime::QuitCb quitCb) override {
     scheduler->start(quitCb);
   }
 
@@ -30,7 +30,7 @@ public:
 
 private:
   std::shared_ptr<HomeAutomation::GV> gv;
-  std::shared_ptr<HomeAutomation::Scheduler::Scheduler> scheduler;
+  std::shared_ptr<HomeAutomation::Runtime::Scheduler> scheduler;
 };
 
 } // namespace Runtime

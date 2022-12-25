@@ -12,7 +12,7 @@ namespace Runtime {
 
 void ModbusRTUFactory::createIOs(
     YAML::Node const &ioNode,
-    std::shared_ptr<HomeAutomation::Scheduler::TaskIOLogicComposite> ioLogic,
+    std::shared_ptr<HomeAutomation::Runtime::TaskIOLogicComposite> ioLogic,
     HomeAutomation::GV *gv) {
   auto path = Helper::getRequiredField<std::string>(ioNode, "path");
   auto baud = Helper::getRequiredField<int>(ioNode, "baud");

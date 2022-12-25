@@ -9,7 +9,7 @@
 #include <spdlog/spdlog.h>
 
 // execution context (shall run in dedicated thread with given cycle time)
-class GroundLogic final : public HomeAutomation::Scheduler::CppProgram {
+class GroundLogic final : public HomeAutomation::Runtime::CppProgram {
 
 public:
   GroundLogic(HomeAutomation::GV *gv)
@@ -65,13 +65,13 @@ private:
 namespace HomeAutomation {
 namespace Runtime {
 
-std::shared_ptr<HomeAutomation::Scheduler::CppProgram>
+std::shared_ptr<HomeAutomation::Runtime::CppProgram>
 createCppProgram(std::string const &name, HomeAutomation::GV *gv) {
   if (name == "GroundLogic") {
     return std::make_shared<GroundLogic>(gv);
   }
   spdlog::error("Unknown program named {} requested.", name);
-  return std::shared_ptr<HomeAutomation::Scheduler::CppProgram>();
+  return std::shared_ptr<HomeAutomation::Runtime::CppProgram>();
 }
 
 } // namespace Runtime

@@ -12,7 +12,7 @@ class MQTTIOFactory {
 public:
   static void createIOs(
       YAML::Node const &ioNode,
-      std::shared_ptr<HomeAutomation::Scheduler::TaskIOLogicComposite> ioLogic,
+      std::shared_ptr<HomeAutomation::Runtime::TaskIOLogicComposite> ioLogic,
       HomeAutomation::GV *gv);
 };
 

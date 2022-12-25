@@ -12,7 +12,7 @@ using MQTTTopic = std::string;
 using InputMapping = std::map<MQTTTopic, VarName>;
 using OutputMapping = std::map<VarName, MQTTTopic>;
 
-class MQTTIOLogic final : public HomeAutomation::Scheduler::TaskIOLogic {
+class MQTTIOLogic final : public HomeAutomation::Runtime::TaskIOLogic {
 public:
   MQTTIOLogic(
       InputMapping &&inputs, OutputMapping &&outputs, HomeAutomation::GV *gv,

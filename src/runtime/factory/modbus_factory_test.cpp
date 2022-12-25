@@ -23,7 +23,7 @@ io:
 )");
 
   auto taskIoLogicImpl =
-      std::make_shared<HomeAutomation::Scheduler::TaskIOLogicComposite>();
+      std::make_shared<HomeAutomation::Runtime::TaskIOLogicComposite>();
   REQUIRE_NOTHROW(HomeAutomation::Runtime::ModbusRTUFactory::createIOs(
       rootNode["io"][0], taskIoLogicImpl, &gv));
 }
@@ -44,7 +44,7 @@ io:
 )");
 
   auto taskIoLogicImpl =
-      std::make_shared<HomeAutomation::Scheduler::TaskIOLogicComposite>();
+      std::make_shared<HomeAutomation::Runtime::TaskIOLogicComposite>();
   REQUIRE_THROWS_AS(HomeAutomation::Runtime::ModbusRTUFactory::createIOs(
                         rootNode["io"][0], taskIoLogicImpl, &gv),
                     std::invalid_argument);
@@ -66,7 +66,7 @@ io:
 )");
 
   auto taskIoLogicImpl =
-      std::make_shared<HomeAutomation::Scheduler::TaskIOLogicComposite>();
+      std::make_shared<HomeAutomation::Runtime::TaskIOLogicComposite>();
   REQUIRE_THROWS_AS(HomeAutomation::Runtime::ModbusRTUFactory::createIOs(
                         rootNode["io"][0], taskIoLogicImpl, &gv),
                     std::invalid_argument);
@@ -101,7 +101,7 @@ io:
 )");
 
   auto taskIoLogicImpl =
-      std::make_shared<HomeAutomation::Scheduler::TaskIOLogicComposite>();
+      std::make_shared<HomeAutomation::Runtime::TaskIOLogicComposite>();
   REQUIRE_NOTHROW(HomeAutomation::Runtime::ModbusRTUFactory::createIOs(
       rootNode["io"][0], taskIoLogicImpl, &gv));
 }

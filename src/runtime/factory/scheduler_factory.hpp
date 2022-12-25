@@ -10,7 +10,7 @@ namespace Runtime {
 
 class SchedulerFactory {
 public:
-  static std::shared_ptr<HomeAutomation::Scheduler::Scheduler>
+  static std::shared_ptr<HomeAutomation::Runtime::Scheduler>
   createScheduler(YAML::Node const &schedulerNode, HomeAutomation::GV *gv);
 
 private:
