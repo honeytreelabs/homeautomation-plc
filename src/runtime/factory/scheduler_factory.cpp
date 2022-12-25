@@ -1,7 +1,6 @@
 #include <io_factory.hpp>
 #include <program_factory.hpp>
 #include <scheduler_factory.hpp>
-#include <scheduler_impl.hpp>
 
 #include <chrono>
 #include <stdexcept>
@@ -9,12 +8,12 @@
 namespace HomeAutomation {
 namespace Runtime {
 
-std::shared_ptr<SchedulerImpl>
+std::shared_ptr<HomeAutomation::Scheduler::Scheduler>
 SchedulerFactory::createScheduler(YAML::Node const &schedulerNode,
                                   HomeAutomation::GV *gv) {
   using namespace std::chrono_literals;
 
-  auto scheduler = std::make_shared<HomeAutomation::Runtime::SchedulerImpl>();
+  auto scheduler = std::make_shared<HomeAutomation::Scheduler::Scheduler>();
 
   for (YAML::const_iterator it = schedulerNode.begin();
        it != schedulerNode.end(); ++it) {

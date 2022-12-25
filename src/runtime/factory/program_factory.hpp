@@ -25,7 +25,7 @@ createCppProgram(std::string const &name, HomeAutomation::GV *gv);
 
 class ProgramFactory {
 public:
-  static void installPrograms(HomeAutomation::Runtime::Task *task,
+  static void installPrograms(HomeAutomation::Scheduler::Task *task,
                               HomeAutomation::GV *gv,
                               YAML::Node const &programsNode);
 };

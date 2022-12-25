@@ -32,7 +32,7 @@ public:
   virtual int wait() = 0;
 
   virtual HomeAutomation::GV *GV() = 0;
-  virtual HomeAutomation::Runtime::Scheduler *Scheduler() = 0;
+  virtual HomeAutomation::Scheduler::Scheduler *Scheduler() = 0;
 };
 
 } // namespace Runtime

@@ -1,7 +1,8 @@
 #pragma once
 
+#include <gv.hpp>
 #include <io_if.hpp>
-#include <scheduler_impl.hpp>
+#include <scheduler.hpp>
 
 namespace HomeAutomation {
 

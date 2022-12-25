@@ -1,6 +1,7 @@
 #pragma once
 
-#include <scheduler_impl.hpp>
+#include <gv.hpp>
+#include <scheduler.hpp>
 
 #include <yaml-cpp/yaml.h>
 

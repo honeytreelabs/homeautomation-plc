@@ -1,7 +1,7 @@
 #pragma once
 
 #include <runtime.hpp>
-#include <scheduler_impl.hpp>
+#include <scheduler.hpp>
 
 #include <yaml-cpp/yaml.h>
 
@@ -10,7 +10,7 @@ namespace Runtime {
 
 class SchedulerFactory {
 public:
-  static std::shared_ptr<SchedulerImpl>
+  static std::shared_ptr<HomeAutomation::Scheduler::Scheduler>
   createScheduler(YAML::Node const &schedulerNode, HomeAutomation::GV *gv);
 
 private:

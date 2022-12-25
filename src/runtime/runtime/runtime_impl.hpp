@@ -1,7 +1,7 @@
 #pragma once
 
 #include <runtime.hpp>
-#include <scheduler_impl.hpp>
+#include <scheduler.hpp>
 
 namespace HomeAutomation {
 namespace Runtime {
@@ -9,13 +9,13 @@ namespace Runtime {
 class RuntimeImpl : public Runtime {
 public:
   RuntimeImpl(std::shared_ptr<HomeAutomation::GV> gv,
-              std::shared_ptr<HomeAutomation::Runtime::SchedulerImpl> scheduler)
+              std::shared_ptr<HomeAutomation::Scheduler::Scheduler> scheduler)
       : gv{gv}, scheduler{scheduler} {}
 
 public:
   HomeAutomation::GV *GV() override { return gv.get(); }
 
-  HomeAutomation::Runtime::Scheduler *Scheduler() override {
+  HomeAutomation::Scheduler::Scheduler *Scheduler() override {
     return scheduler.get();
   }
 
@@ -30,7 +30,7 @@ public:
 
 private:
   std::shared_ptr<HomeAutomation::GV> gv;
-  std::shared_ptr<HomeAutomation::Runtime::SchedulerImpl> scheduler;
+  std::shared_ptr<HomeAutomation::Scheduler::Scheduler> scheduler;
 };
 
 } // namespace Runtime

@@ -75,6 +75,9 @@ private:
 
 using Programs = std::list<std::shared_ptr<Program>>;
 struct Task {
+  void addProgram(std::shared_ptr<HomeAutomation::Scheduler::Program> program) {
+    programs.push_back(program);
+  }
   std::shared_ptr<TaskIOLogic> taskIOLogic;
   std::list<std::shared_ptr<Program>> programs;
   milliseconds interval;
