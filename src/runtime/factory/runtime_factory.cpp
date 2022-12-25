@@ -1,4 +1,7 @@
+#include <gv_factory.hpp>
+#include <runtime_factory.hpp>
 #include <runtime_impl.hpp>
+#include <scheduler_factory.hpp>
 
 #include <yaml-cpp/yaml.h>
 

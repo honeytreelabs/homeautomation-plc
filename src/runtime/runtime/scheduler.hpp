@@ -41,7 +41,7 @@ public:
 
 using Programs = std::list<std::shared_ptr<Program>>;
 struct Task {
-  std::shared_ptr<TaskIOLogic> taskLogic;
+  std::shared_ptr<TaskIOLogic> taskIOLogic;
   std::list<std::shared_ptr<Program>> programs;
   milliseconds interval;
 };
@@ -57,7 +57,7 @@ public:
     if (tasks.find(name) != tasks.end()) {
       throw std::invalid_argument("task with given name already exists");
     }
-    tasks[name] = {.taskLogic = taskLogic, .programs{}, .interval = interval};
+    tasks[name] = {.taskIOLogic = taskLogic, .programs{}, .interval = interval};
   }
 
   void addProgram(std::string const &name, std::shared_ptr<Program> program) {
@@ -65,8 +65,8 @@ public:
     if (it == tasks.end()) {
       throw std::invalid_argument("task with given name does not exist");
     }
-    auto &taskInfo = it->second;
-    taskInfo.programs.push_back(program);
+    auto &task = it->second;
+    task.programs.push_back(program);
   }
 
   Task *getTask(std::string const &name) {
@@ -74,13 +74,13 @@ public:
     if (it == tasks.end()) {
       throw std::invalid_argument("task with given name does not exist");
     }
-    auto &taskInfo = it->second;
-    return &taskInfo;
+    auto &task = it->second;
+    return &task;
   }
 
   void start(QuitCb quitCb) {
     for (auto &task : tasks) {
-      threads.emplace_back(Scheduler::thrdFun, std::cref(task.second), quitCb);
+      threads.emplace_back(Scheduler::taskFun, std::cref(task.second), quitCb);
     }
   }
 
@@ -92,20 +92,20 @@ public:
   }
 
 private:
-  static void thrdFun(Task const &taskInfo, QuitCb quitCb) {
-    taskInfo.taskLogic->init();
+  static void taskFun(Task const &task, QuitCb quitCb) {
+    task.taskIOLogic->init();
     while (!quitCb()) {
       spdlog::debug("Task::tick()");
-      taskInfo.taskLogic->before();
-      for (auto &program : taskInfo.programs) {
+      task.taskIOLogic->before();
+      for (auto &program : task.programs) {
         program->execute(std::chrono::high_resolution_clock::now());
       }
-      taskInfo.taskLogic->after();
+      task.taskIOLogic->after();
 
       // TODO this should account for the actual program execution period
-      std::this_thread::sleep_for(taskInfo.interval);
+      std::this_thread::sleep_for(task.interval);
     }
-    taskInfo.taskLogic->shutdown();
+    task.taskIOLogic->shutdown();
   }
 
   Scheduler(Scheduler &) = delete;

@@ -1,8 +1,6 @@
 #pragma once
 
-#include <gv_factory.hpp>
-#include <runtime_factory.hpp>
-#include <scheduler_factory.hpp>
+#include <runtime.hpp>
 #include <scheduler_impl.hpp>
 
 namespace HomeAutomation {
