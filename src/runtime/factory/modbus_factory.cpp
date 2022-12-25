@@ -38,14 +38,14 @@ void ModbusRTUFactory::createIOs(YAML::Node const &ioNode,
       auto input =
           std::make_shared<HomeAutomation::IO::Modbus::WP8026ADAM>(slave);
       modbus->RegisterInput(input);
-      insertCopySequenceBool(inputSequence, gv->inputs, input,
-                             componentNode["inputs"]);
+      Helper::insertCopySequenceBool(inputSequence, gv->inputs, input,
+                                     componentNode["inputs"]);
     } else if (componentType == "R4S8CRMB") {
       auto output =
           std::make_shared<HomeAutomation::IO::Modbus::R4S8CRMB>(slave);
       modbus->RegisterOutput(output);
-      insertCopySequenceBool(outputSequence, gv->outputs, output,
-                             componentNode["outputs"]);
+      Helper::insertCopySequenceBool(outputSequence, gv->outputs, output,
+                                     componentNode["outputs"]);
     } else {
       std::stringstream s;
       s << "unknown component type " << componentType << " given";

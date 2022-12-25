@@ -1,4 +1,5 @@
 add_library(factory STATIC
+  factory_helpers.cpp
   gv_factory.cpp
   i2c_factory.cpp
   io_factory.cpp
@@ -16,7 +17,8 @@ target_link_libraries(factory PUBLIC
   common
   components::automation
   components::lua
-  runtime)
+  runtime
+  yaml-cpp::yaml-cpp)
 
 create_memchecked_test(gv_factory factory TRUE)
 create_memchecked_test(io_factory factory TRUE)

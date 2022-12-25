@@ -1,3 +1,4 @@
+#include <factory_helpers.hpp>
 #include <i2c_bus.hpp>
 #include <i2c_dev.hpp>
 #include <i2c_factory.hpp>
@@ -32,8 +33,8 @@ void IOFactoryI2C::createIOs(YAML::Node const &ioNode,
         throw std::invalid_argument("unknown i2c component type");
       }
       i2cbus->RegisterInput(input);
-      insertCopySequenceBool(inputSequence, gv->inputs, input,
-                             componentNode["inputs"]);
+      Helper::insertCopySequenceBool(inputSequence, gv->inputs, input,
+                                     componentNode["inputs"]);
       // TODO insertCopySequenceInput
     } else if (componentNode["direction"].as<std::string>() == "output") {
       std::shared_ptr<HomeAutomation::IO::I2C::DigitalOutputModule> output;
@@ -47,8 +48,8 @@ void IOFactoryI2C::createIOs(YAML::Node const &ioNode,
         throw std::invalid_argument("unknown i2c component type");
       }
       i2cbus->RegisterOutput(output);
-      insertCopySequenceBool(outputSequence, gv->outputs, output,
-                             componentNode["outputs"]);
+      Helper::insertCopySequenceBool(outputSequence, gv->outputs, output,
+                                     componentNode["outputs"]);
     } else {
       throw std::invalid_argument("unknown i2c component direction");
     }
