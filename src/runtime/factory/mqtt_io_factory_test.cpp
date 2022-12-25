@@ -22,7 +22,7 @@ io:
 )");
 
   auto taskIoLogicImpl =
-      std::make_shared<HomeAutomation::Runtime::TaskIOLogicImpl>();
+      std::make_shared<HomeAutomation::Runtime::TaskIOLogicComposite>();
   REQUIRE_NOTHROW(HomeAutomation::Runtime::MQTTIOFactory::createIOs(
       rootNode["io"][0], taskIoLogicImpl, &gv));
 }

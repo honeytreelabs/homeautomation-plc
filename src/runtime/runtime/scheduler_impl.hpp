@@ -10,11 +10,8 @@
 namespace HomeAutomation {
 namespace Runtime {
 
-class TaskIOLogicImpl : public HomeAutomation::Scheduler::TaskIOLogic {
+class TaskIOLogicComposite : public HomeAutomation::Scheduler::TaskIOLogic {
 public:
-  TaskIOLogicImpl() = default;
-  virtual ~TaskIOLogicImpl() = default;
-
   virtual void init() override {
     for (auto &ioSystem : ioSystems) {
       ioSystem->init();
@@ -66,7 +63,7 @@ public:
   SchedulerImpl() = default;
 
   void installTask(std::string const &name,
-                   std::shared_ptr<TaskIOLogicImpl> taskLogic,
+                   std::shared_ptr<TaskIOLogicComposite> taskLogic,
                    HomeAutomation::Scheduler::milliseconds interval) {
     scheduler.installTask(name, taskLogic, interval);
     auto task = scheduler.getTask(name);

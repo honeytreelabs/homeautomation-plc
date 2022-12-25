@@ -10,7 +10,7 @@ namespace Runtime {
 class IOFactory {
 public:
   static void createIOs(YAML::Node const &ioNode,
-                        std::shared_ptr<TaskIOLogicImpl> ioLogic,
+                        std::shared_ptr<TaskIOLogicComposite> ioLogic,
                         HomeAutomation::GV *gv);
 };
 
