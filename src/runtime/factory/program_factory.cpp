@@ -1,3 +1,4 @@
+#include <factory_helpers.hpp>
 #include <program_factory.hpp>
 
 namespace HomeAutomation {
@@ -12,8 +13,10 @@ void ProgramFactory::installPrograms(HomeAutomation::Runtime::Task *task,
   for (YAML::const_iterator it = programsNode.begin(); it != programsNode.end();
        ++it) {
     auto const &programNode = *it;
-    auto const &programType = programNode["type"].as<std::string>();
-    auto const &programName = programNode["name"].as<std::string>();
+    auto const programType =
+        Helper::getRequiredField<std::string>(programNode, "type");
+    auto const programName =
+        Helper::getRequiredField<std::string>(programNode, "name");
     std::string const cppProgramTypeName = "C++";
     if (programType == cppProgramTypeName) {
       spdlog::info("Creating {} program {}", cppProgramTypeName, programName);
