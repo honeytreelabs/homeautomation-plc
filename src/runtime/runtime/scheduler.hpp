@@ -25,6 +25,7 @@ public:
   virtual ~Program() {}
   virtual void execute(TimeStamp now) = 0;
 };
+using Programs = std::list<std::shared_ptr<Program>>;
 
 using QuitCb = std::function<bool()>;
 
@@ -73,13 +74,23 @@ private:
   std::list<std::shared_ptr<TaskIOLogic>> ioSystems;
 };
 
-using Programs = std::list<std::shared_ptr<Program>>;
-struct Task {
+class Task final {
+public:
+  Task(std::shared_ptr<TaskIOLogic> taskIOLogic, milliseconds interval)
+      : taskIOLogic{taskIOLogic}, interval{interval} {}
   void addProgram(std::shared_ptr<HomeAutomation::Scheduler::Program> program) {
     programs.push_back(program);
   }
+  void
+  for_each_program(std::function<void(std::shared_ptr<Program>)> func) const {
+    std::for_each(programs.begin(), programs.end(), func);
+  }
+  std::shared_ptr<TaskIOLogic> getTaskIOLogic() const { return taskIOLogic; }
+  milliseconds getInterval() const { return interval; }
+
+private:
   std::shared_ptr<TaskIOLogic> taskIOLogic;
-  std::list<std::shared_ptr<Program>> programs;
+  Programs programs;
   milliseconds interval;
 };
 
@@ -89,12 +100,13 @@ public:
   Scheduler(Scheduler &&) = default;
 
   void installTask(std::string const &name,
-                   std::shared_ptr<TaskIOLogic> taskLogic,
+                   std::shared_ptr<TaskIOLogic> taskIOLogic,
                    milliseconds interval) {
     if (tasks.find(name) != tasks.end()) {
       throw std::invalid_argument("task with given name already exists");
     }
-    tasks[name] = {.taskIOLogic = taskLogic, .programs{}, .interval = interval};
+    tasks.emplace(std::piecewise_construct, std::forward_as_tuple(name),
+                  std::forward_as_tuple(taskIOLogic, interval));
   }
 
   void addProgram(std::string const &name, std::shared_ptr<Program> program) {
@@ -103,7 +115,7 @@ public:
       throw std::invalid_argument("task with given name does not exist");
     }
     auto &task = it->second;
-    task.programs.push_back(program);
+    task.addProgram(program);
   }
 
   Task *getTask(std::string const &name) {
@@ -130,19 +142,19 @@ public:
 
 private:
   static void taskFun(Task const &task, QuitCb quitCb) {
-    task.taskIOLogic->init();
+    task.getTaskIOLogic()->init();
     while (!quitCb()) {
       spdlog::debug("Task::tick()");
-      task.taskIOLogic->before();
-      for (auto &program : task.programs) {
+      task.getTaskIOLogic()->before();
+      task.for_each_program([](std::shared_ptr<Program> program) {
         program->execute(std::chrono::high_resolution_clock::now());
-      }
-      task.taskIOLogic->after();
+      });
+      task.getTaskIOLogic()->after();
 
       // TODO this should account for the actual program execution period
-      std::this_thread::sleep_for(task.interval);
+      std::this_thread::sleep_for(task.getInterval());
     }
-    task.taskIOLogic->shutdown();
+    task.getTaskIOLogic()->shutdown();
   }
 
   Scheduler(Scheduler &) = delete;
