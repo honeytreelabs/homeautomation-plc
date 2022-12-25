@@ -10,40 +10,6 @@
 namespace HomeAutomation {
 namespace Runtime {
 
-class TaskIOLogicComposite : public HomeAutomation::Scheduler::TaskIOLogic {
-public:
-  virtual void init() override {
-    for (auto &ioSystem : ioSystems) {
-      ioSystem->init();
-    }
-  }
-
-  virtual void shutdown() override {
-    for (auto &ioSystem : ioSystems) {
-      ioSystem->shutdown();
-    }
-  }
-
-  virtual void before() override {
-    for (auto &ioSystem : ioSystems) {
-      ioSystem->before();
-    }
-  }
-
-  virtual void after() override {
-    for (auto &ioSystem : ioSystems) {
-      ioSystem->after();
-    }
-  }
-
-  void add(std::shared_ptr<HomeAutomation::Scheduler::TaskIOLogic> ioSystem) {
-    ioSystems.push_back(ioSystem);
-  }
-
-private:
-  std::list<std::shared_ptr<HomeAutomation::Scheduler::TaskIOLogic>> ioSystems;
-};
-
 class TaskImpl : public Task {
 public:
   TaskImpl(HomeAutomation::Scheduler::Task &task) : task{task} {}
@@ -62,9 +28,11 @@ class SchedulerImpl final : public Scheduler {
 public:
   SchedulerImpl() = default;
 
-  void installTask(std::string const &name,
-                   std::shared_ptr<TaskIOLogicComposite> taskLogic,
-                   HomeAutomation::Scheduler::milliseconds interval) {
+  void
+  installTask(std::string const &name,
+              std::shared_ptr<HomeAutomation::Scheduler::TaskIOLogicComposite>
+                  taskLogic,
+              HomeAutomation::Scheduler::milliseconds interval) {
     scheduler.installTask(name, taskLogic, interval);
     auto task = scheduler.getTask(name);
     tasks.emplace(std::piecewise_construct, std::forward_as_tuple(name),

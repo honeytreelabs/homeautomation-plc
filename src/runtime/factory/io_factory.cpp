@@ -10,9 +10,10 @@
 namespace HomeAutomation {
 namespace Runtime {
 
-void IOFactory::createIOs(YAML::Node const &ioNode,
-                          std::shared_ptr<TaskIOLogicComposite> ioLogic,
-                          HomeAutomation::GV *gv) {
+void IOFactory::createIOs(
+    YAML::Node const &ioNode,
+    std::shared_ptr<HomeAutomation::Scheduler::TaskIOLogicComposite> ioLogic,
+    HomeAutomation::GV *gv) {
   if (!ioNode.IsDefined()) {
     return;
   }

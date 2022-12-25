@@ -21,7 +21,8 @@ SchedulerFactory::createScheduler(YAML::Node const &schedulerNode,
     auto const &taskNode = *it;
 
     // IO
-    auto taskIOLogic = std::make_shared<TaskIOLogicComposite>();
+    auto taskIOLogic =
+        std::make_shared<HomeAutomation::Scheduler::TaskIOLogicComposite>();
     auto const &ioNode = taskNode["io"];
     IOFactory::createIOs(ioNode, taskIOLogic, gv);
 
