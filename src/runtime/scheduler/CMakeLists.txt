@@ -1,7 +1,9 @@
-add_library(scheduler INTERFACE)
-target_include_directories(scheduler INTERFACE ${CMAKE_CURRENT_LIST_DIR})
-target_link_libraries(scheduler INTERFACE
+add_library(scheduler STATIC
+  mqtt_impl.cpp)
+target_include_directories(scheduler PUBLIC ${CMAKE_CURRENT_LIST_DIR})
+target_link_libraries(scheduler PUBLIC
   common
+  system
   spdlog::spdlog
 )
-target_compile_features(scheduler INTERFACE cxx_std_20)
+target_compile_features(scheduler PUBLIC cxx_std_20)
