@@ -12,6 +12,13 @@ using namespace std::literals;
 namespace HomeAutomation {
 namespace Components {
 
+// https://ctrpeach.io/posts/cpp20-string-literal-template-parameters/
+template <size_t N> struct StringLiteral {
+  constexpr StringLiteral(const char (&str)[N]) { std::copy_n(str, N, value); }
+
+  char value[N];
+};
+
 struct BlindOutputs {
   bool up;
   bool down;

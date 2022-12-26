@@ -14,9 +14,6 @@ target_include_directories(factory PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 target_compile_features(factory PUBLIC cxx_std_20)
 
 target_link_libraries(factory PUBLIC
-  common
-  components::automation
-  components::lua
   runtime
   yaml-cpp::yaml-cpp)
 

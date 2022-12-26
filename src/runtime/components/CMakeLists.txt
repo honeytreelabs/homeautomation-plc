@@ -2,14 +2,14 @@ add_library(components-automation STATIC blind.cpp)
 add_library(components::automation ALIAS components-automation)
 target_include_directories(components-automation PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 target_link_libraries(components-automation PUBLIC
-  common
+  runtime
   spdlog::spdlog)
 
 add_library(components-lua STATIC lua_block.cpp)
 add_library(components::lua ALIAS components-lua)
 target_include_directories(components-lua PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 target_link_libraries(components-lua PUBLIC
-  common
+  runtime
   sol2::sol2
   lua)
 

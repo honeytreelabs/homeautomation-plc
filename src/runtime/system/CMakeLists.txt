@@ -4,7 +4,6 @@ add_library(system STATIC
   signal.cpp)
 target_include_directories(system PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 target_link_libraries(system PUBLIC
-  common
   ${CONAN_LIBS}
   spdlog::spdlog)
 
@@ -13,7 +12,7 @@ if(MSVC)
 else()
   target_compile_options(system PRIVATE -Wall -Wextra -Wpedantic)
 endif()
-target_compile_features(system PRIVATE cxx_std_20)
+target_compile_features(system PUBLIC cxx_std_20)
 
 create_memchecked_test(i2c_dev system TRUE)
 create_memchecked_test(mqtt system TRUE)
