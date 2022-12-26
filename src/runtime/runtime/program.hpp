@@ -12,8 +12,10 @@ namespace Runtime {
 // Programs shall only operate on GV memory
 class Program {
 public:
-  virtual ~Program() {}
   virtual void execute(TimeStamp now) = 0;
+
+protected:
+  virtual ~Program() {}
 };
 using Programs = std::list<std::shared_ptr<Program>>;
 

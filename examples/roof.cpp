@@ -8,6 +8,8 @@
 
 #include <spdlog/spdlog.h>
 
+#include <sstream>
+
 static constexpr auto const cfg = HomeAutomation::Components::BlindConfig{
     .periodIdle = 500ms, .periodUp = 50s, .periodDown = 50s};
 
@@ -55,8 +57,9 @@ createCppProgram(std::string const &name, HomeAutomation::GV *gv) {
   if (name == "RoofLogic") {
     return std::make_shared<RoofLogic>(gv);
   }
-  spdlog::error("Unknown program named {} requested.", name);
-  return std::shared_ptr<HomeAutomation::Runtime::CppProgram>();
+  std::stringstream s;
+  s << "unknown program named " << name << " requested";
+  throw std::invalid_argument(s.str());
 }
 
 } // namespace Runtime

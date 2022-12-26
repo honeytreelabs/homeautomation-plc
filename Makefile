@@ -69,14 +69,17 @@ test-down:
 	$(MAKE) -C test/mosquitto down
 
 .PHONY: test
+test: export LUA_PATH=/usr/share/lua/5.4/?.lua
 test: test-up
 	ctest -j $$(nproc) --test-dir build --verbose
 
 .PHONY: test-nomemcheck
+test-nomemcheck: export LUA_PATH=/usr/share/lua/5.4/?.lua
 test-nomemcheck:
 	ctest --test-dir build --verbose -E '.*_memchecked_.*'
 
 .PHONY: test-failed
+test-failed: export LUA_PATH=/usr/share/lua/5.4/?.lua
 test-failed:
 	ctest --test-dir build --verbose --rerun-failed --output-on-failure -E '.*_memchecked_.*'
 

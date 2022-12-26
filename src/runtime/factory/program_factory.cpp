@@ -1,9 +1,13 @@
-#include "spdlog/spdlog.h"
 #include <factory_helpers.hpp>
 #include <program_factory.hpp>
+#include <program_lua.hpp>
 
 namespace HomeAutomation {
 namespace Runtime {
+
+constexpr char const *CPPProgramTypeName = "C++";
+constexpr char const *LuaProgramTypeName = "Lua";
+
 void ProgramFactory::installPrograms(HomeAutomation::Runtime::Task *task,
                                      HomeAutomation::GV *gv,
                                      YAML::Node const &programsNode) {
@@ -18,20 +22,20 @@ void ProgramFactory::installPrograms(HomeAutomation::Runtime::Task *task,
         Helper::getRequiredField<std::string>(programNode, "type");
     auto const programName =
         Helper::getRequiredField<std::string>(programNode, "name");
-    std::string const cppProgramTypeName = "C++";
-    if (programType == cppProgramTypeName) {
-      spdlog::info("Creating {} program {}", cppProgramTypeName, programName);
-      auto program = createCppProgram(programName, gv);
-      if (program) {
-        spdlog::info("Installing {} program {}", cppProgramTypeName,
-                     programName);
-        task->addProgram(program);
-      } else {
-        spdlog::warn("Program {} not installed.", programName);
-      }
+    std::shared_ptr<Program> program;
+    if (programType == CPPProgramTypeName) {
+      spdlog::info("Creating {} program {}", CPPProgramTypeName, programName);
+      program =
+          createCppProgram(programName, gv); // provided by actual application
+    } else if (programType == LuaProgramTypeName) {
+      auto const script =
+          Helper::getRequiredField<std::string>(programNode, "script");
+      program = std::make_shared<LuaProgram>(script, gv);
     } else {
       throw std::invalid_argument("unsupported program type given");
     }
+    spdlog::info("Installing {} program {}", programType, programName);
+    task->addProgram(program);
   }
 }
 } // namespace Runtime
