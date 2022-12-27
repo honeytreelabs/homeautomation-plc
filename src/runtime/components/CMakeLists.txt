@@ -1,4 +1,6 @@
-add_library(components-automation STATIC blind.cpp)
+add_library(components-automation STATIC
+  blind_state.cpp
+  blind.cpp)
 add_library(components::automation ALIAS components-automation)
 target_include_directories(components-automation PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 target_link_libraries(components-automation PUBLIC

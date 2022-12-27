@@ -10,6 +10,8 @@
 
 #include <sstream>
 
+using namespace std::chrono_literals;
+
 static constexpr auto const cfg = HomeAutomation::Components::BlindConfig{
     .periodIdle = 500ms, .periodUp = 50s, .periodDown = 50s};
 

@@ -1,4 +1,4 @@
-#include <blind.hpp>
+#include <blind_state.hpp>
 
 #include <catch2/catch_test_macros.hpp>
 
