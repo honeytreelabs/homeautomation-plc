@@ -1,3 +1,4 @@
+#include <blind.hpp>
 #include <library_registry_lua.hpp>
 #include <light.hpp>
 #include <trigger.hpp>
@@ -10,6 +11,7 @@ void HomeAutomation::Library::LuaLibraryRegistry::RegisterComponents(
   Light::RegisterComponent(lua);
   R_TRIG::RegisterComponent(lua);
   F_TRIG::RegisterComponent(lua);
+  Blind::RegisterComponent(lua);
 }
 
 } // namespace Library

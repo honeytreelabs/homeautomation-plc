@@ -3,6 +3,11 @@
 namespace HomeAutomation {
 namespace Library {
 
+BlindConfig BlindConfigFromMillis(unsigned periodIdle, unsigned periodUp,
+                                  unsigned periodDown) {
+  return BlindConfig{periodIdle * 1ms, periodUp * 1ms, periodDown * 1ms};
+}
+
 OptionalBlindState BlindStateIdle::execute(TimeStamp now, bool up, bool down) {
   spdlog::debug("BlindStateIdle::execute");
 

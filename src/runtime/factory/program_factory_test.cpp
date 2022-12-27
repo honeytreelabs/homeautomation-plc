@@ -200,3 +200,40 @@ programs:
   task.executePrograms();
   REQUIRE(std::get<bool>(gv.outputs["output_1"]) == false);
 }
+
+TEST_CASE("program factory: execute Lua program with blind", "[single-file]") {
+  using namespace std::chrono_literals;
+
+  HomeAutomation::GV gv;
+  gv.inputs["input_up"] = false;
+  gv.inputs["input_down"] = false;
+  gv.outputs["output_up"] = false;
+  gv.outputs["output_down"] = false;
+
+  auto const &programsRootNode = YAML::Load(R"(---
+programs:
+  - name: First
+    type: Lua
+    script: test/test_program_with_blind.lua
+)");
+
+  auto taskIOLogic =
+      std::make_shared<HomeAutomation::Runtime::TaskIOLogicComposite>();
+  auto task = HomeAutomation::Runtime::Task{taskIOLogic, 500 * 1ms};
+  REQUIRE_NOTHROW(HomeAutomation::Runtime::ProgramFactory::installPrograms(
+      &task, &gv, programsRootNode["programs"]));
+
+  auto start = std::chrono::high_resolution_clock::now();
+
+  gv.inputs["input_up"] = false;
+  gv.inputs["input_down"] = false;
+  REQUIRE_NOTHROW(task.executePrograms(start));
+  REQUIRE(std::get<bool>(gv.outputs["output_up"]) == false);
+  REQUIRE(std::get<bool>(gv.outputs["output_down"]) == false);
+
+  gv.inputs["input_up"] = true;
+  gv.inputs["input_down"] = false;
+  REQUIRE_NOTHROW(task.executePrograms(start + 600ms));
+  REQUIRE(std::get<bool>(gv.outputs["output_up"]) == true);
+  REQUIRE(std::get<bool>(gv.outputs["output_down"]) == false);
+}

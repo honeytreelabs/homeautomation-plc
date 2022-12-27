@@ -28,9 +28,10 @@ public:
   void addProgram(std::shared_ptr<HomeAutomation::Runtime::Program> program) {
     programs.push_back(program);
   }
-  void executePrograms() const {
+  void executePrograms(
+      TimeStamp now = std::chrono::high_resolution_clock::now()) const {
     for (auto const &program : programs) {
-      program->execute(std::chrono::high_resolution_clock::now());
+      program->execute(now);
     }
   }
   std::shared_ptr<TaskIOLogic> getTaskIOLogic() const { return taskIOLogic; }

@@ -35,6 +35,9 @@ struct BlindConfig {
   std::chrono::milliseconds periodDown;
 };
 
+BlindConfig BlindConfigFromMillis(unsigned periodIdle, unsigned periodUp,
+                                  unsigned periodDown);
+
 using BlindState = State<BlindOutputs, bool, bool>;
 using UniqueBlindState = std::unique_ptr<BlindState>;
 class BlindFSM : public FSM<BlindOutputs, bool, bool> {
