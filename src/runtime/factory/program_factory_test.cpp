@@ -152,3 +152,51 @@ programs:
 
   REQUIRE(std::get<int>(gv.outputs["bar"]) == 44);
 }
+
+TEST_CASE("program factory: execute Lua program with library components",
+          "[single-file]") {
+  using namespace std::chrono_literals;
+
+  HomeAutomation::GV gv;
+  gv.inputs["input_1"] = false;
+  gv.outputs["output_1"] = false;
+
+  auto const &programsRootNode = YAML::Load(R"(---
+programs:
+  - name: First
+    type: Lua
+    script: test/test_program_with_library.lua
+)");
+
+  auto taskIOLogic =
+      std::make_shared<HomeAutomation::Runtime::TaskIOLogicComposite>();
+  auto task = HomeAutomation::Runtime::Task{taskIOLogic, 500 * 1ms};
+  REQUIRE_NOTHROW(HomeAutomation::Runtime::ProgramFactory::installPrograms(
+      &task, &gv, programsRootNode["programs"]));
+
+  task.executePrograms();
+  REQUIRE(std::get<bool>(gv.outputs["output_1"]) == false);
+
+  task.executePrograms();
+  REQUIRE(std::get<bool>(gv.outputs["output_1"]) == false);
+
+  gv.inputs["input_1"] = true;
+  task.executePrograms();
+  REQUIRE(std::get<bool>(gv.outputs["output_1"]) == true);
+
+  gv.inputs["input_1"] = false;
+  task.executePrograms();
+  REQUIRE(std::get<bool>(gv.outputs["output_1"]) == true);
+
+  gv.inputs["input_1"] = false;
+  task.executePrograms();
+  REQUIRE(std::get<bool>(gv.outputs["output_1"]) == true);
+
+  gv.inputs["input_1"] = true;
+  task.executePrograms();
+  REQUIRE(std::get<bool>(gv.outputs["output_1"]) == false);
+
+  gv.inputs["input_1"] = false;
+  task.executePrograms();
+  REQUIRE(std::get<bool>(gv.outputs["output_1"]) == false);
+}
