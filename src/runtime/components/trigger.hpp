@@ -1,5 +1,7 @@
 #pragma once
 
+#include <sol/sol.hpp>
+
 namespace HomeAutomation {
 namespace Components {
 
@@ -12,6 +14,12 @@ public:
     bool ret = !last && cur;
     last = cur;
     return ret;
+  }
+
+  static void RegisterComponent(sol::state &lua) {
+    sol::usertype<R_TRIG> trigger_type = lua.new_usertype<R_TRIG>(
+        "R_TRIG", sol::constructors<R_TRIG(), R_TRIG(bool)>());
+    trigger_type["execute"] = &R_TRIG::execute;
   }
 
 private:
@@ -27,6 +35,12 @@ public:
     bool ret = last && !cur;
     last = cur;
     return ret;
+  }
+
+  static void RegisterComponent(sol::state &lua) {
+    sol::usertype<F_TRIG> trigger_type = lua.new_usertype<F_TRIG>(
+        "F_TRIG", sol::constructors<F_TRIG(), F_TRIG(bool)>());
+    trigger_type["execute"] = &F_TRIG::execute;
   }
 
 private:

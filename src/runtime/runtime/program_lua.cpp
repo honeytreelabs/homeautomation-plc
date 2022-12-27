@@ -1,3 +1,4 @@
+#include <components_registry_lua.hpp>
 #include <program_lua.hpp>
 
 #include <spdlog/spdlog.h>
@@ -8,13 +9,16 @@ namespace Runtime {
 LuaProgram::LuaProgram(std::filesystem::path const &path,
                        HomeAutomation::GV *gv)
     : path{path}, gv{gv}, lua{} {
-  lua.open_libraries();
-  // TODO make components available in Lua interpreter
+  lua.open_libraries(/* all standard libraries */);
+
+  // forward GVs into program
   sol::usertype<HomeAutomation::GV> gv_type =
       lua.new_usertype<HomeAutomation::GV>("GVType");
   gv_type["inputs"] = &HomeAutomation::GV::inputs;
   gv_type["outputs"] = &HomeAutomation::GV::outputs;
   lua["GV"] = gv;
+
+  HomeAutomation::Components::LuaComponentsRegistry::RegisterComponents(lua);
 }
 
 void LuaProgram::execute(TimeStamp now) {

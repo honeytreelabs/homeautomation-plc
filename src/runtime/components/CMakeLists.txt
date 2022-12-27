@@ -1,12 +1,16 @@
 add_library(components-automation STATIC
   blind_state.cpp
-  blind.cpp)
+  blind.cpp
+  components_registry_lua.cpp)
 add_library(components::automation ALIAS components-automation)
 target_include_directories(components-automation PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 target_link_libraries(components-automation PUBLIC
   common
-  spdlog::spdlog)
+  spdlog::spdlog
+  sol2::sol2
+  lua)
 
-create_memchecked_test(blind_state components-automation FALSE)
-create_memchecked_test(blind components-automation FALSE)
-create_memchecked_test(trigger components-automation FALSE)
+create_memchecked_test(blind_state components-automation TRUE)
+create_memchecked_test(blind components-automation TRUE)
+create_memchecked_test(trigger components-automation TRUE)
+create_memchecked_test(components_registry_lua components-automation TRUE)

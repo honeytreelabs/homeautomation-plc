@@ -5,6 +5,7 @@ target_include_directories(runtime PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 target_link_libraries(runtime PUBLIC
   common
   system
+  components::automation
   spdlog::spdlog
   sol2::sol2
   lua)

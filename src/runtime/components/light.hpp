@@ -1,5 +1,6 @@
 #pragma once
 
+#include <sol/sol.hpp>
 #include <spdlog/spdlog.h>
 
 #include <string>
@@ -20,6 +21,13 @@ public:
     return state;
   }
   bool getState() const { return state; }
+
+  static void RegisterComponent(sol::state &lua) {
+    sol::usertype<Light> light = lua.new_usertype<Light>(
+        "Light", sol::constructors<Light(), Light(std::string)>());
+    light["toggle"] = &Light::toggle;
+    light["getState"] = &Light::getState;
+  }
 
 private:
   std::string name;
