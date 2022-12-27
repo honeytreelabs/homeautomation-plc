@@ -2,7 +2,6 @@ function(create_logic name)
   add_executable(${name} ${ARGN})
   target_link_libraries(${name} PRIVATE
     components::automation
-    components::lua
     entry
     factory)
   if (RASPBERRY)
