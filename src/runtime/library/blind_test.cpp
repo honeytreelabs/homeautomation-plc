@@ -4,14 +4,14 @@
 
 using namespace std::literals;
 
-static constexpr auto const cfg = HomeAutomation::Components::BlindConfig{
+static constexpr auto const cfg = HomeAutomation::Library::BlindConfig{
     .periodIdle = 500ms, .periodUp = 30s, .periodDown = 30s};
 
 TEST_CASE("blind: states of inputs unchanged", "[single-file]") {
   spdlog::set_level(spdlog::level::debug);
 
   auto start = std::chrono::high_resolution_clock::now();
-  HomeAutomation::Components::Blind blind(cfg, start);
+  HomeAutomation::Library::Blind blind(cfg, start);
 
   auto relay_states = blind.execute(start + 100ms, false, false);
   REQUIRE(relay_states.up == false);
@@ -26,7 +26,7 @@ TEST_CASE("blind: move up", "[single-file]") {
   spdlog::set_level(spdlog::level::debug);
 
   auto start = std::chrono::high_resolution_clock::now();
-  HomeAutomation::Components::Blind blind_test(cfg, start);
+  HomeAutomation::Library::Blind blind_test(cfg, start);
 
   auto relay_states =
       blind_test.execute(start + cfg.periodIdle + 100ms, false, false);
@@ -48,7 +48,7 @@ TEST_CASE("blind: both inputs true", "[single-file]") {
   spdlog::set_level(spdlog::level::debug);
 
   auto start = std::chrono::high_resolution_clock::now();
-  HomeAutomation::Components::Blind blind(cfg, start);
+  HomeAutomation::Library::Blind blind(cfg, start);
 
   auto relay_states =
       blind.execute(start + cfg.periodIdle + 100ms, false, false);
@@ -68,7 +68,7 @@ TEST_CASE("blind: complete run", "[single-file]") {
   spdlog::set_level(spdlog::level::debug);
 
   auto start = std::chrono::high_resolution_clock::now();
-  HomeAutomation::Components::Blind blind(cfg, start);
+  HomeAutomation::Library::Blind blind(cfg, start);
 
   /* idle */
   auto const timestamp_start_idle = start + cfg.periodIdle + 100ms;

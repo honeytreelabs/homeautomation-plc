@@ -5,7 +5,7 @@
 
 #include <sstream>
 
-using namespace HomeAutomation::Components::MQTT;
+using namespace HomeAutomation::IO::MQTT;
 
 TEST_CASE("messages buffer: empty", "[single-file]") {
   Messages buf;

@@ -3,7 +3,7 @@
 #include <sol/sol.hpp>
 
 namespace HomeAutomation {
-namespace Components {
+namespace Library {
 
 class R_TRIG {
 public:
@@ -47,5 +47,5 @@ private:
   bool last;
 };
 
-} // namespace Components
+} // namespace Library
 } // namespace HomeAutomation

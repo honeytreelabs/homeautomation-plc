@@ -1,4 +1,4 @@
-#include <components_registry_lua.hpp>
+#include <library_registry_lua.hpp>
 #include <program_lua.hpp>
 
 #include <spdlog/spdlog.h>
@@ -18,7 +18,7 @@ LuaProgram::LuaProgram(std::filesystem::path const &path,
   gv_type["outputs"] = &HomeAutomation::GV::outputs;
   lua["GV"] = gv;
 
-  HomeAutomation::Components::LuaComponentsRegistry::RegisterComponents(lua);
+  HomeAutomation::Library::LuaLibraryRegistry::RegisterComponents(lua);
 }
 
 void LuaProgram::execute(TimeStamp now) {

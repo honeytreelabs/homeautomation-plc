@@ -9,9 +9,9 @@
 namespace HomeAutomation {
 namespace Runtime {
 
-static std::shared_ptr<HomeAutomation::Components::MQTT::ClientPaho>
+static std::shared_ptr<HomeAutomation::IO::MQTT::ClientPaho>
 generateClient(YAML::Node const &clientNode) {
-  auto mqtt_options = Components::MQTT::ClientPaho::getDefaultConnectOptions();
+  auto mqtt_options = IO::MQTT::ClientPaho::getDefaultConnectOptions();
   auto const &nodeUsername = clientNode["username"];
   auto const &nodePassword = clientNode["password"];
   if (nodeUsername.IsDefined() && nodePassword.IsDefined()) {
@@ -21,7 +21,7 @@ generateClient(YAML::Node const &clientNode) {
   auto address = Helper::getRequiredField<std::string>(clientNode, "address");
   auto client_id =
       Helper::getRequiredField<std::string>(clientNode, "client_id");
-  return std::make_shared<HomeAutomation::Components::MQTT::ClientPaho>(
+  return std::make_shared<HomeAutomation::IO::MQTT::ClientPaho>(
       address, client_id, mqtt_options);
 }
 

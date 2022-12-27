@@ -1,4 +1,4 @@
-// components
+// library
 #include <blind.hpp>
 #include <light.hpp>
 
@@ -12,7 +12,7 @@
 
 using namespace std::chrono_literals;
 
-static constexpr auto const cfg = HomeAutomation::Components::BlindConfig{
+static constexpr auto const cfg = HomeAutomation::Library::BlindConfig{
     .periodIdle = 500ms, .periodUp = 50s, .periodDown = 50s};
 
 // execution context (shall run in dedicated thread with given cycle time)
@@ -46,9 +46,9 @@ public:
 
 private:
   // logic blocks
-  HomeAutomation::Components::Blind blind_sr;
-  HomeAutomation::Components::Blind blind_kizi_2;
-  HomeAutomation::Components::Light ground_office_light{"Ground Office"};
+  HomeAutomation::Library::Blind blind_sr;
+  HomeAutomation::Library::Blind blind_kizi_2;
+  HomeAutomation::Library::Light ground_office_light{"Ground Office"};
 };
 
 namespace HomeAutomation {

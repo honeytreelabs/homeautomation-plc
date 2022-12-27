@@ -8,7 +8,7 @@
 #include <spdlog/spdlog.h>
 
 namespace HomeAutomation {
-namespace Components {
+namespace Library {
 
 using namespace std::literals;
 
@@ -102,5 +102,5 @@ using BlindStateUp = BlindStateMove<UpOutputs, "up">;
 constexpr BlindOutputs const DownOutputs{false, true};
 using BlindStateDown = BlindStateMove<DownOutputs, "down">;
 
-} // namespace Components
+} // namespace Library
 } // namespace HomeAutomation

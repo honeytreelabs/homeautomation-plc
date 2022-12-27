@@ -3,7 +3,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 TEST_CASE("trigger: rising trigger normal operation", "[single-file]") {
-  HomeAutomation::Components::R_TRIG trigger;
+  HomeAutomation::Library::R_TRIG trigger;
   auto state = trigger.execute(false);
   REQUIRE(state == false);
   state = trigger.execute(true);
@@ -19,7 +19,7 @@ TEST_CASE("trigger: rising trigger normal operation", "[single-file]") {
 }
 
 TEST_CASE("trigger: rising trigger input already true", "[single-file]") {
-  HomeAutomation::Components::R_TRIG trigger(true);
+  HomeAutomation::Library::R_TRIG trigger(true);
   auto state = trigger.execute(true);
   REQUIRE(state == false);
   state = trigger.execute(false);
@@ -37,7 +37,7 @@ TEST_CASE("trigger: rising trigger input already true", "[single-file]") {
 }
 
 TEST_CASE("trigger: falling trigger normal operation", "[single-file]") {
-  HomeAutomation::Components::F_TRIG trigger;
+  HomeAutomation::Library::F_TRIG trigger;
   auto state = trigger.execute(false);
   REQUIRE(state == false);
   state = trigger.execute(true);
@@ -53,7 +53,7 @@ TEST_CASE("trigger: falling trigger normal operation", "[single-file]") {
 }
 
 TEST_CASE("trigger: falling trigger input already true", "[single-file]") {
-  HomeAutomation::Components::F_TRIG trigger(true);
+  HomeAutomation::Library::F_TRIG trigger(true);
   auto state = trigger.execute(true);
   REQUIRE(state == false);
   state = trigger.execute(false);

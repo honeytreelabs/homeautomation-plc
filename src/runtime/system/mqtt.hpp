@@ -9,7 +9,7 @@
 #include <vector>
 
 namespace HomeAutomation {
-namespace Components {
+namespace IO {
 namespace MQTT {
 
 using Messages = HomeAutomation::circular_buffer<mqtt::message_ptr, 128>;
@@ -100,5 +100,5 @@ private:
 };
 
 } // namespace MQTT
-} // namespace Components
+} // namespace IO
 } // namespace HomeAutomation

@@ -1,7 +1,7 @@
 #include <blind_state.hpp>
 
 namespace HomeAutomation {
-namespace Components {
+namespace Library {
 
 OptionalBlindState BlindStateIdle::execute(TimeStamp now, bool up, bool down) {
   spdlog::debug("BlindStateIdle::execute");
@@ -21,5 +21,5 @@ OptionalBlindState BlindStateIdle::execute(TimeStamp now, bool up, bool down) {
   return NoTransition;
 }
 
-} // namespace Components
+} // namespace Library
 } // namespace HomeAutomation

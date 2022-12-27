@@ -6,7 +6,7 @@
 #include <string>
 
 namespace HomeAutomation {
-namespace Components {
+namespace Library {
 
 class Light {
 public:
@@ -33,5 +33,5 @@ private:
   std::string name;
   bool state;
 };
-} // namespace Components
+} // namespace Library
 } // namespace HomeAutomation

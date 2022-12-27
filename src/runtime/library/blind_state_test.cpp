@@ -4,28 +4,27 @@
 
 using namespace std::literals;
 
-static constexpr auto const cfg = HomeAutomation::Components::BlindConfig{
+static constexpr auto const cfg = HomeAutomation::Library::BlindConfig{
     .periodIdle = 500ms, .periodUp = 1s, .periodDown = 1s};
 
 TEST_CASE("blinds state: state outputs", "[single-file]") {
   auto start = std::chrono::high_resolution_clock::now();
-  REQUIRE(
-      HomeAutomation::Components::BlindStateIdle(cfg, start).getStateData() ==
-      HomeAutomation::Components::BlindOutputs{false, false});
-  REQUIRE(HomeAutomation::Components::BlindStateUp(
+  REQUIRE(HomeAutomation::Library::BlindStateIdle(cfg, start).getStateData() ==
+          HomeAutomation::Library::BlindOutputs{false, false});
+  REQUIRE(HomeAutomation::Library::BlindStateUp(
               cfg, std::chrono::high_resolution_clock::now(), true, true)
               .getStateData() ==
-          HomeAutomation::Components::BlindOutputs{true, false});
-  REQUIRE(HomeAutomation::Components::BlindStateDown(
+          HomeAutomation::Library::BlindOutputs{true, false});
+  REQUIRE(HomeAutomation::Library::BlindStateDown(
               cfg, std::chrono::high_resolution_clock::now(), true, true)
               .getStateData() ==
-          HomeAutomation::Components::BlindOutputs{false, true});
+          HomeAutomation::Library::BlindOutputs{false, true});
 }
 
 TEST_CASE("blinds state: stay in idle state", "[single-file]") {
   auto start = std::chrono::high_resolution_clock::now();
   auto idle =
-      std::make_unique<HomeAutomation::Components::BlindStateIdle>(cfg, start);
+      std::make_unique<HomeAutomation::Library::BlindStateIdle>(cfg, start);
 
   auto next = idle->execute(start + 100ms, false, false);
 
@@ -35,7 +34,7 @@ TEST_CASE("blinds state: stay in idle state", "[single-file]") {
 TEST_CASE("blinds state: transition into up state", "[single-file]") {
   auto start = std::chrono::high_resolution_clock::now();
   auto idle =
-      std::make_unique<HomeAutomation::Components::BlindStateIdle>(cfg, start);
+      std::make_unique<HomeAutomation::Library::BlindStateIdle>(cfg, start);
 
   auto next = idle->execute(start + cfg.periodIdle + 100ms, true, false);
 
@@ -47,7 +46,7 @@ TEST_CASE("blind state: transition into up state with both inputs true",
           "[single-file]") {
   auto start = std::chrono::high_resolution_clock::now();
   auto idle =
-      std::make_unique<HomeAutomation::Components::BlindStateIdle>(cfg, start);
+      std::make_unique<HomeAutomation::Library::BlindStateIdle>(cfg, start);
 
   auto next = idle->execute(start + cfg.periodIdle + 100ms, true, true);
 
@@ -58,7 +57,7 @@ TEST_CASE("blind state: transition into up state with both inputs true",
 TEST_CASE("blind state: transition into down state", "[single-file]") {
   auto start = std::chrono::high_resolution_clock::now();
   auto idle =
-      std::make_unique<HomeAutomation::Components::BlindStateIdle>(cfg, start);
+      std::make_unique<HomeAutomation::Library::BlindStateIdle>(cfg, start);
 
   auto next = idle->execute(start + cfg.periodIdle + 100ms, false, true);
 
@@ -69,7 +68,7 @@ TEST_CASE("blind state: transition into down state", "[single-file]") {
 TEST_CASE("blind stae: transition from up state to idle as time is over",
           "[single-file]") {
   auto start = std::chrono::high_resolution_clock::now();
-  auto up = std::make_unique<HomeAutomation::Components::BlindStateUp>(
+  auto up = std::make_unique<HomeAutomation::Library::BlindStateUp>(
       cfg, std::chrono::high_resolution_clock::now(), true, false);
 
   auto next = up->execute(start, false, false);

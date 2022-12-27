@@ -3,7 +3,7 @@
 #include <blind_state.hpp>
 
 namespace HomeAutomation {
-namespace Components {
+namespace Library {
 
 class Blind {
 public:
@@ -16,5 +16,5 @@ private:
   BlindFSM fsm;
 };
 
-} // namespace Components
+} // namespace Library
 } // namespace HomeAutomation

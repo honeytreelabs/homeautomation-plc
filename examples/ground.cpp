@@ -1,4 +1,4 @@
-// components
+// library
 #include <blind.hpp>
 #include <light.hpp>
 
@@ -51,17 +51,17 @@ public:
 
 private:
   // logic blocks
-  HomeAutomation::Components::R_TRIG stairs_light_trigger;
-  HomeAutomation::Components::R_TRIG kitchen_light_trigger;
-  HomeAutomation::Components::R_TRIG charger_trigger;
-  HomeAutomation::Components::R_TRIG deck_trigger;
-  HomeAutomation::Components::R_TRIG ground_office_trigger;
-  HomeAutomation::Components::R_TRIG u_light_trigger;
-  HomeAutomation::Components::Light stairs_light;
-  HomeAutomation::Components::Light kitchen_light;
-  HomeAutomation::Components::Light charger;
-  HomeAutomation::Components::Light deck_light;
-  HomeAutomation::Components::Light u_light;
+  HomeAutomation::Library::R_TRIG stairs_light_trigger;
+  HomeAutomation::Library::R_TRIG kitchen_light_trigger;
+  HomeAutomation::Library::R_TRIG charger_trigger;
+  HomeAutomation::Library::R_TRIG deck_trigger;
+  HomeAutomation::Library::R_TRIG ground_office_trigger;
+  HomeAutomation::Library::R_TRIG u_light_trigger;
+  HomeAutomation::Library::Light stairs_light;
+  HomeAutomation::Library::Light kitchen_light;
+  HomeAutomation::Library::Light charger;
+  HomeAutomation::Library::Light deck_light;
+  HomeAutomation::Library::Light u_light;
 };
 
 namespace HomeAutomation {

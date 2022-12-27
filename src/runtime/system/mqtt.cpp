@@ -9,7 +9,7 @@
 #include <string>
 
 namespace HomeAutomation {
-namespace Components {
+namespace IO {
 namespace MQTT {
 
 void Callback::connected(const std::string & /*cause*/) {
@@ -151,5 +151,5 @@ void ClientPaho::sendWorkerFun() {
 }
 
 } // namespace MQTT
-} // namespace Components
+} // namespace IO
 } // namespace HomeAutomation

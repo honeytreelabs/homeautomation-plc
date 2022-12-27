@@ -3,12 +3,12 @@
 #include <sol/sol.hpp>
 
 namespace HomeAutomation {
-namespace Components {
+namespace Library {
 
-class LuaComponentsRegistry {
+class LuaLibraryRegistry {
 public:
   static void RegisterComponents(sol::state &lua);
 };
 
-} // namespace Components
+} // namespace Library
 } // namespace HomeAutomation

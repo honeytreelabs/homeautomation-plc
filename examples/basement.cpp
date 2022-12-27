@@ -1,4 +1,4 @@
-// components
+// library
 #include <light.hpp>
 #include <trigger.hpp>
 
@@ -48,22 +48,22 @@ public:
 
 private:
   // logic blocks
-  HomeAutomation::Components::R_TRIG workshop_1_trigger;
-  HomeAutomation::Components::R_TRIG workshop_2_trigger;
-  HomeAutomation::Components::R_TRIG room_1_trigger;
-  HomeAutomation::Components::R_TRIG room_2_trigger;
-  HomeAutomation::Components::R_TRIG room_3_trigger;
-  HomeAutomation::Components::R_TRIG room_4_trigger;
-  HomeAutomation::Components::R_TRIG room_5_trigger;
-  HomeAutomation::Components::R_TRIG room_6_trigger;
-  HomeAutomation::Components::Light workshop_1_light{"Workshop 1"};
-  HomeAutomation::Components::Light workshop_2_light{"Workshop 2"};
-  HomeAutomation::Components::Light room_1_light{"Room 1"};
-  HomeAutomation::Components::Light room_2_light{"Room 2"};
-  HomeAutomation::Components::Light room_3_light{"Room 3"};
-  HomeAutomation::Components::Light room_4_light{"Room 4"};
-  HomeAutomation::Components::Light room_5_light{"Room 5"};
-  HomeAutomation::Components::Light room_6_light{"Room 6"};
+  HomeAutomation::Library::R_TRIG workshop_1_trigger;
+  HomeAutomation::Library::R_TRIG workshop_2_trigger;
+  HomeAutomation::Library::R_TRIG room_1_trigger;
+  HomeAutomation::Library::R_TRIG room_2_trigger;
+  HomeAutomation::Library::R_TRIG room_3_trigger;
+  HomeAutomation::Library::R_TRIG room_4_trigger;
+  HomeAutomation::Library::R_TRIG room_5_trigger;
+  HomeAutomation::Library::R_TRIG room_6_trigger;
+  HomeAutomation::Library::Light workshop_1_light{"Workshop 1"};
+  HomeAutomation::Library::Light workshop_2_light{"Workshop 2"};
+  HomeAutomation::Library::Light room_1_light{"Room 1"};
+  HomeAutomation::Library::Light room_2_light{"Room 2"};
+  HomeAutomation::Library::Light room_3_light{"Room 3"};
+  HomeAutomation::Library::Light room_4_light{"Room 4"};
+  HomeAutomation::Library::Light room_5_light{"Room 5"};
+  HomeAutomation::Library::Light room_6_light{"Room 6"};
 };
 
 namespace HomeAutomation {

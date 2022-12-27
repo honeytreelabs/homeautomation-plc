@@ -3,7 +3,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_string.hpp>
 
-using namespace HomeAutomation::Components::MQTT;
+using namespace HomeAutomation::IO::MQTT;
 
 TEST_CASE("mqtt: instantiate/destruct mqtt client", "[single-file]") {
   ClientPaho client{"tcp://localhost:1883"};
