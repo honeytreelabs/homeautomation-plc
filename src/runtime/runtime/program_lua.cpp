@@ -22,8 +22,7 @@ LuaProgram::LuaProgram(std::filesystem::path const &path,
 }
 
 void LuaProgram::execute(TimeStamp now) {
-  // transfer runtime variables
-  lua["NOW"] = now.time_since_epoch();
+  lua["NOW"] = now;
 
   lua.script_file(path);
 }
