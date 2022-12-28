@@ -57,7 +57,7 @@ public:
   std::string const id() const override { return std::string("idle"); }
 
 private:
-  BlindConfig const &cfg;
+  BlindConfig const cfg;
   TimeStamp start;
 
   R_TRIG up_trigger;
@@ -86,7 +86,7 @@ public:
   std::string const id() const override { return ID.value; }
 
 private:
-  BlindConfig const &cfg;
+  BlindConfig const cfg;
   TimeStamp start;
 
   R_TRIG up_trigger;
