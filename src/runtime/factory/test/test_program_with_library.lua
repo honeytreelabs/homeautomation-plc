@@ -2,6 +2,7 @@
 ---@diagnostic disable: undefined-global
 if not INITIALIZED then
 	INITIALIZED = true
+
 	TRIGGER_1 = R_TRIG.new()
 	LIGHT_1 = Light.new()
 end

@@ -2,6 +2,7 @@
 ---@diagnostic disable: undefined-global
 if not INITIALIZED then
 	INITIALIZED = true
+
 	BLIND_1 = Blind.new(BlindConfigFromMillis(500, 30000, 30000))
 end
 
