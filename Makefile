@@ -90,7 +90,6 @@ executable-prepare-generic:
 		&& . ../build.venv/bin/activate \
 		&& conan install --profile=$(profile) .. \
 		&& cmake -DCMAKE_BUILD_TYPE=RelMinSize -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchain/toolchain-$(toolchain).cmake -GNinja ..
-	ln -sf build.$(name)/compile_commands.json
 
 .PHONY: executable-generic
 executable-generic:
