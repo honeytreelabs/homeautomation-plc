@@ -107,7 +107,7 @@ deploy-generic:
 	ssh root@$(host) /etc/init.d/homeautomation enable
 	ssh root@$(host) "mkdir -p /etc/homeautomation"
 	if [ -e examples/deploy/$(name).yaml ]; then sed -f examples/deploy/replacements.sed examples/deploy/$(name).yaml | ssh root@$(host) "cat > /etc/homeautomation/config.yaml"; fi
-	ssh root@$(host) /etc/init.d/homeautomation start
+	if [ "$(start)" = "true" ]; then ssh root@$(host) /etc/init.d/homeautomation start; fi
 
 ### roof
 
@@ -123,7 +123,9 @@ roof: roof-prepare
 
 .PHONY: deploy-roof
 deploy-roof: roof
-	$(MAKE) deploy-generic host=raspberry-d.lan name=roof
+	$(MAKE) deploy-generic host=raspberry-d.lan name=roof start=false
+	scp -O examples/roof_main_rooflogic.lua root@raspberry-d.lan:/opt
+	ssh root@raspberry-d.lan /etc/init.d/homeautomation start
 
 ### ground
 
@@ -139,7 +141,7 @@ ground: ground-prepare
 
 .PHONY: deploy-ground
 deploy-ground: ground
-	$(MAKE) deploy-generic host=raspberry-o.lan name=ground
+	$(MAKE) deploy-generic host=raspberry-o.lan name=ground start=true
 
 ### basement
 # note: needs Alpine or OpenWrt based container
@@ -156,7 +158,7 @@ basement: basement-prepare
 
 .PHONY: deploy-basement
 deploy-basement: basement
-	$(MAKE) deploy-generic host=raspberry-u.lan name=basement
+	$(MAKE) deploy-generic host=raspberry-u.lan name=basement start=true
 
 # currently there is no deployment step because basement execution context is different
 

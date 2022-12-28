@@ -3,8 +3,9 @@
 namespace HomeAutomation {
 namespace Library {
 
-BlindConfig BlindConfigFromMillis(unsigned periodIdle, unsigned periodUp,
-                                  unsigned periodDown) {
+BlindConfig BlindConfigFromMillis(std::uint32_t periodIdle,
+                                  std::uint32_t periodUp,
+                                  std::uint32_t periodDown) {
   return BlindConfig{periodIdle * 1ms, periodUp * 1ms, periodDown * 1ms};
 }
 

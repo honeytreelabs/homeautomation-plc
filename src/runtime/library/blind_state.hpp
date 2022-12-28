@@ -7,6 +7,7 @@
 
 #include <spdlog/spdlog.h>
 
+#include <cstdint>
 #include <tuple>
 
 namespace HomeAutomation {
@@ -29,8 +30,9 @@ struct BlindConfig {
   std::chrono::milliseconds periodDown;
 };
 
-BlindConfig BlindConfigFromMillis(unsigned periodIdle, unsigned periodUp,
-                                  unsigned periodDown);
+BlindConfig BlindConfigFromMillis(std::uint32_t periodIdle,
+                                  std::uint32_t periodUp,
+                                  std::uint32_t periodDown);
 
 using BlindState = State<BlindOutputs, bool, bool>;
 using UniqueBlindState = std::unique_ptr<BlindState>;
@@ -77,6 +79,8 @@ public:
 
     if (now - start > cfg.periodUp || up_trigger.execute(up) ||
         down_trigger.execute(down)) {
+      // TODO periodDown must be considered as well here
+      // depending on the actual state
       return std::make_unique<BlindStateIdle>(cfg, now, up, down);
     }
 

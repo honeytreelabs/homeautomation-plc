@@ -4,7 +4,8 @@ tasks:
     interval: 25000  # us
     programs:
       - name: RoofLogic
-        type: C++
+        type: Lua
+        script: /opt/roof_main_rooflogic.lua
     io:
       - type: mqtt
         client:

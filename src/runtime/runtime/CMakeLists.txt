@@ -10,3 +10,5 @@ target_link_libraries(runtime PUBLIC
   sol2::sol2
   lua)
 target_compile_features(runtime PUBLIC cxx_std_20)
+
+create_memchecked_test(program_lua runtime TRUE)
