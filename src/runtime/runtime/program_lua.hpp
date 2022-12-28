@@ -15,10 +15,6 @@ public:
   void execute(TimeStamp now) override;
 
 private:
-  void transferOutputsToRuntime();
-  void transferGVsToInterpreter(GvSegment &segment,
-                                std::string const &inpVarName);
-
   std::filesystem::path const path;
   HomeAutomation::GV *gv;
   sol::state lua;
