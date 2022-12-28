@@ -5,5 +5,5 @@ if not INITIALIZED then
 	BLIND_1 = Blind.new(BlindConfigFromMillis(500, 30000, 30000))
 end
 
-local result = BLIND_1:execute(NOW, GV.inputs.input_up, GV.inputs.input_down)
-GV.outputs.output_up, GV.outputs.output_down = result.up, result.down
+GV.outputs.output_up, GV.outputs.output_down =
+	BLIND_1:execute(NOW, GV.inputs.input_up, GV.inputs.input_down)

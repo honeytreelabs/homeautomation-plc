@@ -7,6 +7,8 @@
 
 #include <spdlog/spdlog.h>
 
+#include <tuple>
+
 namespace HomeAutomation {
 namespace Library {
 
@@ -19,15 +21,7 @@ template <size_t N> struct StringLiteral {
   char value[N];
 };
 
-struct BlindOutputs {
-  bool up;
-  bool down;
-};
-
-inline bool operator==(BlindOutputs const &lhs, BlindOutputs const &rhs) {
-
-  return lhs.up == rhs.up && lhs.down == rhs.down;
-}
+using BlindOutputs = std::tuple<bool, bool>;
 
 struct BlindConfig {
   std::chrono::milliseconds periodIdle;

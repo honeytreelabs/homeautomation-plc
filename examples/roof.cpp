@@ -28,15 +28,15 @@ public:
     auto result =
         blind_sr.execute(now, std::get<bool>(gv->inputs["sr_raff_up"]),
                          std::get<bool>(gv->inputs["sr_raff_down"]));
-    gv->outputs["sr_raff_up"] = result.up;
-    gv->outputs["sr_raff_down"] = result.down;
+    gv->outputs["sr_raff_up"] = std::get<0>(result);
+    gv->outputs["sr_raff_down"] = std::get<1>(result);
 
     // blind: kizi_2_raff
     result =
         blind_kizi_2.execute(now, std::get<bool>(gv->inputs["kizi_2_raff_up"]),
                              std::get<bool>(gv->inputs["kizi_2_raff_down"]));
-    gv->outputs["kizi_2_raff_up"] = result.up;
-    gv->outputs["kizi_2_raff_down"] = result.down;
+    gv->outputs["kizi_2_raff_up"] = std::get<0>(result);
+    gv->outputs["kizi_2_raff_down"] = std::get<1>(result);
 
     // light: ground_office
     if (std::get<bool>(gv->inputs["ground_office_light"])) {
