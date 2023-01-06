@@ -2,15 +2,19 @@
 
 ## General Description and Features
 
-This Soft PLC software provides a framework to implement home automation logic in the cyclic execution pattern typically found in PLCs. The idea is to have some execution environment with minimal dependencies to the underlying operating system (Linux for now).
+This SoftPLC framework allows for developing applications using the cyclic execution pattern typically found in PLCs. The guiding principle is to provide all that's needed for the application logic (such as IO states) as variable values. Application developers can therefore fully focus on creating the actual application logic without having to deal with low-level system details.
+
+Also see the introductory article on our website (more to come):
+- https://honeytreelabs.com/posts/smart-home-requirements-and-architecture/
 
 Supported featuers:
 
-- Scheduler which supports one resource containing multiple tasks which in turn may execute one or more programs.
-- I2C blocks
-- Blocks representing arbitrary instances of Lua interpreters.
-- Logic blocks representing window blinds, light switches and low-level logic such as triggers.
-- A comprehensive build framework with multitude of tests including memory checks to make sure this piece of software also runs for longer periods of time.
+- Scheduler supporting an arbitrary number of tasks.
+- Implementation of programs in C/C++ and Lua.
+- I<sup>2</sup>C, ModBus, MQTT IO variables.
+- A small standard library containing useful and tested logic blocks.
+- A comprehensive build framework with multitude of tests.
+- A statically linked binary with batteries included.
 
 ## Getting started
 
@@ -27,7 +31,7 @@ Requirements:
 
 The Conan package manager will be installed in a [Python 3 venv](https://docs.python.org/3/library/venv.html).
 
-The following platforms are supported:
+The following platforms are currently supported:
 
 - Native (most likely this is x86_64)
 - Raspberry Pi 4
@@ -49,19 +53,20 @@ Building:
 
 ## Roadmap
 
-### MQTT Blocks (WiP)
+The following list is a living document mentioning what is planned in the future.
 
-This would enable the implementation of high-level workflows using, for example, [Node-RED](https://nodered.org/) or other solutions capable of logically linking MQTT messages.
+### Implementation Improvements
 
-For me this would also allow for inter-floor communication in my house: press a push button in the ground floor and turn on a light in the upper floor.
+- Docker based builds for easier porting/building for foreign platforms.
+- Using the [doctest](https://github.com/doctest/doctest) testing framework instead of [Catch2](https://github.com/catchorg/Catch2) resulting in faster test builds and execution times.
 
-### Modbus Blocks
+### Integration of a Prometheus Client
 
-In the electric cabinet of the basement of my house, components are wired together using Modbus. Having Modbus blocks would allow for implementing the logic of my basement installation.
+For better analysis of what happened when and how often, we want to integrate a Prometheus Client, such as [prometheus-cpp](https://github.com/jupp0r/prometheus-cpp).
 
-### IEC 61131-3 Parser
+### IEC 61131-3 Programs
 
-In central Europe, PLCs used in typical industrial automation scenarios are programmed according to the IEC 61131-3 standard. Therefore, on the middle or long run, I want to implement an interpreter which is capable of executing such logic.
+In central Europe, PLCs used in typical industrial automation scenarios are programmed according to the IEC 61131-3 standard. Therefore, on the middle or long run, we want to implement an interpreter which is capable of executing such logic.
 
 ## References
 
