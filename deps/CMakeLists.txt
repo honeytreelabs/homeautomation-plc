@@ -7,8 +7,7 @@ add_subdirectory(sol2)
 add_subdirectory(yaml-cpp)
 
 if (BUILD_RUN_TESTS)
-  add_subdirectory(Catch2)
+  add_subdirectory(doctest)
 
   include(CTest)
-  include(Catch)
 endif()

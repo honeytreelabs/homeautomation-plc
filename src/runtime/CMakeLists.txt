@@ -1,5 +1,3 @@
-add_subdirectory(test)
-
 add_subdirectory(common)
 add_subdirectory(system)
 add_subdirectory(library)

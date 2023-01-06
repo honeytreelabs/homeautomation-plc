@@ -1,21 +1,21 @@
 #include <mqtt.hpp>
 
-#include <catch2/catch_test_macros.hpp>
-#include <catch2/matchers/catch_matchers_string.hpp>
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include <doctest/doctest.h>
 
 using namespace HomeAutomation::IO::MQTT;
 
-TEST_CASE("mqtt: instantiate/destruct mqtt client", "[single-file]") {
+TEST_CASE("mqtt: instantiate/destruct mqtt client") {
   ClientPaho client{"tcp://localhost:1883"};
 }
 
-TEST_CASE("mqtt: connect/disconnect mqtt client", "[single-file]") {
+TEST_CASE("mqtt: connect/disconnect mqtt client") {
   ClientPaho client{"tcp://localhost:1883"};
   client.connect();
   client.disconnect();
 }
 
-TEST_CASE("mqtt: receive no mqtt messages", "[single-file]") {
+TEST_CASE("mqtt: receive no mqtt messages") {
   ClientPaho client{"tcp://localhost:1883"};
   client.connect();
 
@@ -25,8 +25,7 @@ TEST_CASE("mqtt: receive no mqtt messages", "[single-file]") {
   client.disconnect();
 }
 
-TEST_CASE("mqtt: connect/disconnect mqtt client, no broker listening",
-          "[single-file]") {
+TEST_CASE("mqtt: connect/disconnect mqtt client, no broker listening") {
   // this test shows that we are currently depending on a working/reachable
   // broker
   ClientPaho client{"tcp://localhost:1884"};
@@ -34,7 +33,7 @@ TEST_CASE("mqtt: connect/disconnect mqtt client, no broker listening",
   REQUIRE_NOTHROW(client.disconnect());
 }
 
-TEST_CASE("mqtt: publish/receive one mqtt message", "[single-file]") {
+TEST_CASE("mqtt: publish/receive one mqtt message") {
   using namespace std::chrono_literals;
 
   ClientPaho client_first{"tcp://localhost:1883", "client-first"};
@@ -51,10 +50,8 @@ TEST_CASE("mqtt: publish/receive one mqtt message", "[single-file]") {
 
   auto message = client_second.receive();
   REQUIRE(message);
-  REQUIRE_THAT(message->get_topic().c_str(),
-               Catch::Matchers::Equals("/sample/topic"));
-  REQUIRE_THAT(message->get_payload().c_str(),
-               Catch::Matchers::Equals("sample payload"));
+  REQUIRE(message->get_topic().c_str() == std::string("/sample/topic"));
+  REQUIRE(message->get_payload().c_str() == std::string("sample payload"));
 
   client_first.disconnect();
   client_second.disconnect();

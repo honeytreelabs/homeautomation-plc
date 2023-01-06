@@ -2,11 +2,12 @@
 
 #include <yaml-cpp/yaml.h>
 
-#include <catch2/catch_test_macros.hpp>
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include <doctest/doctest.h>
 
 using namespace HomeAutomation::Runtime;
 
-TEST_CASE("gv factory: initialize GVs from YAML", "[single-file]") {
+TEST_CASE("gv factory: initialize GVs from YAML") {
   HomeAutomation::GV gv;
   gv.inputs["three"] = false;
   gv.inputs["four"] = false;

@@ -4,9 +4,10 @@
 #include <stdexcept>
 #include <yaml-cpp/yaml.h>
 
-#include <catch2/catch_test_macros.hpp>
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include <doctest/doctest.h>
 
-TEST_CASE("io factory: initialize non-existing global var", "[single-file]") {
+TEST_CASE("io factory: initialize non-existing global var") {
   HomeAutomation::GV gv;
 
   auto const &rootNode = YAML::Load(R"(---

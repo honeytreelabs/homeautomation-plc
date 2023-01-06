@@ -1,8 +1,9 @@
 #include <library_registry_lua.hpp>
 
-#include <catch2/catch_test_macros.hpp>
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include <doctest/doctest.h>
 
-TEST_CASE("library registry lua: create and use triggers", "[single-file]") {
+TEST_CASE("library registry lua: create and use triggers") {
   sol::state lua;
   lua.open_libraries();
   HomeAutomation::Library::LuaLibraryRegistry::RegisterComponents(lua);

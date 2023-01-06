@@ -5,10 +5,10 @@
 #include <stdexcept>
 #include <yaml-cpp/yaml.h>
 
-#include <catch2/catch_test_macros.hpp>
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include <doctest/doctest.h>
 
-TEST_CASE("modbus factory: initialize modbus with all required arguments",
-          "[single-file]") {
+TEST_CASE("modbus factory: initialize modbus with all required arguments") {
   HomeAutomation::GV gv;
 
   auto const &rootNode = YAML::Load(R"(---
@@ -28,8 +28,7 @@ io:
       rootNode["io"][0], taskIoLogicImpl, &gv));
 }
 
-TEST_CASE("modbus factory: initialize modbus with missing required argument",
-          "[single-file]") {
+TEST_CASE("modbus factory: initialize modbus with missing required argument") {
   HomeAutomation::GV gv;
 
   auto const &rootNode = YAML::Load(R"(---
@@ -50,8 +49,7 @@ io:
                     std::invalid_argument);
 }
 
-TEST_CASE("modbus factory: initialize modbus with invalid parity setting",
-          "[single-file]") {
+TEST_CASE("modbus factory: initialize modbus with invalid parity setting") {
   HomeAutomation::GV gv;
 
   auto const &rootNode = YAML::Load(R"(---
@@ -73,8 +71,7 @@ io:
 }
 
 TEST_CASE("modbus factory: initialize modbus with all required arguments and "
-          "components",
-          "[single-file]") {
+          "components") {
   HomeAutomation::GV gv;
 
   auto const &rootNode = YAML::Load(R"(---
@@ -106,7 +103,7 @@ io:
       rootNode["io"][0], taskIoLogicImpl, &gv));
 }
 
-TEST_CASE("modbus factory: check parity setting", "[single-file]") {
+TEST_CASE("modbus factory: check parity setting") {
   HomeAutomation::GV gv;
 
   auto const &rootNode = YAML::Load(R"(---

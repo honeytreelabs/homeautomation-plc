@@ -6,7 +6,8 @@
 #include <stdexcept>
 #include <yaml-cpp/yaml.h>
 
-#include <catch2/catch_test_macros.hpp>
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include <doctest/doctest.h>
 
 #include <atomic>
 
@@ -29,7 +30,7 @@ createCppProgram(std::string const &name, HomeAutomation::GV *gv) {
 }
 } // namespace HomeAutomation::Runtime
 
-TEST_CASE("runtime factory: empty", "[single-file]") {
+TEST_CASE("runtime factory: empty") {
   std::string yaml = R"(---
 global_vars: {}
 tasks: []
@@ -38,7 +39,7 @@ tasks: []
   REQUIRE_NOTHROW(RuntimeFactory::fromString(yaml));
 }
 
-TEST_CASE("runtime factory: instantiate runtime only tasks", "[single-file]") {
+TEST_CASE("runtime factory: instantiate runtime only tasks") {
   std::string yaml = R"(---
 global_vars: {}
 tasks:
@@ -49,7 +50,7 @@ tasks:
   REQUIRE_NOTHROW(RuntimeFactory::fromString(yaml));
 }
 
-TEST_CASE("runtime factory: instantiate runtime from YAML", "[single-file]") {
+TEST_CASE("runtime factory: instantiate runtime from YAML") {
   std::string yaml = R"(---
 global_vars:
   inputs:
@@ -80,7 +81,7 @@ tasks: []
                     std::invalid_argument);
 }
 
-TEST_CASE("runtime factory: instantiate and execute runtime", "[single-file]") {
+TEST_CASE("runtime factory: instantiate and execute runtime") {
   using namespace std::chrono_literals;
 
   std::string yaml = R"(---
@@ -107,8 +108,7 @@ tasks:
   REQUIRE(testProgram->cnt > 0);
 }
 
-TEST_CASE("runtime factory: instantiate and execute runtime missing broker",
-          "[single-file]") {
+TEST_CASE("runtime factory: instantiate and execute runtime missing broker") {
   std::string yaml = R"(---
 global_vars: {}
 tasks:
@@ -136,8 +136,7 @@ tasks:
   }());
 }
 
-TEST_CASE("runtime factory: instantiate runtime with some programs",
-          "[single-file]") {
+TEST_CASE("runtime factory: instantiate runtime with some programs") {
   using namespace std::chrono_literals;
 
   REQUIRE_NOTHROW([]() {
@@ -161,9 +160,7 @@ tasks:
   }());
 }
 
-TEST_CASE("runtime factory: instantiate runtime with all features",
-          "[single-file]") {
-
+TEST_CASE("runtime factory: instantiate runtime with all features") {
   std::shared_ptr<HomeAutomation::Runtime::Runtime> runtime;
   REQUIRE_NOTHROW([&runtime]() {
     std::string yaml = R"(---

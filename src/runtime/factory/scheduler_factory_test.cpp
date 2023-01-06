@@ -4,7 +4,8 @@
 
 #include <yaml-cpp/yaml.h>
 
-#include <catch2/catch_test_macros.hpp>
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include <doctest/doctest.h>
 
 #include <stdexcept>
 #include <utility>
@@ -18,7 +19,7 @@ createCppProgram(std::string const &name, HomeAutomation::GV *gv) {
 }
 } // namespace HomeAutomation::Runtime
 
-TEST_CASE("scheduler factory: empty", "[single-file]") {
+TEST_CASE("scheduler factory: empty") {
   std::string yaml = R"(---
 tasks: []
 )";
@@ -33,7 +34,7 @@ class NullProgram : public HomeAutomation::Runtime::Program {
   void execute(HomeAutomation::TimeStamp now) {}
 };
 
-TEST_CASE("scheduler factory: one task", "[single-file]") {
+TEST_CASE("scheduler factory: one task") {
   using namespace std::chrono_literals;
 
   std::string yaml = R"(---

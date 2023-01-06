@@ -58,7 +58,6 @@ The following list is a living document mentioning what is planned in the future
 ### Implementation Improvements
 
 - Docker based builds for easier porting/building for foreign platforms.
-- Using the [doctest](https://github.com/doctest/doctest) testing framework instead of [Catch2](https://github.com/catchorg/Catch2) resulting in faster test builds and execution times.
 
 ### Integration of a Prometheus Client
 

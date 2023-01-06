@@ -1,11 +1,12 @@
 #include <program_lua.hpp>
 
-#include <catch2/catch_test_macros.hpp>
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include <doctest/doctest.h>
 #include <spdlog/spdlog.h>
 
 using namespace std::literals;
 
-TEST_CASE("lua program: window blind complete run", "[single-file]") {
+TEST_CASE("lua program: window blind complete run") {
   spdlog::set_level(spdlog::level::debug);
 
   HomeAutomation::GV gv;

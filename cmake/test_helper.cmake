@@ -1,11 +1,13 @@
 if (BUILD_RUN_TESTS)
   function(create_memchecked_test name lib memchecked)
     add_executable(${name}_test ${name}_test.cpp)
-    target_link_libraries(${name}_test PRIVATE
-    Catch2Static
-    ${lib})
+    target_link_libraries(${name}_test PUBLIC
+      doctest::doctest
+      ${lib})
 
-    catch_discover_tests(${name}_test WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
+    add_test(NAME ${name}_test
+      COMMAND $<TARGET_FILE:${name}_test>
+      WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
     if (${memchecked})
       add_test(NAME ${name}_memchecked_test
       COMMAND valgrind
@@ -18,7 +20,7 @@ if (BUILD_RUN_TESTS)
     endif()
   endfunction()
 else ()
+  # empty functions if not testing is enabled
   function(create_memchecked_test name lib memchecked)
-    # empty function if not testing is enabled
   endfunction()
 endif ()

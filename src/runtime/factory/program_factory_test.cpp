@@ -4,7 +4,8 @@
 #include <stdexcept>
 #include <yaml-cpp/yaml.h>
 
-#include <catch2/catch_test_macros.hpp>
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include <doctest/doctest.h>
 
 #include <sstream>
 
@@ -30,7 +31,7 @@ createCppProgram(std::string const &name, HomeAutomation::GV *gv) {
 } // namespace Runtime
 } // namespace HomeAutomation
 
-TEST_CASE("program factory: initialize C++ programs", "[single-file]") {
+TEST_CASE("program factory: initialize C++ programs") {
   using namespace std::chrono_literals;
 
   HomeAutomation::GV gv;
@@ -52,8 +53,7 @@ programs:
       &task, &gv, rootNode["programs"]));
 }
 
-TEST_CASE("program factory: initialize undefined C++ programs",
-          "[single-file]") {
+TEST_CASE("program factory: initialize undefined C++ programs") {
   using namespace std::chrono_literals;
 
   HomeAutomation::GV gv;
@@ -74,7 +74,7 @@ programs:
                     std::invalid_argument);
 }
 
-TEST_CASE("program factory: initialize Lua programs", "[single-file]") {
+TEST_CASE("program factory: initialize Lua programs") {
   using namespace std::chrono_literals;
 
   HomeAutomation::GV gv;
@@ -99,8 +99,8 @@ programs:
       &task, &gv, rootNode["programs"]));
 }
 
-TEST_CASE("program factory: initialize Lua programs with undefined script path",
-          "[single-file]") {
+TEST_CASE(
+    "program factory: initialize Lua programs with undefined script path") {
   using namespace std::chrono_literals;
 
   HomeAutomation::GV gv;
@@ -126,7 +126,7 @@ programs:
                     std::invalid_argument);
 }
 
-TEST_CASE("program factory: execute Lua program", "[single-file]") {
+TEST_CASE("program factory: execute Lua program") {
   using namespace std::chrono_literals;
 
   HomeAutomation::GV gv;
@@ -153,8 +153,7 @@ programs:
   REQUIRE(std::get<int>(gv.outputs["bar"]) == 44);
 }
 
-TEST_CASE("program factory: execute Lua program with library components",
-          "[single-file]") {
+TEST_CASE("program factory: execute Lua program with library components") {
   using namespace std::chrono_literals;
 
   HomeAutomation::GV gv;
@@ -201,7 +200,7 @@ programs:
   REQUIRE(std::get<bool>(gv.outputs["output_1"]) == false);
 }
 
-TEST_CASE("program factory: execute Lua program with blind", "[single-file]") {
+TEST_CASE("program factory: execute Lua program with blind") {
   using namespace std::chrono_literals;
 
   HomeAutomation::GV gv;

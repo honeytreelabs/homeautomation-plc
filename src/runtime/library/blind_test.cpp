@@ -1,13 +1,14 @@
 #include <blind.hpp>
 
-#include <catch2/catch_test_macros.hpp>
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include <doctest/doctest.h>
 
 using namespace std::literals;
 
 static constexpr auto const cfg = HomeAutomation::Library::BlindConfig{
     .periodIdle = 500ms, .periodUp = 30s, .periodDown = 30s};
 
-TEST_CASE("blind: states of inputs unchanged", "[single-file]") {
+TEST_CASE("blind: states of inputs unchanged") {
   spdlog::set_level(spdlog::level::debug);
 
   auto start = std::chrono::high_resolution_clock::now();
@@ -20,7 +21,7 @@ TEST_CASE("blind: states of inputs unchanged", "[single-file]") {
   REQUIRE(relay_states == std::make_tuple(false, false));
 }
 
-TEST_CASE("blind: move up", "[single-file]") {
+TEST_CASE("blind: move up") {
   spdlog::set_level(spdlog::level::debug);
 
   auto start = std::chrono::high_resolution_clock::now();
@@ -39,7 +40,7 @@ TEST_CASE("blind: move up", "[single-file]") {
   REQUIRE(relay_states == std::make_tuple(true, false));
 }
 
-TEST_CASE("blind: both inputs true", "[single-file]") {
+TEST_CASE("blind: both inputs true") {
   spdlog::set_level(spdlog::level::debug);
 
   auto start = std::chrono::high_resolution_clock::now();
@@ -56,7 +57,7 @@ TEST_CASE("blind: both inputs true", "[single-file]") {
   REQUIRE(relay_states == std::make_tuple(true, false));
 }
 
-TEST_CASE("blind: complete run", "[single-file]") {
+TEST_CASE("blind: complete run") {
   spdlog::set_level(spdlog::level::debug);
 
   auto start = std::chrono::high_resolution_clock::now();

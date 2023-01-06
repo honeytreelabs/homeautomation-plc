@@ -5,10 +5,10 @@
 #include <stdexcept>
 #include <yaml-cpp/yaml.h>
 
-#include <catch2/catch_test_macros.hpp>
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include <doctest/doctest.h>
 
-TEST_CASE("mqtt io factory: initialize mqtt with all required arguments",
-          "[single-file]") {
+TEST_CASE("mqtt io factory: initialize mqtt with all required arguments") {
   HomeAutomation::GV gv;
 
   auto const &rootNode = YAML::Load(R"(---
