@@ -246,3 +246,36 @@ programs:
   REQUIRE(std::get<bool>(gv->outputs["output_up"]) == true);
   REQUIRE(std::get<bool>(gv->outputs["output_down"]) == false);
 }
+
+TEST_CASE("program factory: execute Lua program directly from YAML") {
+  using namespace std::chrono_literals;
+
+  auto gv = std::make_shared<HomeAutomation::GV>();
+  gv->inputs["foo"] = true;
+  gv->outputs["bar"] = 42;
+
+  auto const &programsRootNode = YAML::Load(R"(---
+programs:
+  - name: First
+    type: Lua
+    script: |
+      function Init(gv) end
+      function Cycle(gv, now)
+        if gv.inputs.foo then gv.outputs.bar = gv.outputs.bar + 1 end
+      end
+)");
+
+  auto taskIOLogic =
+      std::make_shared<HomeAutomation::Runtime::TaskIOLogicComposite>();
+  auto task = HomeAutomation::Runtime::Task{taskIOLogic, 500 * 1ms};
+  REQUIRE_NOTHROW(HomeAutomation::Runtime::ProgramFactory::installPrograms(
+      &task, programsRootNode["programs"]));
+
+  task.initPrograms(gv);
+
+  task.executePrograms(gv);
+  task.executePrograms(gv);
+  task.executePrograms(gv);
+
+  REQUIRE(std::get<int>(gv->outputs["bar"]) == 45);
+}

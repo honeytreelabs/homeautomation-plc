@@ -8,6 +8,15 @@ namespace HomeAutomation {
 namespace Runtime {
 
 LuaProgram::LuaProgram(std::filesystem::path const &path) : lua{} {
+  InitLuaInterpreter(lua, [&]() { lua.script_file(path); });
+}
+
+LuaProgram::LuaProgram(std::string const &script) : lua{} {
+  InitLuaInterpreter(lua, [&]() { lua.script(script); });
+}
+
+void LuaProgram::InitLuaInterpreter(sol::state &lua,
+                                    std::function<void()> strategy) {
   lua.open_libraries(/* all standard libraries */);
 
   // forward GVs into program
@@ -19,7 +28,7 @@ LuaProgram::LuaProgram(std::filesystem::path const &path) : lua{} {
   HomeAutomation::Library::LuaLibraryRegistry::RegisterComponents(lua);
 
   try {
-    lua.script_file(path);
+    strategy();
   } catch (sol::error const &err) {
     throw std::invalid_argument(err.what());
   }

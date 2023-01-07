@@ -26,9 +26,15 @@ void ProgramFactory::installPrograms(HomeAutomation::Runtime::Task *task,
       spdlog::info("Creating {} program {}", CPPProgramTypeName, programName);
       program = createCppProgram(programName); // provided by actual application
     } else if (programType == LuaProgramTypeName) {
-      auto const script =
-          Helper::getRequiredField<std::string>(programNode, "script_path");
-      program = std::make_shared<LuaProgram>(script);
+      auto const &scriptNode = programNode["script"];
+      if (scriptNode.IsDefined()) {
+        program = std::make_shared<LuaProgram>(scriptNode.as<std::string>());
+      } else {
+        auto const script_path =
+            Helper::getRequiredField<std::string>(programNode, "script_path");
+        program =
+            std::make_shared<LuaProgram>(std::filesystem::path{script_path});
+      }
     } else {
       throw std::invalid_argument("unsupported program type given");
     }
