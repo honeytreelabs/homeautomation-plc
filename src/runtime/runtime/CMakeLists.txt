@@ -12,4 +12,3 @@ target_link_libraries(runtime PUBLIC
 target_compile_features(runtime PUBLIC cxx_std_20)
 
 create_memchecked_test(program_lua runtime TRUE)
-create_memchecked_test(program_lua_dt runtime TRUE)
