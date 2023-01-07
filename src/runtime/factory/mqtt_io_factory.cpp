@@ -28,7 +28,7 @@ generateClient(YAML::Node const &clientNode) {
 void MQTTIOFactory::createIOs(
     YAML::Node const &ioNode,
     std::shared_ptr<HomeAutomation::Runtime::TaskIOLogicComposite> ioLogic,
-    HomeAutomation::GV *gv) {
+    std::shared_ptr<HomeAutomation::GV> gv) {
   auto const &mqttClientNode = ioNode["client"];
   if (!mqttClientNode.IsDefined()) {
     throw std::invalid_argument("required client field not defined");

@@ -1,16 +1,14 @@
--- luacheck: globals INITIALIZED GV
----@diagnostic disable: undefined-global
-if not INITIALIZED then
-	INITIALIZED = true
-
-	-- use imported module
+---@diagnostic disable-next-line: unused-local
+function Init(gv)
+	---@diagnostic disable-next-line: undefined-global
 	local haspretty, pretty = pcall(require, "pl.pretty")
 	if haspretty then
 		local foo = {one = 'two', three = 'four'}
 		pretty.dump(foo)
 	end
-	return
 end
 
-if GV.inputs.foo then GV.outputs.bar = GV.outputs.bar + 1 end
-
+---@diagnostic disable-next-line: unused-local
+function Cycle(gv, now)
+	if gv.inputs.foo then gv.outputs.bar = gv.outputs.bar + 1 end
+end

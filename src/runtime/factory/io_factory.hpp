@@ -13,7 +13,7 @@ public:
   static void createIOs(
       YAML::Node const &ioNode,
       std::shared_ptr<HomeAutomation::Runtime::TaskIOLogicComposite> ioLogic,
-      HomeAutomation::GV *gv);
+      std::shared_ptr<HomeAutomation::GV> gv);
 };
 
 } // namespace Runtime

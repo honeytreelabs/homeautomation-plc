@@ -8,7 +8,7 @@
 #include <doctest/doctest.h>
 
 TEST_CASE("io factory: initialize non-existing global var") {
-  HomeAutomation::GV gv;
+  auto gv = std::make_shared<HomeAutomation::GV>();
 
   auto const &rootNode = YAML::Load(R"(---
 global_vars:
@@ -29,8 +29,8 @@ io:
   auto taskIoLogicImpl =
       std::make_shared<HomeAutomation::Runtime::TaskIOLogicComposite>();
   REQUIRE_NOTHROW(HomeAutomation::Runtime::IOFactory::createIOs(
-      rootNode["io"], taskIoLogicImpl, &gv));
+      rootNode["io"], taskIoLogicImpl, gv));
   REQUIRE_THROWS_AS(HomeAutomation::Runtime::GVFactory::initializeGVs(
-                        rootNode["global_vars"], &gv),
+                        rootNode["global_vars"], gv),
                     std::invalid_argument);
 }

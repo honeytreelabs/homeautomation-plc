@@ -24,7 +24,7 @@ static void initializeSegment(HomeAutomation::GvSegment &segment,
 }
 
 void GVFactory::initializeGVs(YAML::Node const &gvNode,
-                              HomeAutomation::GV *gv) {
+                              std::shared_ptr<HomeAutomation::GV> gv) {
   if (!gvNode.IsDefined()) {
     return;
   }

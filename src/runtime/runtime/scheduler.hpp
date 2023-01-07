@@ -28,10 +28,16 @@ public:
   void addProgram(std::shared_ptr<HomeAutomation::Runtime::Program> program) {
     programs.push_back(program);
   }
+  void initPrograms(std::shared_ptr<HomeAutomation::GV> gv) const {
+    for (auto const &program : programs) {
+      program->init(gv);
+    }
+  }
   void executePrograms(
+      std::shared_ptr<HomeAutomation::GV> gv,
       TimeStamp now = std::chrono::high_resolution_clock::now()) const {
     for (auto const &program : programs) {
-      program->execute(now);
+      program->execute(gv, now);
     }
   }
   std::shared_ptr<TaskIOLogic> getTaskIOLogic() const { return taskIOLogic; }
@@ -76,9 +82,9 @@ public:
     return &task;
   }
 
-  void start(QuitCb quitCb) {
-    for (auto &task : tasks) {
-      threads.emplace_back(Scheduler::taskFun, std::cref(task.second), quitCb);
+  void start(std::shared_ptr<HomeAutomation::GV> gv, QuitCb quitCb) {
+    for (auto &[name, task] : tasks) {
+      threads.emplace_back(Scheduler::taskFun, std::cref(task), gv, quitCb);
     }
   }
 
@@ -90,12 +96,14 @@ public:
   }
 
 private:
-  static void taskFun(Task const &task, QuitCb quitCb) {
+  static void taskFun(Task const &task, std::shared_ptr<HomeAutomation::GV> gv,
+                      QuitCb quitCb) {
     task.getTaskIOLogic()->init();
+    task.initPrograms(gv);
     while (!quitCb()) {
       spdlog::debug("Task::tick()");
       task.getTaskIOLogic()->before();
-      task.executePrograms();
+      task.executePrograms(gv);
       task.getTaskIOLogic()->after();
 
       // TODO this should account for the actual program execution period

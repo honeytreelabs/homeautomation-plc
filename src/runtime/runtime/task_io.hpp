@@ -19,25 +19,25 @@ public:
 
 class TaskIOLogicComposite : public TaskIOLogic {
 public:
-  virtual void init() override {
+  void init() override {
     for (auto &ioSystem : ioSystems) {
       ioSystem->init();
     }
   }
 
-  virtual void shutdown() override {
+  void shutdown() override {
     for (auto &ioSystem : ioSystems) {
       ioSystem->shutdown();
     }
   }
 
-  virtual void before() override {
+  void before() override {
     for (auto &ioSystem : ioSystems) {
       ioSystem->before();
     }
   }
 
-  virtual void after() override {
+  void after() override {
     for (auto &ioSystem : ioSystems) {
       ioSystem->after();
     }

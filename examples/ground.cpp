@@ -11,16 +11,15 @@
 #include <sstream>
 
 // execution context (shall run in dedicated thread with given cycle time)
-class GroundLogic final : public HomeAutomation::Runtime::CppProgram {
+class GroundLogic final : public HomeAutomation::Runtime::Program {
 
 public:
-  GroundLogic(HomeAutomation::GV *gv)
-      : CppProgram(gv), stairs_light_trigger{}, kitchen_light_trigger{},
-        charger_trigger{}, deck_trigger{}, ground_office_trigger{},
-        stairs_light{"Stairs"}, kitchen_light{"Kitchen"}, charger{"Charger"},
-        deck_light{"Deck"} {}
+  GroundLogic() = default;
 
-  void execute(HomeAutomation::TimeStamp now) override {
+  void init(std::shared_ptr<HomeAutomation::GV> gv) override { (void)gv; }
+
+  void execute(std::shared_ptr<HomeAutomation::GV> gv,
+               HomeAutomation::TimeStamp now) override {
     (void)now;
 
     if (stairs_light_trigger.execute(
@@ -57,20 +56,20 @@ private:
   HomeAutomation::Library::R_TRIG deck_trigger;
   HomeAutomation::Library::R_TRIG ground_office_trigger;
   HomeAutomation::Library::R_TRIG u_light_trigger;
-  HomeAutomation::Library::Light stairs_light;
-  HomeAutomation::Library::Light kitchen_light;
-  HomeAutomation::Library::Light charger;
-  HomeAutomation::Library::Light deck_light;
-  HomeAutomation::Library::Light u_light;
+  HomeAutomation::Library::Light stairs_light{"Stairs"};
+  HomeAutomation::Library::Light kitchen_light{"Kitchen"};
+  HomeAutomation::Library::Light charger{"Charger"};
+  HomeAutomation::Library::Light deck_light{"Deck"};
+  HomeAutomation::Library::Light u_light{"Office"};
 };
 
 namespace HomeAutomation {
 namespace Runtime {
 
-std::shared_ptr<HomeAutomation::Runtime::CppProgram>
-createCppProgram(std::string const &name, HomeAutomation::GV *gv) {
+std::shared_ptr<HomeAutomation::Runtime::Program>
+createCppProgram(std::string const &name) {
   if (name == "GroundLogic") {
-    return std::make_shared<GroundLogic>(gv);
+    return std::make_shared<GroundLogic>();
   }
   std::stringstream s;
   s << "unknown program named " << name << " requested";

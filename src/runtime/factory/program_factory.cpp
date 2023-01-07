@@ -9,7 +9,6 @@ constexpr char const *CPPProgramTypeName = "C++";
 constexpr char const *LuaProgramTypeName = "Lua";
 
 void ProgramFactory::installPrograms(HomeAutomation::Runtime::Task *task,
-                                     HomeAutomation::GV *gv,
                                      YAML::Node const &programsNode) {
   if (!programsNode.IsDefined()) {
     spdlog::info("No programs defined.");
@@ -25,12 +24,11 @@ void ProgramFactory::installPrograms(HomeAutomation::Runtime::Task *task,
     std::shared_ptr<Program> program;
     if (programType == CPPProgramTypeName) {
       spdlog::info("Creating {} program {}", CPPProgramTypeName, programName);
-      program =
-          createCppProgram(programName, gv); // provided by actual application
+      program = createCppProgram(programName); // provided by actual application
     } else if (programType == LuaProgramTypeName) {
       auto const script =
           Helper::getRequiredField<std::string>(programNode, "script");
-      program = std::make_shared<LuaProgram>(script, gv);
+      program = std::make_shared<LuaProgram>(script);
     } else {
       throw std::invalid_argument("unsupported program type given");
     }

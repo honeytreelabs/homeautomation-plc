@@ -1,8 +1,5 @@
--- luacheck: globals INITIALIZED GV
----@diagnostic disable: undefined-global
-if not INITIALIZED then
-	INITIALIZED = true
-	BLIND_SR = Blind.new(BlindConfigFromMillis(500, 30000, 30000))
-end
+---@diagnostic disable: unused-local
+---@diagnostic disable-next-line: undefined-global
+function Init(gv) BLIND_SR = Blind.new(BlindConfigFromMillis(500, 30000, 30000)) end
 
-BLIND_SR.execute(NOW, false, false)
+function Cycle(gv, now) BLIND_SR.execute(now, false, false) end

@@ -13,20 +13,24 @@
 
 using namespace HomeAutomation::Runtime;
 
-class CountProgram : public HomeAutomation::Runtime::CppProgram {
+class CountProgram : public HomeAutomation::Runtime::Program {
 public:
-  CountProgram(HomeAutomation::GV *gv) : CppProgram(gv), cnt{0} {}
-  void execute(HomeAutomation::TimeStamp now) override { cnt++; }
+  CountProgram() = default;
+  void init(std::shared_ptr<HomeAutomation::GV> gv) override {}
+  void execute(std::shared_ptr<HomeAutomation::GV> gv,
+               HomeAutomation::TimeStamp now) override {
+    cnt++;
+  }
   int cnt;
 };
 
 namespace HomeAutomation::Runtime {
-std::shared_ptr<HomeAutomation::Runtime::CppProgram>
-createCppProgram(std::string const &name, HomeAutomation::GV *gv) {
+std::shared_ptr<HomeAutomation::Runtime::Program>
+createCppProgram(std::string const &name) {
   if (name == "Count") {
-    return std::make_shared<CountProgram>(gv);
+    return std::make_shared<CountProgram>();
   }
-  return std::shared_ptr<HomeAutomation::Runtime::CppProgram>();
+  return std::shared_ptr<HomeAutomation::Runtime::Program>();
 }
 } // namespace HomeAutomation::Runtime
 
@@ -95,7 +99,7 @@ tasks:
   auto runtime = RuntimeFactory::fromString(yaml);
 
   HomeAutomation::GV gv;
-  auto testProgram = std::make_shared<CountProgram>(&gv);
+  auto testProgram = std::make_shared<CountProgram>();
 
   runtime->Scheduler()->getTask("main")->addProgram(testProgram);
 

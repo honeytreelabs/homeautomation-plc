@@ -24,14 +24,14 @@ public:
            mqtt::connect_options &connOpts)
       : client(client), topics(topics), messages(messages), connOpts(connOpts) {
   }
-  virtual void connected(const std::string & /*cause*/) override;
-  virtual void connection_lost(const std::string &cause) override;
-  virtual void delivery_complete(mqtt::delivery_token_ptr tok) override;
-  virtual void message_arrived(mqtt::const_message_ptr msg) override;
-  virtual void on_failure(const mqtt::token &asyncActionToken) override {
+  void connected(const std::string & /*cause*/) override;
+  void connection_lost(const std::string &cause) override;
+  void delivery_complete(mqtt::delivery_token_ptr tok) override;
+  void message_arrived(mqtt::const_message_ptr msg) override;
+  void on_failure(const mqtt::token &asyncActionToken) override {
     (void)asyncActionToken;
   }
-  virtual void on_success(const mqtt::token &asyncActionToken) override {
+  void on_success(const mqtt::token &asyncActionToken) override {
     (void)asyncActionToken;
   }
 

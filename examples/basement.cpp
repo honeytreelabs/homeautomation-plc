@@ -11,13 +11,15 @@
 #include <sstream>
 
 // execution context (shall run in dedicated thread with given cycle time)
-class BasementLogic final : public HomeAutomation::Runtime::CppProgram {
+class BasementLogic final : public HomeAutomation::Runtime::Program {
 
 public:
-  BasementLogic(HomeAutomation::GV *gv)
-      : HomeAutomation::Runtime::CppProgram(gv) {}
+  BasementLogic() = default;
 
-  void execute(HomeAutomation::TimeStamp now) override {
+  void init(std::shared_ptr<HomeAutomation::GV> gv) override { (void)gv; }
+
+  void execute(std::shared_ptr<HomeAutomation::GV> gv,
+               HomeAutomation::TimeStamp now) override {
     (void)now;
 
     if (workshop_1_trigger.execute(std::get<bool>(gv->inputs["workshop_1"]))) {
@@ -69,10 +71,10 @@ private:
 namespace HomeAutomation {
 namespace Runtime {
 
-std::shared_ptr<HomeAutomation::Runtime::CppProgram>
-createCppProgram(std::string const &name, HomeAutomation::GV *gv) {
+std::shared_ptr<HomeAutomation::Runtime::Program>
+createCppProgram(std::string const &name) {
   if (name == "BasementLogic") {
-    return std::make_shared<BasementLogic>(gv);
+    return std::make_shared<BasementLogic>();
   }
   std::stringstream s;
   s << "unknown program named " << name << " requested";

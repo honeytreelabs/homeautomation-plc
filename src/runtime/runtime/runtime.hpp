@@ -14,8 +14,8 @@ public:
   virtual void start(HomeAutomation::Runtime::QuitCb quitCb) = 0;
   virtual int wait() = 0;
 
-  virtual HomeAutomation::GV *GV() = 0;
-  virtual HomeAutomation::Runtime::Scheduler *Scheduler() = 0;
+  virtual std::shared_ptr<HomeAutomation::GV> GV() = 0;
+  virtual std::shared_ptr<HomeAutomation::Runtime::Scheduler> Scheduler() = 0;
 };
 
 } // namespace Runtime

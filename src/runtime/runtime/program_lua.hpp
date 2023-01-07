@@ -11,12 +11,11 @@ namespace Runtime {
 
 class LuaProgram : public Program {
 public:
-  LuaProgram(std::filesystem::path const &path, HomeAutomation::GV *gv);
-  void execute(TimeStamp now) override;
+  LuaProgram(std::filesystem::path const &path);
+  void init(std::shared_ptr<HomeAutomation::GV> gv) override;
+  void execute(std::shared_ptr<HomeAutomation::GV> gv, TimeStamp now) override;
 
 private:
-  std::filesystem::path const path;
-  HomeAutomation::GV *gv;
   sol::state lua;
 };
 } // namespace Runtime

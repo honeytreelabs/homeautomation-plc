@@ -13,14 +13,14 @@ public:
       : gv{gv}, scheduler{scheduler} {}
 
 public:
-  HomeAutomation::GV *GV() override { return gv.get(); }
+  std::shared_ptr<HomeAutomation::GV> GV() override { return gv; }
 
-  HomeAutomation::Runtime::Scheduler *Scheduler() override {
-    return scheduler.get();
+  std::shared_ptr<HomeAutomation::Runtime::Scheduler> Scheduler() override {
+    return scheduler;
   }
 
   void start(HomeAutomation::Runtime::QuitCb quitCb) override {
-    scheduler->start(quitCb);
+    scheduler->start(gv, quitCb);
   }
 
   int wait() override {

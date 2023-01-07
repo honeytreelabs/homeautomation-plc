@@ -10,9 +10,8 @@ namespace Runtime {
 
 static std::shared_ptr<RuntimeImpl> initRuntime(YAML::Node const &rootNode) {
   auto gv = std::make_shared<HomeAutomation::GV>();
-  auto scheduler =
-      SchedulerFactory::createScheduler(rootNode["tasks"], gv.get());
-  GVFactory::initializeGVs(rootNode["global_vars"], gv.get());
+  auto scheduler = SchedulerFactory::createScheduler(rootNode["tasks"], gv);
+  GVFactory::initializeGVs(rootNode["global_vars"], gv);
 
   return std::make_shared<RuntimeImpl>(gv, scheduler);
 }

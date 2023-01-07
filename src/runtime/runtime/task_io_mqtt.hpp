@@ -15,7 +15,7 @@ using OutputMapping = std::map<VarName, MQTTTopic>;
 class MQTTIOLogic final : public HomeAutomation::Runtime::TaskIOLogic {
 public:
   MQTTIOLogic(InputMapping &&inputs, OutputMapping &&outputs,
-              HomeAutomation::GV *gv,
+              std::shared_ptr<HomeAutomation::GV> gv,
               std::shared_ptr<HomeAutomation::IO::MQTT::ClientPaho> mqttClient)
       : inputs{std::move(inputs)}, outputs{std::move(outputs)}, gv{gv},
         mqttClient{mqttClient}, outputValues{} {}
@@ -28,7 +28,7 @@ public:
 private:
   InputMapping inputs;
   OutputMapping outputs;
-  HomeAutomation::GV *gv;
+  std::shared_ptr<HomeAutomation::GV> gv;
   std::shared_ptr<HomeAutomation::IO::MQTT::ClientPaho> mqttClient;
   // as only changes in output values will be published,
   // previous values need to be remembered

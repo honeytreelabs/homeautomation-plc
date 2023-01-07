@@ -1,12 +1,14 @@
--- luacheck: globals INITIALIZED GV
----@diagnostic disable: undefined-global
-if not INITIALIZED then
-	INITIALIZED = true
-
+---@diagnostic disable-next-line: unused-local
+function Init(gv)
+	---@diagnostic disable-next-line: undefined-global
 	TRIGGER_1 = R_TRIG.new()
+	---@diagnostic disable-next-line: undefined-global
 	LIGHT_1 = Light.new()
 end
 
-if TRIGGER_1:execute(GV.inputs.input_1) then
-	GV.outputs.output_1 = LIGHT_1:toggle()
+---@diagnostic disable-next-line: unused-local
+function Cycle(gv, now)
+	if TRIGGER_1:execute(gv.inputs.input_1) then
+		gv.outputs.output_1 = LIGHT_1:toggle()
+	end
 end

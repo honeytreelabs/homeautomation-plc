@@ -11,7 +11,7 @@ namespace Runtime {
 void IOFactoryI2C::createIOs(
     YAML::Node const &ioNode,
     std::shared_ptr<HomeAutomation::Runtime::TaskIOLogicComposite> ioLogic,
-    HomeAutomation::GV *gv) {
+    std::shared_ptr<HomeAutomation::GV> gv) {
   auto i2cbus = std::make_shared<HomeAutomation::IO::I2C::RealBus>(
       ioNode["bus"].as<std::string>());
 
