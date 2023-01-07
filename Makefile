@@ -11,9 +11,9 @@ conan-install:
 			fi \
 		&& conan profile update settings.build_type=Debug default \
 		&& conan profile update settings.compiler.libcxx=libstdc++11 default \
-		&&	cp ../.conan/rpi4.profile ~/.conan/profiles/rpi4 \
-		&&	cp ../.conan/rpi2.profile ~/.conan/profiles/rpi2 \
-		&&	cp ../.conan/build.profile ~/.conan/profiles/build)
+		&&	cp ../conan/rpi4.profile ~/.conan/profiles/rpi4 \
+		&&	cp ../conan/rpi2.profile ~/.conan/profiles/rpi2 \
+		&&	cp ../conan/build.profile ~/.conan/profiles/build)
 
 .PHONY: conan-install-deps
 conan-install-deps:
