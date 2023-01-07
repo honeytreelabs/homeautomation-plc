@@ -88,13 +88,13 @@ TEST_CASE("program factory: initialize Lua programs") {
 programs:
   - name: First
     type: Lua
-    script: /opt/homeautomation/first.lua
+    script_path: /opt/homeautomation/first.lua
   - name: Second
     type: Lua
-    script: /opt/homeautomation/second.lua
+    script_path: /opt/homeautomation/second.lua
   - name: Third
     type: Lua
-    script: /opt/homeautomation/third.lua
+    script_path: /opt/homeautomation/third.lua
 )");
 
   auto taskIOLogic =
@@ -115,13 +115,13 @@ TEST_CASE(
 programs:
   - name: First
     type: Lua
-    # script undefined
+    # script_path undefined
   - name: Second
     type: Lua
-    script: /opt/homeautomation/second.lua
+    script_path: /opt/homeautomation/second.lua
   - name: Third
     type: Lua
-    script: /opt/homeautomation/third.lua
+    script_path: /opt/homeautomation/third.lua
 )");
 
   auto taskIOLogic =
@@ -143,7 +143,7 @@ TEST_CASE("program factory: execute Lua program") {
 programs:
   - name: First
     type: Lua
-    script: test/test_program.lua
+    script_path: test/test_program.lua
 )");
 
   auto taskIOLogic =
@@ -172,7 +172,7 @@ TEST_CASE("program factory: execute Lua program with library components") {
 programs:
   - name: First
     type: Lua
-    script: test/test_program_with_library.lua
+    script_path: test/test_program_with_library.lua
 )");
 
   auto taskIOLogic =
@@ -221,7 +221,7 @@ TEST_CASE("program factory: execute Lua program with blind") {
 programs:
   - name: First
     type: Lua
-    script: test/test_program_with_blind.lua
+    script_path: test/test_program_with_blind.lua
 )");
 
   auto taskIOLogic =

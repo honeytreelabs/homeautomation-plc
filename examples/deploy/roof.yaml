@@ -5,7 +5,7 @@ tasks:
     programs:
       - name: RoofLogic
         type: Lua
-        script: /opt/roof_main_rooflogic.lua
+        script_path: /opt/roof_main_rooflogic.lua
     io:
       - type: mqtt
         client:
