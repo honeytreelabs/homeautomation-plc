@@ -2,7 +2,7 @@ all: native
 
 .PHONY: conan-install
 conan-install:
-	if [ ! -e build.venv ]; then python -m venv build.venv; fi
+	if [ ! -e build.venv ]; then python3 -m venv build.venv; fi
 	(cd build.venv \
 		&& . bin/activate \
 		&& pip install conan \
