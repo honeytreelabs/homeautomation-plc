@@ -4,6 +4,41 @@
 
 This SoftPLC framework allows for developing applications using the cyclic execution pattern typically found in PLCs. The guiding principle is to provide all that's needed for the application logic (such as IO states) as variable values. Application developers can therefore fully focus on creating the actual application logic without having to deal with low-level system details.
 
+All that's required to be passed to the resulting binary is a configuration in YAML format.
+
+Example for two port expanders attached to the I<sup>2</sup>C bus of a Raspberry Pi:
+
+``` yaml
+tasks:
+  - name: main
+    interval: 25000  # us
+    programs:
+      - name: BlindLogic
+        type: Lua
+        script: |
+          function Init(gv) BLIND = Blind.new(BlindConfigFromMillis(500, 50000, 50000)) end
+          function Cycle(gv, now)
+            gv.outputs.blind_up, gv.outputs.blind_down =
+              BLIND:execute(now, gv.inputs.blind_up, gv.inputs.blind_down)
+          end
+    io:
+      - type: i2c
+        bus: /dev/i2c-1
+        components:
+          3b:  # i2c address
+            type: pcf8574
+            direction: input
+            inputs:
+              0: blind_up
+              1: blind_down
+          20:  # i2c address
+            type: max7311
+            direction: output
+            outputs:
+              0: blind_up
+              1: blind_down
+```
+
 Also see the introductory article on our website (more to come):
 - https://honeytreelabs.com/posts/smart-home-requirements-and-architecture/
 
