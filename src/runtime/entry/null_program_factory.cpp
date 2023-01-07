@@ -1,8 +1,6 @@
 // PLC runtime
 #include <program.hpp>
 
-#include <spdlog/spdlog.h>
-
 #include <sstream>
 
 namespace HomeAutomation {
