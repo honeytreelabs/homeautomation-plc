@@ -1,5 +1,4 @@
-target_host=aarch64-rpi4-linux-musl
-standalone_toolchain=/home/rpoisel/x-tools/aarch64-rpi4-linux-musl
+target_host=aarch64-linux-gnu
 cc_compiler=gcc
 cxx_compiler=g++
 
@@ -12,9 +11,6 @@ compiler.libcxx=libstdc++11
 build_type=Release
 
 [env]
-CONAN_CMAKE_FIND_ROOT_PATH=$standalone_toolchain/$target_host
-CONAN_CMAKE_SYSROOT=$standalone_toolchain/$target_host/sysroot
-PATH=[$standalone_toolchain/bin]
 CHOST=$target_host
 AR=$target_host-ar
 AS=$target_host-as
