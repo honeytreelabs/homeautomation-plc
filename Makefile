@@ -1,5 +1,7 @@
 all: native
 
+mkfile_path := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
+
 .PHONY: conan-install
 conan-install:
 	if [ ! -e build.venv ]; then python3 -m venv build.venv; fi
@@ -11,9 +13,9 @@ conan-install:
 			fi \
 		&& conan profile update settings.build_type=Debug default \
 		&& conan profile update settings.compiler.libcxx=libstdc++11 default \
-		&&	cp ../conan/rpi4.profile ~/.conan/profiles/rpi4 \
-		&&	cp ../conan/rpi2.profile ~/.conan/profiles/rpi2 \
-		&&	cp ../conan/build.profile ~/.conan/profiles/build)
+		&& cp $(mkfile_path)/conan/rpi4.profile ~/.conan/profiles/rpi4 \
+		&& cp $(mkfile_path)/conan/rpi2.profile ~/.conan/profiles/rpi2 \
+		&& cp $(mkfile_path)/conan/build.profile ~/.conan/profiles/build)
 
 .PHONY: conan-install-deps
 conan-install-deps:
