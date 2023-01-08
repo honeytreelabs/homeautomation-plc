@@ -56,23 +56,38 @@ Supported featuers:
 Requirements:
 
 - [GNU Make](https://www.gnu.org/software/make/)
-- [Docker Compose](https://docs.docker.com/compose/install/)
+- [Docker Compose](https://docs.docker.com/compose/install/) (test environment)
 - [Python 3](https://www.python.org/)
 - [CMake 3.20+](https://cmake.org/)
 - [Ninja](https://ninja-build.org/)
 - [GCC 8+](https://gcc.gnu.org/)
 - [Valgrind](https://valgrind.org/)
-- Optional: [crosstool-ng](https://crosstool-ng.github.io/)
 
 The Conan package manager will be installed in a [Python 3 venv](https://docs.python.org/3/library/venv.html).
 
-The following platforms are currently supported:
+Currently, the following platforms are currently supported:
 
 - Native (most likely this is x86_64)
 - Raspberry Pi 4
 - Raspberry Pi 2
 
-In order to build the toolchain for the latter two, please refer to the directories beneath [cmake/toolchain/ct-ng](./cmake/toolchain/ct-ng). They contain the configurations for crosstool-ng. Find the documentation for this tool [here](https://crosstool-ng.github.io/docs/).
+Preparation (Debian):
+
+``` shell
+sudo apt update && sudo apt install -y \
+    build-essential \
+    cmake \
+    g++ \
+    g++-aarch64-linux-gnu \
+    g++-arm-linux-gnueabihf \
+    make \
+    ninja-build \
+    python3 \
+    python-is-python3 \
+    python3-pip \
+    python3-venv \
+    valgrind
+```
 
 Building:
 
