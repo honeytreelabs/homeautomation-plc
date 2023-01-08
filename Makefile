@@ -94,7 +94,7 @@ executable-prepare-generic:
 .PHONY: executable-generic
 executable-generic:
 	cd build.$(name) \
-		&& ninja -v bin/$(name)
+		&& ninja -v
 
 .PHONY: deploy-generic
 deploy-generic:
@@ -120,6 +120,7 @@ roof-prepare: executable-prepare-generic
 .PHONY: roof
 roof: roof-prepare
 	$(MAKE) executable-generic name=roof
+	cp build.roof/bin/generic build.roof/bin/roof
 
 .PHONY: deploy-roof
 deploy-roof: roof
