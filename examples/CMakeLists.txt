@@ -1,3 +1,9 @@
+function(create_init_script name)
+  set(binary ${name})
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/deploy/homeautomation.init.in homeautomation.${name})
+  unset(binary)
+endfunction()
+
 function(create_logic name)
   add_executable(${name} ${ARGN})
   target_link_libraries(${name} PRIVATE
@@ -13,11 +19,12 @@ function(create_logic name)
     # in the furute, -Werror shall be enabled too with few exceptions to that rule
   endif()
   target_compile_features(${name} PRIVATE cxx_std_20)
-
-  set(binary ${name})
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/deploy/homeautomation.init.in homeautomation.${name})
-  unset(binary)
 endfunction()
 
 create_logic(ground ground.cpp)
+create_init_script(ground)
+
 create_logic(basement basement.cpp)
+create_init_script(basement)
+
+create_init_script(roof)

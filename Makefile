@@ -104,7 +104,7 @@ deploy-generic:
 	# grace period to make sure the process exits
 	sleep 1
 	scp -O build.$(name)/bin/$(name) root@$(host):/opt
-	scp -O build.$(name)/src/homeautomation.$(name) root@$(host):/etc/init.d/homeautomation
+	scp -O build.$(name)/examples/homeautomation.$(name) root@$(host):/etc/init.d/homeautomation
 	ssh root@$(host) /etc/init.d/homeautomation enable
 	ssh root@$(host) "mkdir -p /etc/homeautomation"
 	if [ -e examples/deploy/$(name).yaml ]; then sed -f examples/deploy/replacements.sed examples/deploy/$(name).yaml | ssh root@$(host) "cat > /etc/homeautomation/config.yaml"; fi
