@@ -18,6 +18,7 @@ conan-install:
 .PHONY: conan-install-deps
 conan-install-deps:
 	if ! [ -d build.deps ]; then mkdir build.deps; fi
+	-find deps -regex '.*test_package/build$$' -type d -exec rm -rf "{}" \;
 	. build.venv/bin/activate \
 		&& conan create --profile:build=build --profile:host=$(profile) deps/libmodbus \
 		&& conan create --profile:build=build --profile:host=$(profile) deps/zlib \
