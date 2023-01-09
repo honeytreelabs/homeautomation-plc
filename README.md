@@ -97,10 +97,9 @@ Building:
 - `make conan-install-deps-rpi3`: build and install dependencies for Raspberry Pi 4 (optional)
 - `make conan-install-deps-rpi2`: build and install dependencies for Raspberry Pi 2 (optional)
 - `make native`: build tests for native platform
-- `make roof`: build PLC application for the roof Raspberry Pi 4 (optional)
-- `make ground`: build PLC application for the ground Raspberry Pi 2 (optional)
-- `make basement`: build PLC application for the basement Raspberry Pi 4 (optional)
 - `make test`: build and run tests locally directly on the build platform
+- `make rpi3`: build for Raspberry Pi 3 (and 4) platform
+- `make rpi2`: build for Raspberry Pi 2 platform
 
 ## Roadmap
 
