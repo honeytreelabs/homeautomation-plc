@@ -6,9 +6,7 @@ endfunction()
 
 function(create_logic name)
   add_executable(${name} ${ARGN})
-  target_link_libraries(${name} PRIVATE
-    entry
-    factory)
+  target_link_libraries(${name} PRIVATE entry)
   if (RASPBERRY)
     target_link_libraries(${name} PUBLIC -static)
   endif()
