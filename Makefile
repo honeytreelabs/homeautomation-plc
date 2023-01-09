@@ -13,7 +13,7 @@ conan-install:
 			fi \
 		&& conan profile update settings.build_type=Debug default \
 		&& conan profile update settings.compiler.libcxx=libstdc++11 default \
-		&& cp $(mkfile_path)/conan/rpi4.profile ~/.conan/profiles/rpi4 \
+		&& cp $(mkfile_path)/conan/rpi3.profile ~/.conan/profiles/rpi3 \
 		&& cp $(mkfile_path)/conan/rpi2.profile ~/.conan/profiles/rpi2 \
 		&& cp $(mkfile_path)/conan/build.profile ~/.conan/profiles/build)
 
@@ -38,12 +38,12 @@ conan-install-deps-native: conan-install-deps
 conan-install-deps-rpi2: profile=rpi2
 conan-install-deps-rpi2: conan-install-deps
 
-.PHONY: conan-install-deps-rpi4
-conan-install-deps-rpi4: profile=rpi4
-conan-install-deps-rpi4: conan-install-deps
+.PHONY: conan-install-deps-rpi3
+conan-install-deps-rpi3: profile=rpi3
+conan-install-deps-rpi3: conan-install-deps
 
 .PHONY: prepare-all-deps
-prepare: conan-install-deps-native conan-install-deps-rpi4 conan-install-deps-rpi2
+prepare: conan-install-deps-native conan-install-deps-rpi3 conan-install-deps-rpi2
 
 .PHONY: native-prepare
 native-prepare:
@@ -116,8 +116,8 @@ deploy-generic:
 
 .PHONY: roof-prepare
 roof-prepare: name=roof
-roof-prepare: profile=rpi4
-roof-prepare: toolchain=aarch64-rpi4
+roof-prepare: profile=rpi3
+roof-prepare: toolchain=aarch64-rpi3
 roof-prepare: executable-prepare-generic
 
 .PHONY: roof
@@ -152,8 +152,8 @@ deploy-ground: ground
 
 .PHONY: basement-prepare
 basement-prepare: name=basement
-basement-prepare: profile=rpi4
-basement-prepare: toolchain=aarch64-rpi4
+basement-prepare: profile=rpi3
+basement-prepare: toolchain=aarch64-rpi3
 basement-prepare: executable-prepare-generic
 
 .PHONY: basement
