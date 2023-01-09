@@ -68,7 +68,8 @@ The Conan package manager will be installed in a [Python 3 venv](https://docs.py
 Currently, the following platforms are currently supported:
 
 - Native (most likely this is x86_64)
-- Raspberry Pi 4
+- Raspberry Pi 4 (use Raspberry Pi 3 target)
+- Raspberry Pi 3
 - Raspberry Pi 2
 
 Preparation (Debian):
@@ -93,7 +94,7 @@ Building:
 
 - `make conan-install`: install the conan package manager
 - `make conan-install-deps-native`: build and install dependencies for native platform
-- `make conan-install-deps-rpi4`: build and install dependencies for Raspberry Pi 4 (optional)
+- `make conan-install-deps-rpi3`: build and install dependencies for Raspberry Pi 4 (optional)
 - `make conan-install-deps-rpi2`: build and install dependencies for Raspberry Pi 2 (optional)
 - `make native`: build tests for native platform
 - `make roof`: build PLC application for the roof Raspberry Pi 4 (optional)
