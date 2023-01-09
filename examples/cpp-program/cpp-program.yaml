@@ -3,7 +3,7 @@ tasks:
   - name: main
     interval: 25000  # us
     programs:
-      - name: GroundLogic
+      - name: CppProgram
         type: C++
     io:
       - type: mqtt

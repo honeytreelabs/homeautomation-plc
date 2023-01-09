@@ -94,8 +94,8 @@ Building:
 
 - `make conan-install`: install the conan package manager
 - `make conan-install-deps-native`: build and install dependencies for native platform
-- `make conan-install-deps-rpi3`: build and install dependencies for Raspberry Pi 4 (optional)
-- `make conan-install-deps-rpi2`: build and install dependencies for Raspberry Pi 2 (optional)
+- `make conan-install-deps-rpi3`: build and install dependencies for Raspberry Pi 3 (and 4)
+- `make conan-install-deps-rpi2`: build and install dependencies for Raspberry Pi 2
 - `make native`: build tests for native platform
 - `make test`: build and run tests locally directly on the build platform
 - `make rpi3`: build for Raspberry Pi 3 (and 4) platform
