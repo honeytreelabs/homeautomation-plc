@@ -1,0 +1,7 @@
+add_executable(cpp-program cpp-program.cpp)
+target_link_libraries(cpp-program PRIVATE entry)
+if (RASPBERRY)
+  target_link_libraries(cpp-program PRIVATE -static)
+endif ()
+target_compile_features(cpp-program PRIVATE cxx_std_20)
+target_compile_options(cpp-program PRIVATE -Wall -Wextra -Wpedantic)

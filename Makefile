@@ -1,4 +1,8 @@
+# note: parallel Make not supported for this Makefile
+
 all: native
+
+### dependency handling
 
 mkfile_path := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 
@@ -45,6 +49,8 @@ conan-install-deps-rpi3: conan-install-deps
 .PHONY: prepare-all-deps
 prepare: conan-install-deps-native conan-install-deps-rpi3 conan-install-deps-rpi2
 
+### local development (non-optimized binaries with debug symbols)
+
 .PHONY: native-prepare
 native-prepare:
 	if ! [ -d build ]; then mkdir build; fi
@@ -86,86 +92,41 @@ test-failed: export LUA_PATH=/usr/share/lua/5.4/?.lua
 test-failed:
 	ctest --test-dir build --verbose --rerun-failed --output-on-failure -E '.*_memchecked_.*'
 
-.PHONY: executable-prepare-generic
-executable-prepare-generic:
+### Raspberry Pi ports (optimized binaries)
+
+.PHONY: prepare-generic
+prepare-generic:
 	if ! [ -d build.$(name) ]; then mkdir build.$(name); fi
 	cd build.$(name) \
 		&& . ../build.venv/bin/activate \
 		&& conan install --profile=$(profile) .. \
 		&& cmake -DCMAKE_BUILD_TYPE=RelMinSize -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchain/toolchain-$(toolchain).cmake -GNinja ..
 
-.PHONY: executable-generic
-executable-generic:
+.PHONY: generic
+generic:
 	cd build.$(name) \
 		&& ninja -v
 
-.PHONY: deploy-generic
-deploy-generic:
-	ssh root@$(host) /etc/init.d/homeautomation disable || true
-	ssh root@$(host) /etc/init.d/homeautomation stop || true
-	# grace period to make sure the process exits
-	sleep 1
-	scp -O build.$(name)/bin/$(name) root@$(host):/opt
-	scp -O build.$(name)/examples/homeautomation.$(name) root@$(host):/etc/init.d/homeautomation
-	ssh root@$(host) /etc/init.d/homeautomation enable
-	ssh root@$(host) "mkdir -p /etc/homeautomation"
-	if [ -e examples/deploy/$(name).yaml ]; then sed -f examples/deploy/replacements.sed examples/deploy/$(name).yaml | ssh root@$(host) "cat > /etc/homeautomation/config.yaml"; fi
-	if [ "$(start)" = "true" ]; then ssh root@$(host) /etc/init.d/homeautomation start; fi
+.PHONY: rpi3-prepare
+rpi3-prepare: name=rpi3
+rpi3-prepare: profile=rpi3
+rpi3-prepare: toolchain=aarch64-rpi3
+rpi3-prepare: prepare-generic
 
-### roof
+.PHONY: rpi3
+rpi3: rpi3-prepare
+	$(MAKE) generic name=rpi3
 
-.PHONY: roof-prepare
-roof-prepare: name=roof
-roof-prepare: profile=rpi3
-roof-prepare: toolchain=aarch64-rpi3
-roof-prepare: executable-prepare-generic
+.PHONY: rpi2-prepare
+rpi2-prepare: name=rpi2
+rpi2-prepare: profile=rpi2
+rpi2-prepare: toolchain=armv7hf-rpi2
+rpi2-prepare: prepare-generic
 
-.PHONY: roof
-roof: roof-prepare
-	$(MAKE) executable-generic name=roof
-	cp build.roof/bin/generic build.roof/bin/roof
-
-.PHONY: deploy-roof
-deploy-roof: roof
-	$(MAKE) deploy-generic host=raspberry-d.lan name=roof start=false
-	scp -O examples/roof_main_rooflogic.lua root@raspberry-d.lan:/opt
-	ssh root@raspberry-d.lan /etc/init.d/homeautomation start
-
-### ground
-
-.PHONY: ground-prepare
-ground-prepare: name=ground
-ground-prepare: profile=rpi2
-ground-prepare: toolchain=armv7hf-rpi2
-ground-prepare: executable-prepare-generic
-
-.PHONY: ground
-ground: ground-prepare
-	$(MAKE) executable-generic name=ground
-
-.PHONY: deploy-ground
-deploy-ground: ground
-	$(MAKE) deploy-generic host=raspberry-o.lan name=ground start=true
-
-### basement
-# note: needs Alpine or OpenWrt based container
-
-.PHONY: basement-prepare
-basement-prepare: name=basement
-basement-prepare: profile=rpi3
-basement-prepare: toolchain=aarch64-rpi3
-basement-prepare: executable-prepare-generic
-
-.PHONY: basement
-basement: basement-prepare
-	$(MAKE) executable-generic name=basement
-
-.PHONY: deploy-basement
-deploy-basement: basement
-	$(MAKE) deploy-generic host=raspberry-u.lan name=basement start=true
-
-# currently there is no deployment step because basement execution context is different
+.PHONY: rpi2
+rpi2: rpi2-prepare
+	$(MAKE) generic name=rpi2
 
 .PHONY: clean
 clean:
-	rm -rf build.venv build build.roof build.ground build.basement
+	rm -rf build.venv build build.rpi3 build.rpi2

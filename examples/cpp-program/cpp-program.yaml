@@ -1,0 +1,40 @@
+---
+tasks:
+  - name: main
+    interval: 25000  # us
+    programs:
+      - name: GroundLogic
+        type: C++
+    io:
+      - type: mqtt
+        client:
+          username: user
+          password: secret
+          address: tcp://localhost:1883
+          client_id: cppprogram::main
+        inputs: {}
+        outputs:
+          /homeautomation/light_remote light_remote
+      - type: i2c
+        bus: /dev/i2c-1
+        components:
+          38:  # i2c address
+            type: pcf8574
+            direction: input
+            inputs:
+              1: button_a
+              2: button_b
+              3: button_c
+              4: button_d
+              5: button_e
+              6: button_f
+          20:  # i2c address
+            type: pcf8574
+            direction: output
+            outputs:
+              0: light_a
+              1: light_b
+              2: light_b
+              3: light_c
+              4: light_d
+              5: light_e

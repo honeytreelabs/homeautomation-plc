@@ -1,0 +1,38 @@
+---
+tasks:
+  - name: main
+    interval: 25000  # us
+    programs:
+      - name: LuaLogic
+        type: Lua
+        script_path: /opt/generic_main_lualogic.lua
+    io:
+      - type: mqtt
+        client:
+          username: user
+          password: secret
+          address: tcp://localhost:1883
+          client_id: generic::main
+        inputs:
+          /homeautomation/light_remote: light_remote
+        outputs: {}
+      - type: i2c
+        bus: /dev/i2c-1
+        components:
+          3b:  # i2c address
+            type: pcf8574
+            direction: input
+            inputs:
+              0: button_1_up
+              1: button_1_down
+              2: button_2_up
+              3: button_2_down
+          20:  # i2c address
+            type: max7311
+            direction: output
+            outputs:
+              0: blind_1_up
+              1: blind_1_down
+              2: blind_2_up
+              3: blind_2_down
+              4: light_a
