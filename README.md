@@ -105,21 +105,28 @@ Building:
 
 The following list is a living document mentioning what is planned in the future.
 
-### Implementation Improvements
+### IEC 61131-3 Programs
 
-- Docker based builds for easier porting/building for foreign platforms.
+In central Europe, PLCs used in typical industrial automation scenarios are programmed according to the IEC 61131-3 standard. Therefore, on the middle or long run, we want to implement an interpreter which is capable of executing such logic.
 
 ### Integration of a Prometheus Client
 
 For better analysis of what happened when and how often, we want to integrate a Prometheus Client, such as [prometheus-cpp](https://github.com/jupp0r/prometheus-cpp).
 
-### IEC 61131-3 Programs
-
-In central Europe, PLCs used in typical industrial automation scenarios are programmed according to the IEC 61131-3 standard. Therefore, on the middle or long run, we want to implement an interpreter which is capable of executing such logic.
-
 ### Improved Testing Capabilities
 
 For inlined Lua application logic I want to implement a testing framework that allows for making formally sure that the contained application behaves as expected.
+
+### Command and Control Interface
+
+This interface allows for Starting/Stoping/Pausing the runtime dependening on commands received via different channels, such as MQTT and/or HTTP push mechanisms.
+
+### Global Variables with Logic
+
+Changes in the values of global variable values (= events) invoke callbacks that can be registered with them:
+
+- Variable value changed.
+- Get all variable values.
 
 ## References
 
