@@ -1,5 +1,4 @@
 #include <program_factory.hpp>
-#include <runtime.hpp>
 #include <runtime_factory.hpp>
 #include <signal.hpp>
 
@@ -10,8 +9,6 @@
 #include <chrono>
 
 int main(int argc, char *argv[]) {
-  using namespace std::chrono_literals;
-
   if (argc != 2) {
     spdlog::error("Usage: {} <path-to-config-file>", argv[0]);
     return 1;
@@ -20,11 +17,13 @@ int main(int argc, char *argv[]) {
   try {
     HomeAutomation::System::initQuitCondition();
 
-    auto runtime = HomeAutomation::Runtime::RuntimeFactory::fromFile(argv[1]);
+    auto gv = HomeAutomation::GV{};
+    auto scheduler = HomeAutomation::Runtime::Scheduler{};
+    HomeAutomation::Runtime::RuntimeFactory::fromFile(argv[1], &gv, &scheduler);
 
     spdlog::info("Starting runtime");
-    runtime->start(HomeAutomation::System::quitCondition);
-    return runtime->wait();
+    scheduler.start(&gv, HomeAutomation::System::quitCondition);
+    return scheduler.wait();
   } catch (YAML::Exception const &exc) {
     spdlog::error("Could not parse configuration file: {}", exc.what());
     return 1;

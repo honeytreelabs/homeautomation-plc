@@ -12,9 +12,8 @@
 class SampleProgram final : public HomeAutomation::Runtime::Program {
 public:
   SampleProgram() = default;
-  void init(std::shared_ptr<HomeAutomation::GV> gv) override { (void)gv; }
-  void execute(std::shared_ptr<HomeAutomation::GV> gv,
-               HomeAutomation::TimeStamp now) override {
+  void init(HomeAutomation::GV *gv) override { (void)gv; }
+  void execute(HomeAutomation::GV *gv, HomeAutomation::TimeStamp now) override {
     (void)gv;
     (void)now;
   }
@@ -39,8 +38,6 @@ createCppProgram(std::string const &name) {
 TEST_CASE("program factory: initialize C++ programs") {
   using namespace std::chrono_literals;
 
-  auto gv = std::make_shared<HomeAutomation::GV>();
-
   auto const &rootNode = YAML::Load(R"(---
 programs:
   - name: SampleProgram
@@ -61,8 +58,6 @@ programs:
 TEST_CASE("program factory: initialize undefined C++ programs") {
   using namespace std::chrono_literals;
 
-  auto gv = std::make_shared<HomeAutomation::GV>();
-
   auto const &rootNode = YAML::Load(R"(---
 programs:
   - name: SampleProgram
@@ -81,8 +76,6 @@ programs:
 
 TEST_CASE("program factory: initialize Lua programs") {
   using namespace std::chrono_literals;
-
-  auto gv = std::make_shared<HomeAutomation::GV>();
 
   auto const &rootNode = YAML::Load(R"(---
 programs:
@@ -109,8 +102,6 @@ TEST_CASE(
     "program factory: initialize Lua programs with undefined script path") {
   using namespace std::chrono_literals;
 
-  auto gv = std::make_shared<HomeAutomation::GV>();
-
   auto const &rootNode = YAML::Load(R"(---
 programs:
   - name: First
@@ -135,9 +126,10 @@ programs:
 TEST_CASE("program factory: execute Lua program") {
   using namespace std::chrono_literals;
 
-  auto gv = std::make_shared<HomeAutomation::GV>();
-  gv->inputs["foo"] = true;
-  gv->outputs["bar"] = 42;
+  HomeAutomation::GV gv{};
+
+  gv.inputs["foo"] = true;
+  gv.outputs["bar"] = 42;
 
   auto const &programsRootNode = YAML::Load(R"(---
 programs:
@@ -152,21 +144,22 @@ programs:
   REQUIRE_NOTHROW(HomeAutomation::Runtime::ProgramFactory::installPrograms(
       &task, programsRootNode["programs"]));
 
-  task.initPrograms(gv);
+  task.initPrograms(&gv);
 
-  task.executePrograms(gv);
-  task.executePrograms(gv);
-  task.executePrograms(gv);
+  task.executePrograms(&gv);
+  task.executePrograms(&gv);
+  task.executePrograms(&gv);
 
-  REQUIRE(std::get<int>(gv->outputs["bar"]) == 45);
+  REQUIRE(std::get<int>(gv.outputs["bar"]) == 45);
 }
 
 TEST_CASE("program factory: execute Lua program with library components") {
   using namespace std::chrono_literals;
 
-  auto gv = std::make_shared<HomeAutomation::GV>();
-  gv->inputs["input_1"] = false;
-  gv->outputs["output_1"] = false;
+  HomeAutomation::GV gv{};
+
+  gv.inputs["input_1"] = false;
+  gv.outputs["output_1"] = false;
 
   auto const &programsRootNode = YAML::Load(R"(---
 programs:
@@ -181,41 +174,42 @@ programs:
   REQUIRE_NOTHROW(HomeAutomation::Runtime::ProgramFactory::installPrograms(
       &task, programsRootNode["programs"]));
 
-  task.initPrograms(gv);
-  REQUIRE(std::get<bool>(gv->outputs["output_1"]) == false);
+  task.initPrograms(&gv);
+  REQUIRE(std::get<bool>(gv.outputs["output_1"]) == false);
 
-  task.executePrograms(gv);
-  REQUIRE(std::get<bool>(gv->outputs["output_1"]) == false);
+  task.executePrograms(&gv);
+  REQUIRE(std::get<bool>(gv.outputs["output_1"]) == false);
 
-  gv->inputs["input_1"] = true;
-  task.executePrograms(gv);
-  REQUIRE(std::get<bool>(gv->outputs["output_1"]) == true);
+  gv.inputs["input_1"] = true;
+  task.executePrograms(&gv);
+  REQUIRE(std::get<bool>(gv.outputs["output_1"]) == true);
 
-  gv->inputs["input_1"] = false;
-  task.executePrograms(gv);
-  REQUIRE(std::get<bool>(gv->outputs["output_1"]) == true);
+  gv.inputs["input_1"] = false;
+  task.executePrograms(&gv);
+  REQUIRE(std::get<bool>(gv.outputs["output_1"]) == true);
 
-  gv->inputs["input_1"] = false;
-  task.executePrograms(gv);
-  REQUIRE(std::get<bool>(gv->outputs["output_1"]) == true);
+  gv.inputs["input_1"] = false;
+  task.executePrograms(&gv);
+  REQUIRE(std::get<bool>(gv.outputs["output_1"]) == true);
 
-  gv->inputs["input_1"] = true;
-  task.executePrograms(gv);
-  REQUIRE(std::get<bool>(gv->outputs["output_1"]) == false);
+  gv.inputs["input_1"] = true;
+  task.executePrograms(&gv);
+  REQUIRE(std::get<bool>(gv.outputs["output_1"]) == false);
 
-  gv->inputs["input_1"] = false;
-  task.executePrograms(gv);
-  REQUIRE(std::get<bool>(gv->outputs["output_1"]) == false);
+  gv.inputs["input_1"] = false;
+  task.executePrograms(&gv);
+  REQUIRE(std::get<bool>(gv.outputs["output_1"]) == false);
 }
 
 TEST_CASE("program factory: execute Lua program with blind") {
   using namespace std::chrono_literals;
 
-  auto gv = std::make_shared<HomeAutomation::GV>();
-  gv->inputs["input_up"] = false;
-  gv->inputs["input_down"] = false;
-  gv->outputs["output_up"] = false;
-  gv->outputs["output_down"] = false;
+  HomeAutomation::GV gv{};
+
+  gv.inputs["input_up"] = false;
+  gv.inputs["input_down"] = false;
+  gv.outputs["output_up"] = false;
+  gv.outputs["output_down"] = false;
 
   auto const &programsRootNode = YAML::Load(R"(---
 programs:
@@ -232,27 +226,28 @@ programs:
 
   auto start = std::chrono::high_resolution_clock::now();
 
-  task.initPrograms(gv);
+  task.initPrograms(&gv);
 
-  gv->inputs["input_up"] = false;
-  gv->inputs["input_down"] = false;
-  REQUIRE_NOTHROW(task.executePrograms(gv, start));
-  REQUIRE(std::get<bool>(gv->outputs["output_up"]) == false);
-  REQUIRE(std::get<bool>(gv->outputs["output_down"]) == false);
+  gv.inputs["input_up"] = false;
+  gv.inputs["input_down"] = false;
+  REQUIRE_NOTHROW(task.executePrograms(&gv, start));
+  REQUIRE(std::get<bool>(gv.outputs["output_up"]) == false);
+  REQUIRE(std::get<bool>(gv.outputs["output_down"]) == false);
 
-  gv->inputs["input_up"] = true;
-  gv->inputs["input_down"] = false;
-  REQUIRE_NOTHROW(task.executePrograms(gv, start + 600ms));
-  REQUIRE(std::get<bool>(gv->outputs["output_up"]) == true);
-  REQUIRE(std::get<bool>(gv->outputs["output_down"]) == false);
+  gv.inputs["input_up"] = true;
+  gv.inputs["input_down"] = false;
+  REQUIRE_NOTHROW(task.executePrograms(&gv, start + 600ms));
+  REQUIRE(std::get<bool>(gv.outputs["output_up"]) == true);
+  REQUIRE(std::get<bool>(gv.outputs["output_down"]) == false);
 }
 
 TEST_CASE("program factory: execute Lua program directly from YAML") {
   using namespace std::chrono_literals;
 
-  auto gv = std::make_shared<HomeAutomation::GV>();
-  gv->inputs["foo"] = true;
-  gv->outputs["bar"] = 42;
+  HomeAutomation::GV gv{};
+
+  gv.inputs["foo"] = true;
+  gv.outputs["bar"] = 42;
 
   auto const &programsRootNode = YAML::Load(R"(---
 programs:
@@ -271,11 +266,11 @@ programs:
   REQUIRE_NOTHROW(HomeAutomation::Runtime::ProgramFactory::installPrograms(
       &task, programsRootNode["programs"]));
 
-  task.initPrograms(gv);
+  task.initPrograms(&gv);
 
-  task.executePrograms(gv);
-  task.executePrograms(gv);
-  task.executePrograms(gv);
+  task.executePrograms(&gv);
+  task.executePrograms(&gv);
+  task.executePrograms(&gv);
 
-  REQUIRE(std::get<int>(gv->outputs["bar"]) == 45);
+  REQUIRE(std::get<int>(gv.outputs["bar"]) == 45);
 }

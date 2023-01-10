@@ -34,13 +34,10 @@ void LuaProgram::InitLuaInterpreter(sol::state &lua,
   }
 }
 
-void LuaProgram::init(std::shared_ptr<HomeAutomation::GV> gv) {
-  lua["Init"](gv.get());
-}
+void LuaProgram::init(HomeAutomation::GV *gv) { lua["Init"](gv); }
 
-void LuaProgram::execute(std::shared_ptr<HomeAutomation::GV> gv,
-                         TimeStamp now) {
-  lua["Cycle"](gv.get(), now);
+void LuaProgram::execute(HomeAutomation::GV *gv, TimeStamp now) {
+  lua["Cycle"](gv, now);
 }
 
 } // namespace Runtime

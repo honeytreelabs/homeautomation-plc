@@ -9,7 +9,7 @@
 #include <doctest/doctest.h>
 
 TEST_CASE("modbus factory: initialize modbus with all required arguments") {
-  auto gv = std::make_shared<HomeAutomation::GV>();
+  HomeAutomation::GV gv{};
 
   auto const &rootNode = YAML::Load(R"(---
 io:
@@ -25,11 +25,11 @@ io:
   auto taskIoLogicImpl =
       std::make_shared<HomeAutomation::Runtime::TaskIOLogicComposite>();
   REQUIRE_NOTHROW(HomeAutomation::Runtime::ModbusRTUFactory::createIOs(
-      rootNode["io"][0], taskIoLogicImpl, gv));
+      rootNode["io"][0], taskIoLogicImpl, &gv));
 }
 
 TEST_CASE("modbus factory: initialize modbus with missing required argument") {
-  auto gv = std::make_shared<HomeAutomation::GV>();
+  HomeAutomation::GV gv{};
 
   auto const &rootNode = YAML::Load(R"(---
 io:
@@ -45,12 +45,12 @@ io:
   auto taskIoLogicImpl =
       std::make_shared<HomeAutomation::Runtime::TaskIOLogicComposite>();
   REQUIRE_THROWS_AS(HomeAutomation::Runtime::ModbusRTUFactory::createIOs(
-                        rootNode["io"][0], taskIoLogicImpl, gv),
+                        rootNode["io"][0], taskIoLogicImpl, &gv),
                     std::invalid_argument);
 }
 
 TEST_CASE("modbus factory: initialize modbus with invalid parity setting") {
-  auto gv = std::make_shared<HomeAutomation::GV>();
+  HomeAutomation::GV gv{};
 
   auto const &rootNode = YAML::Load(R"(---
 io:
@@ -66,13 +66,13 @@ io:
   auto taskIoLogicImpl =
       std::make_shared<HomeAutomation::Runtime::TaskIOLogicComposite>();
   REQUIRE_THROWS_AS(HomeAutomation::Runtime::ModbusRTUFactory::createIOs(
-                        rootNode["io"][0], taskIoLogicImpl, gv),
+                        rootNode["io"][0], taskIoLogicImpl, &gv),
                     std::invalid_argument);
 }
 
 TEST_CASE("modbus factory: initialize modbus with all required arguments and "
           "components") {
-  auto gv = std::make_shared<HomeAutomation::GV>();
+  HomeAutomation::GV gv{};
 
   auto const &rootNode = YAML::Load(R"(---
 io:
@@ -100,12 +100,10 @@ io:
   auto taskIoLogicImpl =
       std::make_shared<HomeAutomation::Runtime::TaskIOLogicComposite>();
   REQUIRE_NOTHROW(HomeAutomation::Runtime::ModbusRTUFactory::createIOs(
-      rootNode["io"][0], taskIoLogicImpl, gv));
+      rootNode["io"][0], taskIoLogicImpl, &gv));
 }
 
 TEST_CASE("modbus factory: check parity setting") {
-  auto gv = std::make_shared<HomeAutomation::GV>();
-
   auto const &rootNode = YAML::Load(R"(---
 io:
   - parity: N

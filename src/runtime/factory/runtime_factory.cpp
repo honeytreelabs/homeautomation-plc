@@ -1,6 +1,5 @@
 #include <gv_factory.hpp>
 #include <runtime_factory.hpp>
-#include <runtime_impl.hpp>
 #include <scheduler_factory.hpp>
 
 #include <yaml-cpp/yaml.h>
@@ -8,25 +7,25 @@
 namespace HomeAutomation {
 namespace Runtime {
 
-static std::shared_ptr<RuntimeImpl> initRuntime(YAML::Node const &rootNode) {
-  auto gv = std::make_shared<HomeAutomation::GV>();
-  auto scheduler = SchedulerFactory::createScheduler(rootNode["tasks"], gv);
+void initRuntime(YAML::Node const &rootNode, HomeAutomation::GV *gv,
+                 HomeAutomation::Runtime::Scheduler *scheduler) {
+  SchedulerFactory::initializeScheduler(rootNode["tasks"], gv, scheduler);
   GVFactory::initializeGVs(rootNode["global_vars"], gv);
-
-  return std::make_shared<RuntimeImpl>(gv, scheduler);
 }
 
-std::shared_ptr<Runtime> RuntimeFactory::fromString(std::string const &str) {
+void RuntimeFactory::fromString(std::string const &str, HomeAutomation::GV *gv,
+                                HomeAutomation::Runtime::Scheduler *scheduler) {
   YAML::Node rootNode = YAML::Load(str);
 
-  return initRuntime(rootNode);
+  return initRuntime(rootNode, gv, scheduler);
 }
 
-std::shared_ptr<Runtime>
-RuntimeFactory::fromFile(std::filesystem::path const &path) {
+void RuntimeFactory::fromFile(std::filesystem::path const &path,
+                              HomeAutomation::GV *gv,
+                              HomeAutomation::Runtime::Scheduler *scheduler) {
   YAML::Node rootNode = YAML::LoadFile(path);
 
-  return initRuntime(rootNode);
+  return initRuntime(rootNode, gv, scheduler);
 }
 
 } // namespace Runtime

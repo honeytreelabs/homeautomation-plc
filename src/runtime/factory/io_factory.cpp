@@ -13,7 +13,7 @@ namespace Runtime {
 void IOFactory::createIOs(
     YAML::Node const &ioNode,
     std::shared_ptr<HomeAutomation::Runtime::TaskIOLogicComposite> ioLogic,
-    std::shared_ptr<HomeAutomation::GV> gv) {
+    HomeAutomation::GV *gv) {
   if (!ioNode.IsDefined()) {
     return;
   }

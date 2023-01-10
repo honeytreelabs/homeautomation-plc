@@ -13,10 +13,9 @@ class CppProgram final : public HomeAutomation::Runtime::Program {
 public:
   CppProgram() = default;
 
-  void init(std::shared_ptr<HomeAutomation::GV> gv) override { (void)gv; }
+  void init(HomeAutomation::GV *gv) override { (void)gv; }
 
-  void execute(std::shared_ptr<HomeAutomation::GV> gv,
-               HomeAutomation::TimeStamp now) override {
+  void execute(HomeAutomation::GV *gv, HomeAutomation::TimeStamp now) override {
     (void)now;
 
     if (stairs_light_trigger.execute(std::get<bool>(gv->inputs["button_a"]))) {

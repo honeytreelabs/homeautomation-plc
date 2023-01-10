@@ -9,7 +9,7 @@
 #include <doctest/doctest.h>
 
 TEST_CASE("mqtt io factory: initialize mqtt with all required arguments") {
-  auto gv = std::make_shared<HomeAutomation::GV>();
+  HomeAutomation::GV gv{};
 
   auto const &rootNode = YAML::Load(R"(---
 io:
@@ -24,5 +24,5 @@ io:
   auto taskIoLogicImpl =
       std::make_shared<HomeAutomation::Runtime::TaskIOLogicComposite>();
   REQUIRE_NOTHROW(HomeAutomation::Runtime::MQTTIOFactory::createIOs(
-      rootNode["io"][0], taskIoLogicImpl, gv));
+      rootNode["io"][0], taskIoLogicImpl, &gv));
 }

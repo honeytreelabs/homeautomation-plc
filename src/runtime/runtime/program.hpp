@@ -12,8 +12,8 @@ namespace Runtime {
 // Programs shall only operate on GV memory
 class Program {
 public:
-  virtual void init(std::shared_ptr<HomeAutomation::GV> gv) = 0;
-  virtual void execute(std::shared_ptr<HomeAutomation::GV> gv,
+  virtual void init(HomeAutomation::GV *gv) = 0;
+  virtual void execute(HomeAutomation::GV *gv,
                        HomeAutomation::TimeStamp now) = 0;
 
 protected:

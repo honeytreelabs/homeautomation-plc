@@ -25,15 +25,16 @@ tasks: []
 )";
 
   auto const &rootNode = YAML::Load(yaml);
-  auto gv = std::make_shared<HomeAutomation::GV>();
+  HomeAutomation::GV gv{};
+  HomeAutomation::Runtime::Scheduler scheduler{};
 
-  REQUIRE_NOTHROW(SchedulerFactory::createScheduler(rootNode["tasks"], gv));
+  REQUIRE_NOTHROW(SchedulerFactory::initializeScheduler(rootNode["tasks"], &gv,
+                                                        &scheduler));
 }
 
 class NullProgram : public HomeAutomation::Runtime::Program {
-  void init(std::shared_ptr<HomeAutomation::GV> gv) override { (void)gv; }
-  void execute(std::shared_ptr<HomeAutomation::GV> gv,
-               HomeAutomation::TimeStamp now) override {
+  void init(HomeAutomation::GV *gv) override { (void)gv; }
+  void execute(HomeAutomation::GV *gv, HomeAutomation::TimeStamp now) override {
     (void)gv;
     (void)now;
   }
@@ -50,9 +51,11 @@ tasks:
 
   auto const &rootNode = YAML::Load(yaml);
 
-  auto gv = std::make_shared<HomeAutomation::GV>();
-  auto scheduler = SchedulerFactory::createScheduler(rootNode["tasks"], gv);
+  HomeAutomation::GV gv{};
+  HomeAutomation::Runtime::Scheduler scheduler{};
+
+  SchedulerFactory::initializeScheduler(rootNode["tasks"], &gv, &scheduler);
 
   auto program = std::make_shared<NullProgram>();
-  REQUIRE_NOTHROW(scheduler->getTask("main")->addProgram(program));
+  REQUIRE_NOTHROW(scheduler.getTask("main")->addProgram(program));
 }

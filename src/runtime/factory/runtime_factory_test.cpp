@@ -16,9 +16,8 @@ using namespace HomeAutomation::Runtime;
 class CountProgram : public HomeAutomation::Runtime::Program {
 public:
   CountProgram() = default;
-  void init(std::shared_ptr<HomeAutomation::GV> gv) override {}
-  void execute(std::shared_ptr<HomeAutomation::GV> gv,
-               HomeAutomation::TimeStamp now) override {
+  void init(HomeAutomation::GV *gv) override {}
+  void execute(HomeAutomation::GV *gv, HomeAutomation::TimeStamp now) override {
     cnt++;
   }
   int cnt;
@@ -40,7 +39,10 @@ global_vars: {}
 tasks: []
 )";
 
-  REQUIRE_NOTHROW(RuntimeFactory::fromString(yaml));
+  HomeAutomation::GV gv{};
+  HomeAutomation::Runtime::Scheduler scheduler{};
+
+  REQUIRE_NOTHROW(RuntimeFactory::fromString(yaml, &gv, &scheduler));
 }
 
 TEST_CASE("runtime factory: instantiate runtime only tasks") {
@@ -51,7 +53,10 @@ tasks:
     interval: 25000
 )";
 
-  REQUIRE_NOTHROW(RuntimeFactory::fromString(yaml));
+  HomeAutomation::GV gv{};
+  HomeAutomation::Runtime::Scheduler scheduler{};
+
+  REQUIRE_NOTHROW(RuntimeFactory::fromString(yaml, &gv, &scheduler));
 }
 
 TEST_CASE("runtime factory: instantiate runtime from YAML") {
@@ -80,8 +85,12 @@ global_vars:
 tasks: []
 )";
 
+  HomeAutomation::GV gv{};
+  HomeAutomation::Runtime::Scheduler scheduler{};
+
   // referenced variables do not exist
-  REQUIRE_THROWS_AS(HomeAutomation::Runtime::RuntimeFactory::fromString(yaml),
+  REQUIRE_THROWS_AS(HomeAutomation::Runtime::RuntimeFactory::fromString(
+                        yaml, &gv, &scheduler),
                     std::invalid_argument);
 }
 
@@ -95,20 +104,22 @@ tasks:
     interval: 25000
 )";
 
-  std::atomic_bool quit_cond = false;
-  auto runtime = RuntimeFactory::fromString(yaml);
+  HomeAutomation::GV gv{};
+  HomeAutomation::Runtime::Scheduler scheduler{};
 
-  HomeAutomation::GV gv;
+  std::atomic_bool quit_cond = false;
+  RuntimeFactory::fromString(yaml, &gv, &scheduler);
+
   auto testProgram = std::make_shared<CountProgram>();
 
-  runtime->Scheduler()->getTask("main")->addProgram(testProgram);
+  scheduler.getTask("main")->addProgram(testProgram);
 
-  runtime->start([&quit_cond]() -> bool { return quit_cond; });
+  scheduler.start(&gv, [&quit_cond]() -> bool { return quit_cond; });
 
   std::this_thread::sleep_for(100ms);
   quit_cond = true;
 
-  REQUIRE(runtime->wait() == EXIT_SUCCESS);
+  REQUIRE(scheduler.wait() == EXIT_SUCCESS);
   REQUIRE(testProgram->cnt > 0);
 }
 
@@ -132,11 +143,14 @@ tasks:
         output: {}
 )";
 
-  auto runtime = RuntimeFactory::fromString(yaml);
+  HomeAutomation::GV gv{};
+  HomeAutomation::Runtime::Scheduler scheduler{};
 
-  REQUIRE_NOTHROW([&runtime]() {
-    runtime->start([]() -> bool { return true; });
-    runtime->wait();
+  RuntimeFactory::fromString(yaml, &gv, &scheduler);
+
+  REQUIRE_NOTHROW([&gv, &scheduler]() {
+    scheduler.start(&gv, []() -> bool { return true; });
+    scheduler.wait();
   }());
 }
 
@@ -153,20 +167,25 @@ tasks:
         type: C++
 )";
     std::atomic_bool quit_cond = false;
-    auto runtime = RuntimeFactory::fromString(yaml);
+    HomeAutomation::GV gv{};
+    HomeAutomation::Runtime::Scheduler scheduler{};
 
-    runtime->start([&quit_cond]() -> bool { return quit_cond; });
+    RuntimeFactory::fromString(yaml, &gv, &scheduler);
+
+    scheduler.start(&gv, [&quit_cond]() -> bool { return quit_cond; });
 
     std::this_thread::sleep_for(100ms);
     quit_cond = true;
 
-    REQUIRE(runtime->wait() == EXIT_SUCCESS);
+    REQUIRE(scheduler.wait() == EXIT_SUCCESS);
   }());
 }
 
 TEST_CASE("runtime factory: instantiate runtime with all features") {
-  std::shared_ptr<HomeAutomation::Runtime::Runtime> runtime;
-  REQUIRE_NOTHROW([&runtime]() {
+  HomeAutomation::GV gv{};
+  HomeAutomation::Runtime::Scheduler scheduler{};
+
+  REQUIRE_NOTHROW([&gv, &scheduler]() {
     std::string yaml = R"(---
 global_vars:
   inputs:
@@ -236,19 +255,18 @@ tasks:
               3: kizi_2_raff_down
               4: ground_office_light
 )";
-    runtime = RuntimeFactory::fromString(yaml);
+    RuntimeFactory::fromString(yaml, &gv, &scheduler);
   }());
 
-  REQUIRE(std::get<bool>(runtime->GV()->inputs["sr_raff_down"]) == false);
-  REQUIRE(std::get<bool>(runtime->GV()->inputs["sr_raff_up"]) == false);
-  REQUIRE(std::get<bool>(runtime->GV()->inputs["kizi_2_raff_up"]) == false);
-  REQUIRE(std::get<bool>(runtime->GV()->inputs["kizi_2_raff_down"]) == false);
-  REQUIRE(std::get<bool>(runtime->GV()->inputs["anything"]) == true);
+  REQUIRE(std::get<bool>(gv.inputs["sr_raff_down"]) == false);
+  REQUIRE(std::get<bool>(gv.inputs["sr_raff_up"]) == false);
+  REQUIRE(std::get<bool>(gv.inputs["kizi_2_raff_up"]) == false);
+  REQUIRE(std::get<bool>(gv.inputs["kizi_2_raff_down"]) == false);
+  REQUIRE(std::get<bool>(gv.inputs["anything"]) == true);
 
-  REQUIRE(std::get<bool>(runtime->GV()->outputs["sr_raff_up"]) == false);
-  REQUIRE(std::get<bool>(runtime->GV()->outputs["sr_raff_down"]) == false);
-  REQUIRE(std::get<bool>(runtime->GV()->outputs["kizi_2_raff_up"]) == false);
-  REQUIRE(std::get<bool>(runtime->GV()->outputs["kizi_2_raff_down"]) == false);
-  REQUIRE(std::get<bool>(runtime->GV()->outputs["ground_office_light"]) ==
-          true);
+  REQUIRE(std::get<bool>(gv.outputs["sr_raff_up"]) == false);
+  REQUIRE(std::get<bool>(gv.outputs["sr_raff_down"]) == false);
+  REQUIRE(std::get<bool>(gv.outputs["kizi_2_raff_up"]) == false);
+  REQUIRE(std::get<bool>(gv.outputs["kizi_2_raff_down"]) == false);
+  REQUIRE(std::get<bool>(gv.outputs["ground_office_light"]) == true);
 }
