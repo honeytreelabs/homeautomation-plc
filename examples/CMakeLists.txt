@@ -1,2 +1,2 @@
 add_subdirectory(cpp-program)
-add_subdirectory(generic)
+# generic and generic-inline do not need any build instructions

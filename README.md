@@ -4,7 +4,7 @@
 
 This SoftPLC framework allows for developing applications using the cyclic execution pattern typically found in PLCs. The guiding principle is to provide all that's needed for the application logic (such as IO states) as variable values. Application developers can therefore fully focus on creating the actual application logic without having to deal with low-level system details.
 
-All that's required to be passed to the resulting binary is a configuration in YAML format.
+All that's required to be passed to the resulting binary is a configuration in YAML format. This file may even contain the PLC application logic in Lua (optional).
 
 Example for two port expanders attached to the I<sup>2</sup>C bus of a Raspberry Pi:
 
@@ -19,7 +19,7 @@ tasks:
           function Init(gv) BLIND = Blind.new(BlindConfigFromMillis(500, 50000, 50000)) end
           function Cycle(gv, now)
             gv.outputs.blind_up, gv.outputs.blind_down =
-              BLIND:execute(now, gv.inputs.blind_up, gv.inputs.blind_down)
+              BLIND:execute(now, gv.inputs.button_up, gv.inputs.button_down)
           end
     io:
       - type: i2c
@@ -29,8 +29,8 @@ tasks:
             type: pcf8574
             direction: input
             inputs:
-              0: blind_up
-              1: blind_down
+              0: button_up
+              1: button_down
           20:  # i2c address
             type: max7311
             direction: output
@@ -116,6 +116,10 @@ For better analysis of what happened when and how often, we want to integrate a 
 ### IEC 61131-3 Programs
 
 In central Europe, PLCs used in typical industrial automation scenarios are programmed according to the IEC 61131-3 standard. Therefore, on the middle or long run, we want to implement an interpreter which is capable of executing such logic.
+
+### Improved Testing Capabilities
+
+For inlined Lua application logic I want to implement a testing framework that allows for making formally sure that the contained application behaves as expected.
 
 ## References
 
