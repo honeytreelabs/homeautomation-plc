@@ -50,7 +50,7 @@ programs:
 
   auto taskIOLogic =
       std::make_shared<HomeAutomation::Runtime::TaskIOLogicComposite>();
-  auto task = HomeAutomation::Runtime::Task{taskIOLogic, 500 * 1ms};
+  auto task = HomeAutomation::Runtime::Task{"TestTask", taskIOLogic, 500 * 1ms};
   REQUIRE_NOTHROW(HomeAutomation::Runtime::ProgramFactory::installPrograms(
       &task, rootNode["programs"]));
 }
@@ -68,7 +68,7 @@ programs:
 
   auto taskIOLogic =
       std::make_shared<HomeAutomation::Runtime::TaskIOLogicComposite>();
-  auto task = HomeAutomation::Runtime::Task{taskIOLogic, 500 * 1ms};
+  auto task = HomeAutomation::Runtime::Task{"TestTask", taskIOLogic, 500 * 1ms};
   REQUIRE_THROWS_AS(HomeAutomation::Runtime::ProgramFactory::installPrograms(
                         &task, rootNode["programs"]),
                     std::invalid_argument);
@@ -92,7 +92,7 @@ programs:
 
   auto taskIOLogic =
       std::make_shared<HomeAutomation::Runtime::TaskIOLogicComposite>();
-  auto task = HomeAutomation::Runtime::Task{taskIOLogic, 500 * 1ms};
+  auto task = HomeAutomation::Runtime::Task{"TestTask", taskIOLogic, 500 * 1ms};
   REQUIRE_THROWS_AS(HomeAutomation::Runtime::ProgramFactory::installPrograms(
                         &task, rootNode["programs"]),
                     std::invalid_argument);
@@ -117,7 +117,7 @@ programs:
 
   auto taskIOLogic =
       std::make_shared<HomeAutomation::Runtime::TaskIOLogicComposite>();
-  auto task = HomeAutomation::Runtime::Task{taskIOLogic, 500 * 1ms};
+  auto task = HomeAutomation::Runtime::Task{"TestTask", taskIOLogic, 500 * 1ms};
   REQUIRE_THROWS_AS(HomeAutomation::Runtime::ProgramFactory::installPrograms(
                         &task, rootNode["programs"]),
                     std::invalid_argument);
@@ -140,7 +140,7 @@ programs:
 
   auto taskIOLogic =
       std::make_shared<HomeAutomation::Runtime::TaskIOLogicComposite>();
-  auto task = HomeAutomation::Runtime::Task{taskIOLogic, 500 * 1ms};
+  auto task = HomeAutomation::Runtime::Task{"TestTask", taskIOLogic, 500 * 1ms};
   REQUIRE_NOTHROW(HomeAutomation::Runtime::ProgramFactory::installPrograms(
       &task, programsRootNode["programs"]));
 
@@ -170,7 +170,7 @@ programs:
 
   auto taskIOLogic =
       std::make_shared<HomeAutomation::Runtime::TaskIOLogicComposite>();
-  auto task = HomeAutomation::Runtime::Task{taskIOLogic, 500 * 1ms};
+  auto task = HomeAutomation::Runtime::Task{"TestTask", taskIOLogic, 500 * 1ms};
   REQUIRE_NOTHROW(HomeAutomation::Runtime::ProgramFactory::installPrograms(
       &task, programsRootNode["programs"]));
 
@@ -220,7 +220,7 @@ programs:
 
   auto taskIOLogic =
       std::make_shared<HomeAutomation::Runtime::TaskIOLogicComposite>();
-  auto task = HomeAutomation::Runtime::Task{taskIOLogic, 500 * 1ms};
+  auto task = HomeAutomation::Runtime::Task{"TestTask", taskIOLogic, 500 * 1ms};
   REQUIRE_NOTHROW(HomeAutomation::Runtime::ProgramFactory::installPrograms(
       &task, programsRootNode["programs"]));
 
@@ -262,7 +262,7 @@ programs:
 
   auto taskIOLogic =
       std::make_shared<HomeAutomation::Runtime::TaskIOLogicComposite>();
-  auto task = HomeAutomation::Runtime::Task{taskIOLogic, 500 * 1ms};
+  auto task = HomeAutomation::Runtime::Task{"TestTask", taskIOLogic, 500 * 1ms};
   REQUIRE_NOTHROW(HomeAutomation::Runtime::ProgramFactory::installPrograms(
       &task, programsRootNode["programs"]));
 

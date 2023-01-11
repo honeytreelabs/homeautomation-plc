@@ -17,20 +17,16 @@ void SchedulerFactory::initializeScheduler(YAML::Node const &schedulerNode,
        it != schedulerNode.end(); ++it) {
     auto const &taskNode = *it;
 
-    // IO
     auto taskIOLogic =
         std::make_shared<HomeAutomation::Runtime::TaskIOLogicComposite>();
     auto const &ioNode = taskNode["io"];
     IOFactory::createIOs(ioNode, taskIOLogic, gv);
 
-    // install task
     auto const &taskName = taskNode["name"].as<std::string>();
     spdlog::info("Installing task {}", taskName);
-    scheduler->installTask(taskName, taskIOLogic,
-                           taskNode["interval"].as<int>() * 1us);
+    auto task = scheduler->installTask(taskName, taskIOLogic,
+                                       taskNode["interval"].as<int>() * 1us);
 
-    // TODO scheduler->installTask should return newly created task
-    auto task = scheduler->getTask(taskName);
     ProgramFactory::installPrograms(task, taskNode["programs"]);
   }
 }

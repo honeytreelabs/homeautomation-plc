@@ -21,8 +21,9 @@ using milliseconds = std::chrono::duration<double, std::milli>;
 
 class Task final {
 public:
-  Task(std::shared_ptr<TaskIOLogic> taskIOLogic, milliseconds interval)
-      : taskIOLogic{taskIOLogic}, interval{interval} {}
+  Task(std::string const &name, std::shared_ptr<TaskIOLogic> taskIOLogic,
+       milliseconds interval)
+      : name{name}, taskIOLogic{taskIOLogic}, interval{interval} {}
   void addProgram(std::shared_ptr<HomeAutomation::Runtime::Program> program) {
     programs.push_back(program);
   }
@@ -42,6 +43,7 @@ public:
   milliseconds getInterval() const { return interval; }
 
 private:
+  std::string const name;
   std::shared_ptr<TaskIOLogic> taskIOLogic;
   Programs programs;
   milliseconds interval;
@@ -58,37 +60,16 @@ class Scheduler final {
 public:
   Scheduler() : state{STOPPED}, tasks{}, threads{} {}
 
-  void installTask(std::string const &name,
-                   std::shared_ptr<TaskIOLogic> taskIOLogic,
-                   milliseconds interval) {
-    if (tasks.find(name) != tasks.end()) {
-      throw std::invalid_argument("task with given name already exists");
-    }
-    tasks.emplace(std::piecewise_construct, std::forward_as_tuple(name),
-                  std::forward_as_tuple(taskIOLogic, interval));
-  }
-
-  void addProgram(std::string const &name, std::shared_ptr<Program> program) {
-    auto const &it = tasks.find(name);
-    if (it == tasks.end()) {
-      throw std::invalid_argument("task with given name does not exist");
-    }
-    auto &task = it->second;
-    task.addProgram(program);
-  }
-
-  Task *getTask(std::string const &name) {
-    auto const &it = tasks.find(name);
-    if (it == tasks.end()) {
-      throw std::invalid_argument("task with given name does not exist");
-    }
-    auto &task = it->second;
+  Task *installTask(std::string const &name,
+                    std::shared_ptr<TaskIOLogic> taskIOLogic,
+                    milliseconds interval) {
+    auto &task = tasks.emplace_back(name, taskIOLogic, interval);
     return &task;
   }
 
   void start(HomeAutomation::GV *gv) {
     state = RUNNING;
-    for (auto &[name, task] : tasks) {
+    for (auto &task : tasks) {
       threads.emplace_back(Scheduler::taskFun, std::cref(task), gv, &state);
     }
   }
@@ -127,7 +108,7 @@ private:
   Scheduler &operator=(Scheduler &&) = delete;
 
   std::atomic_uint8_t state;
-  std::map<std::string, Task> tasks;
+  std::list<Task> tasks;
   std::list<std::thread> threads;
 };
 

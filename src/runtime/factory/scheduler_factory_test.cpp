@@ -12,9 +12,20 @@
 
 using namespace HomeAutomation::Runtime;
 
+class NullProgram : public HomeAutomation::Runtime::Program {
+  void init(HomeAutomation::GV *gv) override { (void)gv; }
+  void execute(HomeAutomation::GV *gv, HomeAutomation::TimeStamp now) override {
+    (void)gv;
+    (void)now;
+  }
+};
+
 namespace HomeAutomation::Runtime {
 std::shared_ptr<HomeAutomation::Runtime::Program>
 createCppProgram(std::string const &name) {
+  if (name == "NullProgram") {
+    return std::make_shared<NullProgram>();
+  }
   return std::shared_ptr<HomeAutomation::Runtime::Program>();
 }
 } // namespace HomeAutomation::Runtime
@@ -32,14 +43,6 @@ tasks: []
                                                         &scheduler));
 }
 
-class NullProgram : public HomeAutomation::Runtime::Program {
-  void init(HomeAutomation::GV *gv) override { (void)gv; }
-  void execute(HomeAutomation::GV *gv, HomeAutomation::TimeStamp now) override {
-    (void)gv;
-    (void)now;
-  }
-};
-
 TEST_CASE("scheduler factory: one task") {
   using namespace std::chrono_literals;
 
@@ -47,6 +50,9 @@ TEST_CASE("scheduler factory: one task") {
 tasks:
   - name: main
     interval: 25000
+    programs:
+      - name: NullProgram
+        type: C++
 )";
 
   auto const &rootNode = YAML::Load(yaml);
@@ -55,7 +61,4 @@ tasks:
   HomeAutomation::Runtime::Scheduler scheduler{};
 
   SchedulerFactory::initializeScheduler(rootNode["tasks"], &gv, &scheduler);
-
-  auto program = std::make_shared<NullProgram>();
-  REQUIRE_NOTHROW(scheduler.getTask("main")->addProgram(program));
 }

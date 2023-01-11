@@ -94,34 +94,6 @@ tasks: []
                     std::invalid_argument);
 }
 
-TEST_CASE("runtime factory: instantiate and execute runtime") {
-  using namespace std::chrono_literals;
-
-  std::string yaml = R"(---
-global_vars: {}
-tasks:
-  - name: main
-    interval: 25000
-)";
-
-  HomeAutomation::GV gv{};
-  HomeAutomation::Runtime::Scheduler scheduler{};
-
-  RuntimeFactory::fromString(yaml, &gv, &scheduler);
-
-  auto testProgram = std::make_shared<CountProgram>();
-
-  scheduler.getTask("main")->addProgram(testProgram);
-
-  scheduler.start(&gv);
-
-  std::this_thread::sleep_for(100ms);
-
-  scheduler.stop();
-  REQUIRE(scheduler.wait() == EXIT_SUCCESS);
-  REQUIRE(testProgram->cnt > 0);
-}
-
 TEST_CASE("runtime factory: instantiate and execute runtime missing broker") {
   std::string yaml = R"(---
 global_vars: {}
