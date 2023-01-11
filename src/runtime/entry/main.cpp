@@ -15,14 +15,18 @@ int main(int argc, char *argv[]) {
   }
 
   try {
-    HomeAutomation::System::initQuitCondition();
-
     auto gv = HomeAutomation::GV{};
     auto scheduler = HomeAutomation::Runtime::Scheduler{};
+
+    HomeAutomation::System::initQuitCondition([&scheduler](int sig) {
+      (void)sig;
+      scheduler.stop();
+    });
+
     HomeAutomation::Runtime::RuntimeFactory::fromFile(argv[1], &gv, &scheduler);
 
     spdlog::info("Starting runtime");
-    scheduler.start(&gv, HomeAutomation::System::quitCondition);
+    scheduler.start(&gv);
     return scheduler.wait();
   } catch (YAML::Exception const &exc) {
     spdlog::error("Could not parse configuration file: {}", exc.what());

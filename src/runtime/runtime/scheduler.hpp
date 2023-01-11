@@ -19,8 +19,6 @@ namespace Runtime {
 
 using milliseconds = std::chrono::duration<double, std::milli>;
 
-using QuitCb = std::function<bool()>;
-
 class Task final {
 public:
   Task(std::shared_ptr<TaskIOLogic> taskIOLogic, milliseconds interval)
@@ -49,10 +47,16 @@ private:
   milliseconds interval;
 };
 
+enum SchedulerState : std::uint8_t {
+  UNKNOWN,
+  RUNNING,
+  STOPPING,
+  STOPPED,
+};
+
 class Scheduler final {
 public:
-  Scheduler() = default;
-  Scheduler(Scheduler &&) = default;
+  Scheduler() : state{STOPPED}, tasks{}, threads{} {}
 
   void installTask(std::string const &name,
                    std::shared_ptr<TaskIOLogic> taskIOLogic,
@@ -82,24 +86,31 @@ public:
     return &task;
   }
 
-  void start(HomeAutomation::GV *gv, QuitCb quitCb) {
+  void start(HomeAutomation::GV *gv) {
+    state = RUNNING;
     for (auto &[name, task] : tasks) {
-      threads.emplace_back(Scheduler::taskFun, std::cref(task), gv, quitCb);
+      threads.emplace_back(Scheduler::taskFun, std::cref(task), gv, &state);
     }
   }
+
+  void stop() { state = STOPPING; }
+
+  std::uint8_t getState() const { return state; }
 
   int wait() {
     for (auto &thread : threads) {
       thread.join();
     }
+    state = STOPPED;
     return EXIT_SUCCESS;
   }
 
 private:
-  static void taskFun(Task const &task, HomeAutomation::GV *gv, QuitCb quitCb) {
+  static void taskFun(Task const &task, HomeAutomation::GV *gv,
+                      std::atomic_uint8_t *state) {
     task.getTaskIOLogic()->init();
     task.initPrograms(gv);
-    while (!quitCb()) {
+    while (*state == RUNNING) {
       spdlog::debug("Task::tick()");
       task.getTaskIOLogic()->before();
       task.executePrograms(gv);
@@ -115,6 +126,7 @@ private:
   Scheduler &operator=(Scheduler &) = delete;
   Scheduler &operator=(Scheduler &&) = delete;
 
+  std::atomic_uint8_t state;
   std::map<std::string, Task> tasks;
   std::list<std::thread> threads;
 };

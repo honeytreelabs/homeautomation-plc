@@ -107,18 +107,17 @@ tasks:
   HomeAutomation::GV gv{};
   HomeAutomation::Runtime::Scheduler scheduler{};
 
-  std::atomic_bool quit_cond = false;
   RuntimeFactory::fromString(yaml, &gv, &scheduler);
 
   auto testProgram = std::make_shared<CountProgram>();
 
   scheduler.getTask("main")->addProgram(testProgram);
 
-  scheduler.start(&gv, [&quit_cond]() -> bool { return quit_cond; });
+  scheduler.start(&gv);
 
   std::this_thread::sleep_for(100ms);
-  quit_cond = true;
 
+  scheduler.stop();
   REQUIRE(scheduler.wait() == EXIT_SUCCESS);
   REQUIRE(testProgram->cnt > 0);
 }
@@ -149,7 +148,8 @@ tasks:
   RuntimeFactory::fromString(yaml, &gv, &scheduler);
 
   REQUIRE_NOTHROW([&gv, &scheduler]() {
-    scheduler.start(&gv, []() -> bool { return true; });
+    scheduler.start(&gv);
+    scheduler.stop();
     scheduler.wait();
   }());
 }
@@ -172,11 +172,12 @@ tasks:
 
     RuntimeFactory::fromString(yaml, &gv, &scheduler);
 
-    scheduler.start(&gv, [&quit_cond]() -> bool { return quit_cond; });
+    scheduler.start(&gv);
 
     std::this_thread::sleep_for(100ms);
     quit_cond = true;
 
+    scheduler.stop();
     REQUIRE(scheduler.wait() == EXIT_SUCCESS);
   }());
 }
