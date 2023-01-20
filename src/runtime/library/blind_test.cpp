@@ -11,7 +11,7 @@ static constexpr auto const cfg = HomeAutomation::Library::BlindConfig{
 TEST_CASE("blind: states of inputs unchanged") {
   spdlog::set_level(spdlog::level::debug);
 
-  auto start = std::chrono::high_resolution_clock::now();
+  auto start = std::chrono::steady_clock::now();
   HomeAutomation::Library::Blind blind(cfg, start);
 
   auto relay_states = blind.execute(start + 100ms, false, false);
@@ -24,7 +24,7 @@ TEST_CASE("blind: states of inputs unchanged") {
 TEST_CASE("blind: move up") {
   spdlog::set_level(spdlog::level::debug);
 
-  auto start = std::chrono::high_resolution_clock::now();
+  auto start = std::chrono::steady_clock::now();
   HomeAutomation::Library::Blind blind_test(cfg, start);
 
   auto relay_states =
@@ -43,7 +43,7 @@ TEST_CASE("blind: move up") {
 TEST_CASE("blind: both inputs true") {
   spdlog::set_level(spdlog::level::debug);
 
-  auto start = std::chrono::high_resolution_clock::now();
+  auto start = std::chrono::steady_clock::now();
   HomeAutomation::Library::Blind blind(cfg, start);
 
   auto relay_states =
@@ -60,7 +60,7 @@ TEST_CASE("blind: both inputs true") {
 TEST_CASE("blind: complete run") {
   spdlog::set_level(spdlog::level::debug);
 
-  auto start = std::chrono::high_resolution_clock::now();
+  auto start = std::chrono::steady_clock::now();
   HomeAutomation::Library::Blind blind(cfg, start);
 
   /* idle */

@@ -224,7 +224,7 @@ programs:
   REQUIRE_NOTHROW(HomeAutomation::Runtime::ProgramFactory::installPrograms(
       &task, programsRootNode["programs"]));
 
-  auto start = std::chrono::high_resolution_clock::now();
+  auto start = std::chrono::steady_clock::now();
 
   task.initPrograms(&gv);
 

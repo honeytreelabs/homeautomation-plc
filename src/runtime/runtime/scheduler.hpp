@@ -32,9 +32,8 @@ public:
       program->init(gv);
     }
   }
-  void executePrograms(
-      HomeAutomation::GV *gv,
-      TimeStamp now = std::chrono::high_resolution_clock::now()) const {
+  void executePrograms(HomeAutomation::GV *gv,
+                       TimeStamp now = std::chrono::steady_clock::now()) const {
     for (auto const &program : programs) {
       program->execute(gv, now);
     }

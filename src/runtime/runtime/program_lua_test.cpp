@@ -18,7 +18,7 @@ TEST_CASE("lua program: window blind complete run") {
   auto path = std::filesystem::path{"test/test_program_with_blind.lua"};
   auto luaProgram = HomeAutomation::Runtime::LuaProgram(path);
   luaProgram.init(&gv);
-  auto start = std::chrono::high_resolution_clock::now();
+  auto start = std::chrono::steady_clock::now();
   auto const periodIdle = 500ms;
   auto const periodUp = 30s;
   auto const periodDown = 30s;
@@ -115,7 +115,7 @@ end
 )"};
   auto luaProgram = HomeAutomation::Runtime::LuaProgram(script);
   luaProgram.init(&gv);
-  auto start = std::chrono::high_resolution_clock::now();
+  auto start = std::chrono::steady_clock::now();
   auto const periodIdle = 500ms;
   auto const periodUp = 30s;
   auto const periodDown = 30s;
