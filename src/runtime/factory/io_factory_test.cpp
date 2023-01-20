@@ -19,7 +19,7 @@ io:
   - type: i2c
     bus: /dev/i2c-1
     components:
-      3b:  # i2c address
+      0x3b:  # i2c address
         type: pcf8574
         direction: input
         inputs:

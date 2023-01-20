@@ -209,7 +209,7 @@ tasks:
       - type: i2c
         bus: /dev/i2c-1
         components:
-          3b:  # i2c address
+          0x3b:  # i2c address
             type: pcf8574
             direction: input
             inputs:
@@ -218,7 +218,7 @@ tasks:
               2: kizi_2_raff_up
               3: kizi_2_raff_down
               4: anything
-          20:  # i2c address
+          0x20:  # i2c address
             type: max7311
             direction: output
             outputs:
