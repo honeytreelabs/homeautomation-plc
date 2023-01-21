@@ -128,6 +128,10 @@ Changes in the values of global variable values (= events) invoke callbacks that
 - Variable value changed.
 - Get all variable values.
 
+### time_points/durations as simple 64-bit values
+
+This allows for easier interaction with interpreters and conversion between different time bases.
+
 ## References
 
 I wrote a couple of articles about the protocols mentioned in this project. Unfortunately, they are in German. But most likely, it is possible to translate them with some available online tools:
