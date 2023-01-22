@@ -1,0 +1,24 @@
+---
+tasks:
+  - name: main
+    interval: 25000  # us
+    programs:
+      - name: BlindLogic
+        type: Lua
+        script: <placeholder>
+    io:
+      - type: i2c
+        bus: /dev/i2c-1
+        components:
+          0x3b:  # i2c address
+            type: pcf8574
+            direction: input
+            inputs:
+              0: button_up
+              1: button_down
+          0x20:  # i2c address
+            type: max7311
+            direction: output
+            outputs:
+              0: blind_up
+              1: blind_down
