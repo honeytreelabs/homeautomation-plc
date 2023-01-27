@@ -6,6 +6,27 @@ all: native
 
 mkfile_path := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 
+.PHONY: deps-install
+deps-install:
+	if ! grep -q 'ID=.*\(debian\|ubuntu\)' /etc/os-release; then \
+		echo "Only debian/ubuntu Linux are supported as build platform"; \
+		exit 1; \
+	fi
+	if ! command -v sudo; then echo "sudo must be available."; exit 1; fi
+	sudo apt update && sudo apt install -y \
+		build-essential \
+		cmake \
+		g++ \
+		g++-aarch64-linux-gnu \
+		g++-arm-linux-gnueabihf \
+		make \
+		ninja-build \
+		python3 \
+		python-is-python3 \
+		python3-pip \
+		python3-venv \
+		valgrind
+
 .PHONY: conan-install
 conan-install:
 	if [ ! -e build.venv ]; then python3 -m venv build.venv; fi

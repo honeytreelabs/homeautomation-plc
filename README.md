@@ -77,26 +77,9 @@ Currently, the following platforms are currently supported:
 - Raspberry Pi 3
 - Raspberry Pi 2
 
-Preparation (Debian):
-
-``` shell
-sudo apt update && sudo apt install -y \
-    build-essential \
-    cmake \
-    g++ \
-    g++-aarch64-linux-gnu \
-    g++-arm-linux-gnueabihf \
-    make \
-    ninja-build \
-    python3 \
-    python-is-python3 \
-    python3-pip \
-    python3-venv \
-    valgrind
-```
-
 Building:
 
+- `make deps-install`: install required packages (Debian/Ubuntu Linux only)
 - `make conan-install`: install the conan package manager
 - `make conan-install-deps-native`: build and install dependencies for native platform
 - `make conan-install-deps-rpi3`: build and install dependencies for Raspberry Pi 3 (and 4)
