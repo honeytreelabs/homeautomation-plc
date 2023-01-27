@@ -7,6 +7,8 @@ namespace Library {
 
 class LuaLibraryRegistry {
 public:
+  LuaLibraryRegistry() = delete;
+  ~LuaLibraryRegistry() = delete;
   static void RegisterComponents(sol::state &lua);
 };
 
