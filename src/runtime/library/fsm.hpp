@@ -16,6 +16,7 @@ template <typename RetType, typename... Types> class FSM;
 template <typename RetType, typename... Types> class State {
 public:
   using OptionalState = std::optional<std::unique_ptr<State>>;
+  constexpr static const auto NoTransition = std::nullopt;
 
   virtual ~State() = default;
   virtual OptionalState execute(TimeStamp now, Types... args) = 0;

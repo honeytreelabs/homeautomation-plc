@@ -41,7 +41,6 @@ public:
   BlindFSM(UniqueBlindState state) : FSM(std::move(state)) {}
 };
 using OptionalBlindState = std::optional<UniqueBlindState>;
-constexpr const auto NoTransition = std::nullopt;
 
 class BlindStateIdle : public BlindState {
 public:
