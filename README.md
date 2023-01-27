@@ -56,6 +56,8 @@ Supported featuers:
 - A comprehensive build framework with multitude of tests.
 - A statically linked binary with batteries included.
 
+This project is licensed under the terms of the GNU Lesser General Public License v3.0.
+
 ## Getting started
 
 Requirements:
