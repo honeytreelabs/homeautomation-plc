@@ -1,30 +1,32 @@
 ---
 tasks:
   - name: main
-    interval: 25000 # us
+    interval: 25000  # us
     programs:
       - name: BlindLogic
         type: Lua
         script: |-
+          local blind
+
           -- called once before cyclic execution
-          function Init(gv) BLIND = Blind.new(BlindConfigFromMillis(500, 50000, 50000)) end
+          function Init(gv) blind = Blind.new(BlindConfigFromMillis(500, 50000, 50000)) end
 
           -- called every cycle
           function Cycle(gv, now)
           	gv.outputs.blind_up, gv.outputs.blind_down =
-          		BLIND:execute(now, gv.inputs.button_up, gv.inputs.button_down)
+          		blind:execute(now, gv.inputs.button_up, gv.inputs.button_down)
           end
     io:
       - type: i2c
         bus: /dev/i2c-1
         components:
-          0x3b: # i2c address
+          0x3b:  # i2c address
             type: pcf8574
             direction: input
             inputs:
               0: button_up
               1: button_down
-          0x20: # i2c address
+          0x20:  # i2c address
             type: max7311
             direction: output
             outputs:
