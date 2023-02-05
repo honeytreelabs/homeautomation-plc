@@ -1,0 +1,21 @@
+---
+version: "3.8"
+services:
+  build-env:
+    build:
+      context: ..
+      dockerfile: ./docker/Dockerfile.build
+    image: homeautomation-plc-build:latest
+    command: tail -f /dev/null
+    volumes:
+      - ..:/source:ro
+  mosquitto:
+    image: eclipse-mosquitto:2
+    volumes:
+      - ./config/:/mosquitto/config/:ro
+      - log:/mosquitto/log/
+      - data:/mosquitto/data/
+
+volumes:
+  data:
+  log:

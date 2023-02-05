@@ -48,11 +48,11 @@ conan-install-deps:
 	if ! [ -d build.deps ]; then mkdir build.deps; fi
 	-find deps -regex '.*test_package/build$$' -type d -exec rm -rf "{}" \;
 	. build.venv/bin/activate \
-		&& conan create --profile:build=build --profile:host=$(profile) deps/libmodbus \
-		&& conan create --profile:build=build --profile:host=$(profile) deps/zlib \
-		&& conan create --profile:build=build --profile:host=$(profile) deps/openssl \
-		&& conan create --profile:build=build --profile:host=$(profile) deps/paho-mqtt-c \
-		&& conan create --profile:build=build --profile:host=$(profile) deps/paho-mqtt-cpp \
+		&& conan create --profile:build=build --profile:host=$(profile) $(mkfile_path)/deps/libmodbus \
+		&& conan create --profile:build=build --profile:host=$(profile) $(mkfile_path)/deps/zlib \
+		&& conan create --profile:build=build --profile:host=$(profile) $(mkfile_path)/deps/openssl \
+		&& conan create --profile:build=build --profile:host=$(profile) $(mkfile_path)/deps/paho-mqtt-c \
+		&& conan create --profile:build=build --profile:host=$(profile) $(mkfile_path)/deps/paho-mqtt-cpp \
 		&& conan install --profile:build=build --profile:host=$(profile) -if build.deps -of build.deps --build=lua .
 	rm -rf build.deps
 
@@ -74,45 +74,47 @@ prepare: conan-install-deps-native conan-install-deps-rpi3 conan-install-deps-rp
 ### local development (non-optimized binaries with debug symbols)
 
 .PHONY: native-prepare
+native-prepare: conandir=../build.venv
+native-prepare: sourcedir=..
 native-prepare:
 	if ! [ -d build ]; then mkdir build; fi
 	cd build \
-		&& . ../build.venv/bin/activate \
-		&& conan install .. \
-		&& cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchain/toolchain-native.cmake -GNinja ..
-	ln -sf build/compile_commands.json
+		&& . $(conandir)/bin/activate \
+		&& conan install $(sourcedir) \
+		&& cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_TOOLCHAIN_FILE=$(sourcedir)/cmake/toolchain/toolchain-native.cmake -GNinja $(sourcedir)
+	-ln -sf build/compile_commands.json $(sourcedir)
 
 .PHONY: native
-native: native-prepare
+native: conandir=../build.venv
+native: sourcedir=..
+native:
+	$(MAKE) -f $(sourcedir)/Makefile native-prepare conandir=$(conandir) sourcedir=$(sourcedir)
 	cd build \
 		&& ninja -v
 
-.PHONY: test-up
-test-up:
-	$(MAKE) -C test/mosquitto up
-
-.PHONY: test-status
-test-status:
-	$(MAKE) -C test/mosquitto status
-
-.PHONY: test-down
-test-down:
-	$(MAKE) -C test/mosquitto down
-
 .PHONY: test
 test: export LUA_PATH=/usr/share/lua/5.4/?.lua
-test: test-up
-	ctest -j $$(nproc) --test-dir build --verbose
+test: testdir=build
+test:
+	ctest -j $$(nproc) --test-dir $(testdir) --verbose
+
+.PHONY: test-nomemcheck-safe
+test-nomemcheck-safe: export LUA_PATH=/usr/share/lua/5.4/?.lua
+test-nomemcheck-safe: testdir=build
+test-nomemcheck-safe:
+	ctest --test-dir $(testdir) --verbose -E '.*_memchecked_.*|mqtt_test'
 
 .PHONY: test-nomemcheck
 test-nomemcheck: export LUA_PATH=/usr/share/lua/5.4/?.lua
+test-nomemcheck: testdir=build
 test-nomemcheck:
-	ctest --test-dir build --verbose -E '.*_memchecked_.*'
+	ctest --test-dir $(testdir) --verbose -E '.*_memchecked_.*'
 
 .PHONY: test-failed
 test-failed: export LUA_PATH=/usr/share/lua/5.4/?.lua
+test-failed: testdir=build
 test-failed:
-	ctest --test-dir build --verbose --rerun-failed --output-on-failure -E '.*_memchecked_.*'
+	ctest --test-dir $(testdir) --verbose --rerun-failed --output-on-failure -E '.*_memchecked_.*'
 
 ### Raspberry Pi ports (optimized binaries)
 
@@ -120,34 +122,41 @@ test-failed:
 prepare-generic:
 	if ! [ -d build.$(name) ]; then mkdir build.$(name); fi
 	cd build.$(name) \
-		&& . ../build.venv/bin/activate \
-		&& conan install --profile=$(profile) .. \
-		&& cmake -DCMAKE_BUILD_TYPE=RelMinSize -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchain/toolchain-$(toolchain).cmake -GNinja ..
+		&& . $(conandir)/bin/activate \
+		&& conan install --profile=$(profile) $(sourcedir) \
+		&& cmake -DCMAKE_BUILD_TYPE=RelMinSize -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_TOOLCHAIN_FILE=$(sourcedir)/cmake/toolchain/toolchain-$(toolchain).cmake -GNinja $(sourcedir)
 
 .PHONY: generic
+generic: conandir=../build.venv
+generic: sourcedir=$(mkfile_path)
 generic:
+	$(MAKE) -f $(sourcedir)/Makefile prepare-generic name=$(name) profile=$(profile) toolchain=$(toolchain) conandir=$(conandir) sourcedir=$(sourcedir)
 	cd build.$(name) \
 		&& ninja -v
 
 .PHONY: rpi3-prepare
-rpi3-prepare: name=rpi3
-rpi3-prepare: profile=rpi3
-rpi3-prepare: toolchain=aarch64-rpi3
-rpi3-prepare: prepare-generic
+rpi3-prepare: conandir=../build.venv
+rpi3-prepare: sourcedir=$(mkfile_path)
+rpi3-prepare:
+	$(MAKE) -f $(sourcedir)/Makefile prepare-generic name=rpi3 profile=rpi3 toolchain=aarch64-rpi3 conandir=$(conandir) sourcedir=$(sourcedir)
 
 .PHONY: rpi3
-rpi3: rpi3-prepare
-	$(MAKE) generic name=rpi3
+rpi3: conandir=../build.venv
+rpi3: sourcedir=$(mkfile_path)
+rpi3:
+	$(MAKE) -f $(sourcedir)/Makefile generic conandir=$(conandir) sourcedir=$(sourcedir) name=rpi3 profile=rpi3 toolchain=aarch64-rpi3
 
 .PHONY: rpi2-prepare
-rpi2-prepare: name=rpi2
-rpi2-prepare: profile=rpi2
-rpi2-prepare: toolchain=armv7hf-rpi2
-rpi2-prepare: prepare-generic
+rpi2-prepare: conandir=../build.venv
+rpi2-prepare: sourcedir=$(mkfile_path)
+rpi2-prepare:
+	$(MAKE) -f $(sourcedir)/Makefile prepare-generic name=rpi2 profile=rpi2 toolchain=armv7hf-rpi2 conandir=$(conandir) sourcedir=$(sourcedir)
 
 .PHONY: rpi2
-rpi2: rpi2-prepare
-	$(MAKE) generic name=rpi2
+rpi2: conandir=../build.venv
+rpi2: sourcedir=$(mkfile_path)
+rpi2:
+	$(MAKE) -f $(sourcedir)/Makefile generic conandir=$(conandir) sourcedir=$(sourcedir) name=rpi2 profile=rpi2 toolchain=armv7hf-rpi2
 
 .PHONY: clean
 clean:

@@ -1,0 +1,35 @@
+FROM debian:bookworm
+
+LABEL org.opencontainers.image.authors="rainer@honeytreelabs.com"
+
+# debian packages
+RUN apt-get update \
+    && apt-get install -yy \
+      build-essential \
+      cmake \
+      g++ \
+      g++-aarch64-linux-gnu \
+      g++-arm-linux-gnueabihf \
+      lua-unit \
+      make \
+      ninja-build \
+      python3 \
+      python-is-python3 \
+      python3-pip \
+      python3-venv \
+      valgrind
+
+WORKDIR /prepare
+
+# conan + dependencies
+COPY deps deps
+COPY conan conan
+COPY Makefile .
+COPY conanfile.txt .
+
+RUN make conan-install
+RUN make conan-install-deps-native
+# currently, only the Raspberry Pi 3 platform is built automatically
+RUN make conan-install-deps-rpi3
+
+CMD ["/bin/bash"]
