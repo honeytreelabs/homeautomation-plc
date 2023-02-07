@@ -19,6 +19,7 @@ deps-install:
 		g++ \
 		g++-aarch64-linux-gnu \
 		g++-arm-linux-gnueabihf \
+		lua-unit \
 		make \
 		ninja-build \
 		python3 \
