@@ -28,6 +28,7 @@ build:
   after_script:
     - cd docker
     - docker compose rm -sf build-env
+    - docker rm $(docker ps -a -f status=exited -q)
 test:
   stage: test
   dependencies:
@@ -43,3 +44,4 @@ test:
   after_script:
     - cd docker
     - docker compose rm -sf
+    - docker rm $(docker ps -a -f status=exited -q)
