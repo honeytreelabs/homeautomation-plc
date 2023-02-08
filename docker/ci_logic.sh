@@ -24,8 +24,8 @@ cd "$(get_script_dir)" || (echo "Could not change directory to $(get_script_dir)
 case "${1}" in
     run-build)
         echo "Running build ..."
-        docker compose build
-        docker compose up -d --force-recreate build-env
+        exec_bg docker compose build
+        exec_bg docker compose up -d --force-recreate build-env
 
         # native platform
         exec_bg docker compose exec -T -w / build-env make -f /source/Makefile native conandir=/prepare/build.venv sourcedir=/source
@@ -36,8 +36,8 @@ case "${1}" in
         ;;
     run-test)
         echo "Running test ..."
-        docker compose build
-        docker compose up -d --force-recreate
+        exec_bg docker compose build
+        exec_bg docker compose up -d --force-recreate
 
         exec_bg tar xzf ../build.tgz
         docker compose cp build build-env:/
