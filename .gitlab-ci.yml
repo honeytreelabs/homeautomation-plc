@@ -14,34 +14,11 @@ build:
   artifacts:
     paths:
       - build.tgz
-  before_script:
-    - cd docker
-    - docker compose build
-    - docker compose up -d --force-recreate build-env
   script:
-    # native platform
-    - docker compose exec -w / build-env make -f /source/Makefile native conandir=/prepare/build.venv sourcedir=/source
-    - docker compose cp build-env:/build .
-    - tar czpf ../build.tgz build
-    # Raspberry Pi 3 platform
-    - docker compose exec -w / build-env make -f /source/Makefile rpi3 conandir=/prepare/build.venv sourcedir=/source
-  after_script:
-    - cd docker
-    - docker compose rm -sf build-env
-    - docker rm $(docker ps -a -f status=exited -q)
+    - ./docker/ci_logic.sh run-build
 test:
   stage: test
   dependencies:
     - build
-  before_script:
-    - cd docker
-    - docker compose build
-    - docker compose up -d --force-recreate
-    - tar xzf ../build.tgz
-    - docker compose cp build build-env:/
   script:
-    - docker compose exec -w /source build-env make -f /source/Makefile test-nomemcheck testdir=/build
-  after_script:
-    - cd docker
-    - docker compose rm -sf
-    - docker rm $(docker ps -a -f status=exited -q)
+    - ./docker/ci_logic.sh run-test
