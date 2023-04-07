@@ -9,3 +9,4 @@ compile_commands.json
 deps/libmodbus/test_package/CMakeUserPresets.json
 **/*~undo-tree~
 build.tgz
+**/__pycache__/

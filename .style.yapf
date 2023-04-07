@@ -1,0 +1,11 @@
+[style]
+based_on_style = yapf
+column_limit = 120
+indent_width = 4
+split_before_named_assigns = true
+spaces_around_power_operator = true
+dedent_closing_brackets = true
+coalesce_brackets = true
+force_multiline_dict = true
+split_complex_comprehension = true
+split_arguments_when_comma_terminated = true
