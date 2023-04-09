@@ -9,6 +9,7 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 
+using namespace std::chrono_literals;
 using namespace HomeAutomation::IO::MQTT;
 
 static int compose_up_mosquitto() {
@@ -20,9 +21,19 @@ static int compose_rm_mosquitto() {
       "cd ../../../docker && docker compose rm -sf mosquitto");
 }
 
+static bool is_mosquitto_not_running_anymore() {
+  return TestUtil::exec("docker ps -a | grep -vq mosquitto") == EXIT_SUCCESS;
+}
+
 TEST_CASE("MQTT client") {
+  auto logger = spdlog::stdout_color_mt("console");
+  spdlog::cfg::load_env_levels();
+
   REQUIRE(compose_rm_mosquitto() == EXIT_SUCCESS);
+  REQUIRE(
+      TestUtil::poll_for_cond(is_mosquitto_not_running_anymore, 150, 100ms));
   REQUIRE(compose_up_mosquitto() == EXIT_SUCCESS);
+  std::this_thread::sleep_for(200ms);
 
   SUBCASE("mqtt: instantiate/destruct mqtt client") {
     ClientPaho client{"tcp://mosquitto:1883"};
@@ -79,9 +90,6 @@ TEST_CASE("MQTT client") {
   SUBCASE("mqtt: publish/receive mqtt message with flaky broker") {
     using namespace std::chrono_literals;
 
-    auto logger = spdlog::stdout_color_mt("console");
-    spdlog::cfg::load_env_levels();
-
     ClientPaho client_first{"tcp://mosquitto:1883", "client-first"};
     ClientPaho client_second{"tcp://mosquitto:1883", "client-second"};
 
@@ -109,9 +117,11 @@ TEST_CASE("MQTT client") {
       client_first.send(TOPIC, PAYLOAD);
       std::this_thread::sleep_for(1s);
       REQUIRE(compose_up_mosquitto() == EXIT_SUCCESS);
-      while (!(client_first.is_connected() && client_second.is_connected())) {
-        std::this_thread::sleep_for(100ms);
-      }
+      REQUIRE(TestUtil::poll_for_cond(
+          [&client_first, &client_second]() {
+            return client_first.is_connected() && client_second.is_connected();
+          },
+          100, 100ms));
 
       // let the MQTT stack do its things
       std::this_thread::sleep_for(300ms);
