@@ -28,11 +28,11 @@ case "${1}" in
         exec_bg docker compose up -d --force-recreate build-env
 
         # native platform
-        exec_bg docker compose exec -T -w / build-env make -f /source/Makefile native conandir=/prepare/build.venv sourcedir=/source
+        exec_bg docker compose exec -T -w / build-env make -f /source/Makefile native sourcedir=/source
         docker compose cp build-env:/build .
         exec_bg tar czpf ../build.tgz build
         # raspberry pi
-        exec_bg docker compose exec -T -w / build-env make -f /source/Makefile rpi3 conandir=/prepare/build.venv sourcedir=/source
+        exec_bg docker compose exec -T -w / build-env make -f /source/Makefile rpi3 sourcedir=/source
         ;;
     run-test)
         echo "Running test ..."

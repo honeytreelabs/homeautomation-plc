@@ -25,30 +25,24 @@ deps-install:
 		python3 \
 		python-is-python3 \
 		python3-pip \
-		python3-venv \
 		valgrind
 
 .PHONY: conan-install
 conan-install:
-	if [ ! -e build.venv ]; then python3 -m venv build.venv; fi
-	(cd build.venv \
-		&& . bin/activate \
-		&& pip install conan \
-		&&	if ! conan profile show default > /dev/null 2>&1; then \
-				conan profile new default --detect; \
-			fi \
+	if ! conan profile show default > /dev/null 2>&1; then \
+			conan profile new default --detect; \
+	fi \
 		&& conan profile update settings.build_type=Debug default \
 		&& conan profile update settings.compiler.libcxx=libstdc++11 default \
 		&& cp $(mkfile_path)/conan/rpi3.profile ~/.conan/profiles/rpi3 \
 		&& cp $(mkfile_path)/conan/rpi2.profile ~/.conan/profiles/rpi2 \
-		&& cp $(mkfile_path)/conan/build.profile ~/.conan/profiles/build)
+		&& cp $(mkfile_path)/conan/build.profile ~/.conan/profiles/build
 
 .PHONY: conan-install-deps
 conan-install-deps:
 	if ! [ -d build.deps ]; then mkdir build.deps; fi
 	-find deps -regex '.*test_package/build$$' -type d -exec rm -rf "{}" \;
-	. build.venv/bin/activate \
-		&& conan create --profile:build=build --profile:host=$(profile) $(mkfile_path)/deps/libmodbus \
+	conan create --profile:build=build --profile:host=$(profile) $(mkfile_path)/deps/libmodbus \
 		&& conan create --profile:build=build --profile:host=$(profile) $(mkfile_path)/deps/zlib \
 		&& conan create --profile:build=build --profile:host=$(profile) $(mkfile_path)/deps/openssl \
 		&& conan create --profile:build=build --profile:host=$(profile) $(mkfile_path)/deps/paho-mqtt-c \
@@ -74,21 +68,18 @@ prepare: conan-install-deps-native conan-install-deps-rpi3 conan-install-deps-rp
 ### local development (non-optimized binaries with debug symbols)
 
 .PHONY: native-prepare
-native-prepare: conandir=../build.venv
 native-prepare: sourcedir=..
 native-prepare:
 	if ! [ -d build ]; then mkdir build; fi
 	cd build \
-		&& . $(conandir)/bin/activate \
-		&& conan install $(sourcedir) \
+		&& conan install $(mkfile_path) \
 		&& cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_TOOLCHAIN_FILE=$(sourcedir)/cmake/toolchain/toolchain-native.cmake -GNinja $(sourcedir)
 	-ln -sf build/compile_commands.json $(sourcedir)
 
 .PHONY: native
-native: conandir=../build.venv
 native: sourcedir=..
 native:
-	$(MAKE) -f $(sourcedir)/Makefile native-prepare conandir=$(conandir) sourcedir=$(sourcedir)
+	$(MAKE) -f $(sourcedir)/Makefile native-prepare sourcedir=$(sourcedir)
 	cd build \
 		&& ninja -v
 
@@ -122,42 +113,36 @@ test-failed:
 prepare-generic:
 	if ! [ -d build.$(name) ]; then mkdir build.$(name); fi
 	cd build.$(name) \
-		&& . $(conandir)/bin/activate \
 		&& conan install --profile=$(profile) $(sourcedir) \
 		&& cmake -DCMAKE_BUILD_TYPE=RelMinSize -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_TOOLCHAIN_FILE=$(sourcedir)/cmake/toolchain/toolchain-$(toolchain).cmake -GNinja $(sourcedir)
 
 .PHONY: generic
-generic: conandir=../build.venv
 generic: sourcedir=$(mkfile_path)
 generic:
-	$(MAKE) -f $(sourcedir)/Makefile prepare-generic name=$(name) profile=$(profile) toolchain=$(toolchain) conandir=$(conandir) sourcedir=$(sourcedir)
+	$(MAKE) -f $(sourcedir)/Makefile prepare-generic name=$(name) profile=$(profile) toolchain=$(toolchain) sourcedir=$(sourcedir)
 	cd build.$(name) \
 		&& ninja -v
 
 .PHONY: rpi3-prepare
-rpi3-prepare: conandir=../build.venv
 rpi3-prepare: sourcedir=$(mkfile_path)
 rpi3-prepare:
-	$(MAKE) -f $(sourcedir)/Makefile prepare-generic name=rpi3 profile=rpi3 toolchain=aarch64-rpi3 conandir=$(conandir) sourcedir=$(sourcedir)
+	$(MAKE) -f $(sourcedir)/Makefile prepare-generic name=rpi3 profile=rpi3 toolchain=aarch64-rpi3 sourcedir=$(sourcedir)
 
 .PHONY: rpi3
-rpi3: conandir=../build.venv
 rpi3: sourcedir=$(mkfile_path)
 rpi3:
-	$(MAKE) -f $(sourcedir)/Makefile generic conandir=$(conandir) sourcedir=$(sourcedir) name=rpi3 profile=rpi3 toolchain=aarch64-rpi3
+	$(MAKE) -f $(sourcedir)/Makefile generic sourcedir=$(sourcedir) name=rpi3 profile=rpi3 toolchain=aarch64-rpi3
 
 .PHONY: rpi2-prepare
-rpi2-prepare: conandir=../build.venv
 rpi2-prepare: sourcedir=$(mkfile_path)
 rpi2-prepare:
-	$(MAKE) -f $(sourcedir)/Makefile prepare-generic name=rpi2 profile=rpi2 toolchain=armv7hf-rpi2 conandir=$(conandir) sourcedir=$(sourcedir)
+	$(MAKE) -f $(sourcedir)/Makefile prepare-generic name=rpi2 profile=rpi2 toolchain=armv7hf-rpi2 sourcedir=$(sourcedir)
 
 .PHONY: rpi2
-rpi2: conandir=../build.venv
 rpi2: sourcedir=$(mkfile_path)
 rpi2:
-	$(MAKE) -f $(sourcedir)/Makefile generic conandir=$(conandir) sourcedir=$(sourcedir) name=rpi2 profile=rpi2 toolchain=armv7hf-rpi2
+	$(MAKE) -f $(sourcedir)/Makefile generic sourcedir=$(sourcedir) name=rpi2 profile=rpi2 toolchain=armv7hf-rpi2
 
 .PHONY: clean
 clean:
-	rm -rf build.venv build build.rpi3 build.rpi2
+	rm -rf build build.rpi3 build.rpi2

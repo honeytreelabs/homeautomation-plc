@@ -1,16 +1,31 @@
-FROM debian:bookworm
+FROM python:3.11-bullseye
 
 LABEL org.opencontainers.image.authors="rainer@honeytreelabs.com"
 
-# debian packages
+# docker prerequisites
 RUN apt-get update \
     && apt-get install -yy \
+      ca-certificates \
+      curl \
+      gnupg
+
+# docker
+RUN mkdir -m 0755 -p /etc/apt/keyrings \
+    && curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg \
+    && echo "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" > /etc/apt/sources.list.d/docker.list \
+    && apt-get update \
+    && apt-get install -yy docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+# debian packages (build utilities)
+RUN echo "deb http://deb.debian.org/debian/ unstable main non-free contrib" >> /etc/apt/sources.list \
+    && apt-get update \
+    && apt-get install -yy \
       build-essential \
-      cmake \
+      cmake/unstable \
       g++ \
-      g++-aarch64-linux-gnu \
-      g++-arm-linux-gnueabihf \
-      lua-unit \
+      g++-aarch64-linux-gnu/unstable \
+      g++-arm-linux-gnueabihf/unstable \
+      lua-unit/unstable \
       make \
       ninja-build \
       python3 \
@@ -27,7 +42,9 @@ COPY conan conan
 COPY Makefile .
 COPY conanfile.txt .
 
-RUN make conan-install
+RUN pip install --upgrade pip \
+    && pip install conan==1.59.0 \
+    && make conan-install
 RUN make conan-install-deps-native
 # currently, only the Raspberry Pi 3 platform is built automatically
 RUN make conan-install-deps-rpi3
