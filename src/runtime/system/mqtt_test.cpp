@@ -22,16 +22,17 @@ static int compose_rm_mosquitto() {
 }
 
 static bool is_mosquitto_not_running_anymore() {
-  return TestUtil::exec("docker ps -a | grep -vq mosquitto") == EXIT_SUCCESS;
+  return TestUtil::exec(
+             "cd ../../../docker && docker compose ps | grep -vq mosquitto") ==
+         EXIT_SUCCESS;
 }
 
 TEST_CASE("MQTT client") {
-  auto logger = spdlog::stdout_color_mt("console");
   spdlog::cfg::load_env_levels();
 
   REQUIRE(compose_rm_mosquitto() == EXIT_SUCCESS);
-  REQUIRE(
-      TestUtil::poll_for_cond(is_mosquitto_not_running_anymore, 150, 100ms));
+  REQUIRE(TestUtil::poll_for_cond(is_mosquitto_not_running_anymore, 150,
+                                  100ms) == true);
   REQUIRE(compose_up_mosquitto() == EXIT_SUCCESS);
   std::this_thread::sleep_for(200ms);
 
@@ -112,7 +113,7 @@ TEST_CASE("MQTT client") {
       std::this_thread::sleep_for(1s);
       constexpr char const *PAYLOAD = "sample payload";
       constexpr char const *TOPIC = "/sample/topic";
-      logger->info("Publishing message with payload \"{}\" to topic {}",
+      spdlog::info("Publishing message with payload \"{}\" to topic {}",
                    PAYLOAD, TOPIC);
       client_first.send(TOPIC, PAYLOAD);
       std::this_thread::sleep_for(1s);
@@ -127,7 +128,7 @@ TEST_CASE("MQTT client") {
       std::this_thread::sleep_for(300ms);
       message = client_second.receive();
       REQUIRE(message);
-      logger->info("Received message with payload \"{}\" to topic {}",
+      spdlog::info("Received message with payload \"{}\" to topic {}",
                    message->get_payload(), message->get_topic());
       REQUIRE(message->get_topic() == std::string(TOPIC));
       REQUIRE(message->get_payload() == std::string(PAYLOAD));

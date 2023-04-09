@@ -87,7 +87,8 @@ native:
 test: export LUA_PATH=/usr/share/lua/5.4/?.lua
 test: testdir=build
 test:
-	ctest -j $$(nproc) --test-dir $(testdir) --verbose
+	ctest -j $$(nproc) --test-dir $(testdir) --verbose -E 'mqtt_test|mqtt_memchecked_test'
+	ctest --test-dir $(testdir) --verbose -R 'mqtt_test|mqtt_memchecked_test'
 
 .PHONY: test-nomemcheck
 test-nomemcheck: export LUA_PATH=/usr/share/lua/5.4/?.lua
@@ -99,7 +100,7 @@ test-nomemcheck:
 test-failed: export LUA_PATH=/usr/share/lua/5.4/?.lua
 test-failed: testdir=build
 test-failed:
-	ctest --test-dir $(testdir) --verbose --rerun-failed --output-on-failure -E '.*_memchecked_.*'
+	ctest --test-dir $(testdir) --verbose --rerun-failed --output-on-failure
 
 ### Raspberry Pi ports (optimized binaries)
 
