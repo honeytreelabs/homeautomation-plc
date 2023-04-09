@@ -89,12 +89,6 @@ test: testdir=build
 test:
 	ctest -j $$(nproc) --test-dir $(testdir) --verbose
 
-.PHONY: test-nomemcheck-safe
-test-nomemcheck-safe: export LUA_PATH=/usr/share/lua/5.4/?.lua
-test-nomemcheck-safe: testdir=build
-test-nomemcheck-safe:
-	ctest --test-dir $(testdir) --verbose -E '.*_memchecked_.*|mqtt_test'
-
 .PHONY: test-nomemcheck
 test-nomemcheck: export LUA_PATH=/usr/share/lua/5.4/?.lua
 test-nomemcheck: testdir=build

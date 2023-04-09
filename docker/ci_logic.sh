@@ -42,6 +42,6 @@ case "${1}" in
         exec_bg tar xzf ../build.tgz
         docker compose cp build build-env:/
 
-        exec_bg docker compose exec -T -w /source build-env make -f /source/Makefile test-nomemcheck testdir=/build
+        exec_bg docker compose exec -T -w /build build-env make -f /source/Makefile test testdir=.
         ;;
 esac

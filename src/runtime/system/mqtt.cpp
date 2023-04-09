@@ -8,83 +8,17 @@
 #include <iostream>
 #include <string>
 
+using namespace std::chrono_literals;
+
 namespace HomeAutomation {
 namespace IO {
 namespace MQTT {
 
-void Callback::connected(const std::string & /*cause*/) {
-  for (auto &topic : topics) {
-    client.subscribe(topic, 1 /* qos */);
-  }
-}
-
-void Callback::reconnect() {
-  using namespace std::chrono_literals;
-  std::this_thread::sleep_for(2500ms); // TODO make interruptable
-  client.connect(connOpts, nullptr, *this);
-}
-
-void Callback::connection_lost(const std::string &cause) {
-  std::cout << "\nConnection lost" << std::endl;
-  if (!cause.empty()) {
-    std::cout << "\tcause: " << cause << std::endl;
-  }
-  reconnect();
-}
-
-void Callback::message_arrived(mqtt::const_message_ptr msg) {
-  messages.put(msg);
-}
-
-void Callback::delivery_complete(mqtt::delivery_token_ptr tok) {
-  std::cout << "\tDelivery complete for token: "
-            << (tok ? tok->get_message_id() : -1) << std::endl;
-}
-
-/**
- * A base action listener.
- */
-class sender_action_listener : public virtual mqtt::iaction_listener {
-protected:
-  void on_failure(const mqtt::token &tok) override {
-    std::cout << "\tListener failure for token: " << tok.get_message_id()
-              << std::endl;
-  }
-
-  void on_success(const mqtt::token &tok) override {
-    std::cout << "\tListener success for token: " << tok.get_message_id()
-              << std::endl;
-  }
-};
-
-/**
- * A derived action listener for publish events.
- */
-class delivery_action_listener : public sender_action_listener {
-  std::atomic<bool> done_;
-
-  void on_failure(const mqtt::token &tok) override {
-    sender_action_listener::on_failure(tok);
-    done_ = true;
-  }
-
-  void on_success(const mqtt::token &tok) override {
-    sender_action_listener::on_success(tok);
-    done_ = true;
-  }
-
-public:
-  delivery_action_listener() : done_(false) {}
-  bool is_done() const { return done_; }
-};
-
 void ClientPaho::connect() {
-  // client should be resilient to MQTT broker outages (e.g. retry)
-  // but this is not implemented yet
   try {
-    conntok = client.connect(connOpts);
-    conntok->wait();
+    client.connect(connOpts);
 
+    recv_worker = std::thread(&ClientPaho::recvWorkerFun, this);
     send_worker = std::thread(&ClientPaho::sendWorkerFun, this);
   } catch (mqtt::exception const &exc) {
     spdlog::error("Could not connect to MQTT broker: {}", exc.what());
@@ -109,43 +43,56 @@ void ClientPaho::subscribe(std::string_view const &topic, int qos) {
 
 mqtt::const_message_ptr ClientPaho::receive() {
   auto msg = recv_msgs.get();
-  return msg.value_or(mqtt::const_message_ptr(0));
+  return msg.value_or(mqtt::const_message_ptr(nullptr));
 }
+
+void ClientPaho::reconnect() { client.reconnect(); }
+bool ClientPaho::is_connected() const { return client.is_connected(); }
 
 void ClientPaho::disconnect() {
   quit_cond = true;
   if (send_worker.joinable()) {
     send_worker.join();
   }
-
-  // Double check that there are no pending tokens
-  auto toks = client.get_pending_delivery_tokens();
-  if (!toks.empty()) {
-    std::cout << "Error: There are pending delivery tokens!" << std::endl;
+  if (recv_worker.joinable()) {
+    recv_worker.join();
   }
 
-  // Disconnect
   try {
-    conntok = client.disconnect();
-    conntok->wait();
+    client.disconnect();
   } catch (mqtt::exception const &exc) {
     spdlog::error("could not disconnect mqtt client: {}", exc.what());
   }
 }
 
-void ClientPaho::sendWorkerFun() {
-  using namespace std::chrono_literals;
+void ClientPaho::recvWorkerFun() {
   while (!quit_cond) {
-    //   wait for queue with timeout
-    auto pubmsg = send_msgs.get_for(100ms);
+    mqtt::const_message_ptr msg;
+    if (!client.try_consume_message_for(&msg, 100ms)) {
+      continue;
+    }
+    if (!client.is_connected()) {
+      std::this_thread::sleep_for(100ms);
+      continue;
+    }
+    recv_msgs.put(msg);
+  }
+}
+
+void ClientPaho::sendWorkerFun() {
+  while (!quit_cond) {
+    auto pubmsg = send_msgs.peek_for(100ms);
     if (pubmsg == std::nullopt) {
       continue;
     }
-    /* hand elem over to MQTT stack */
     try {
-      client.publish(pubmsg.value())->wait_for(1s);
+      client.publish(pubmsg.value());
+      send_msgs.get();
     } catch (mqtt::exception &exc) {
-      // TODO log error
+      if (exc.get_message() != "Disconnected") {
+        spdlog::error("Error publishing message: {}", exc.what());
+      }
+      std::this_thread::sleep_for(100ms);
     }
   }
 }

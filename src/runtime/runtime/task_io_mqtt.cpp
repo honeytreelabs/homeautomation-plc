@@ -3,6 +3,9 @@
 namespace HomeAutomation {
 namespace Runtime {
 
+constexpr char const *PAYLOAD_TRUE = "1";
+constexpr char const *PAYLOAD_FALSE = "0";
+
 void MQTTIOLogic::init() {
   mqttClient->connect();
   for (auto const &[topic, varName] : inputs) {
@@ -26,9 +29,9 @@ void MQTTIOLogic::before() {
       continue;
     }
     auto const &varName = inputIt->second;
-    if (msg->get_payload_str() == "1") {
+    if (msg->get_payload_str() == PAYLOAD_TRUE) {
       gv->inputs[varName] = true;
-    } else if (msg->get_payload_str() == "0") {
+    } else if (msg->get_payload_str() == PAYLOAD_FALSE) {
       gv->inputs[varName] = false;
     }
   }
@@ -42,7 +45,7 @@ void MQTTIOLogic::after() {
     if (!std::get<bool>(outputValues[varName]) &&
         std::get<bool>(gv->outputs[varName])) {
       // send true
-      mqttClient->send(topic, "1");
+      mqttClient->send(topic, PAYLOAD_TRUE);
     }
     outputValues[varName] = gv->outputs[varName];
   }

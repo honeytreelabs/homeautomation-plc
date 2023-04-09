@@ -17,5 +17,5 @@ target_compile_features(system PUBLIC cxx_std_20)
 create_memchecked_test(i2c_dev system TRUE)
 # the following is a workaround and should work on the long run
 # without any memory leaks
-create_memchecked_test(mqtt system FALSE)
+create_memchecked_test(mqtt system TRUE)
 create_memchecked_test(messages_buffer system TRUE)

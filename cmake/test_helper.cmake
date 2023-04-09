@@ -3,6 +3,7 @@ if (BUILD_RUN_TESTS)
     add_executable(${name}_test ${name}_test.cpp)
     target_link_libraries(${name}_test PUBLIC
       doctest::doctest
+      test_util
       ${lib})
 
     add_test(NAME ${name}_test

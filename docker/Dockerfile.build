@@ -37,10 +37,10 @@ RUN echo "deb http://deb.debian.org/debian/ unstable main non-free contrib" >> /
 WORKDIR /prepare
 
 # conan + dependencies
-COPY deps deps
 COPY conan conan
-COPY Makefile .
 COPY conanfile.txt .
+COPY deps deps
+COPY Makefile .
 
 RUN pip install --upgrade pip \
     && pip install conan==1.59.0 \

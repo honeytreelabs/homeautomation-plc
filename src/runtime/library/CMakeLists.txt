@@ -8,7 +8,8 @@ target_link_libraries(library-automation PUBLIC
   common
   spdlog::spdlog
   sol2::sol2
-  lua)
+  lua
+  "${CMAKE_DL_LIBS}")
 
 add_executable(library_lua_main library_lua_main.cpp)
 target_include_directories(library_lua_main PRIVATE ${CMAKE_CURRENT_LIST_DIR})
