@@ -14,6 +14,32 @@ namespace HomeAutomation {
 namespace IO {
 namespace MQTT {
 
+class ClientPahoCb final : public mqtt::callback {
+public:
+  ClientPahoCb(ClientPaho &client) : pahoClient{client} {}
+  void connected(const std::string &cause) override {
+    spdlog::info("Connected: {}", cause);
+    if (cause == "automatic reconnect") {
+      pahoClient.set_resubscribe();
+    }
+  }
+  void connection_lost(const std::string &cause) override {
+    spdlog::info("Connection lost: {}",
+                 cause != "" ? cause : "no reason given");
+  }
+
+private:
+  ClientPaho &pahoClient;
+};
+
+ClientPaho::ClientPaho(std::string const &address, std::string const &clientID,
+                       mqtt::connect_options connOpts)
+    : client(address, clientID), cb{std::make_shared<ClientPahoCb>(*this)},
+      must_resubscribe{false}, send_msgs{}, recv_msgs{},
+      quit_cond(false), topics{}, connOpts{connOpts}, send_worker{} {
+  client.set_callback(*cb);
+}
+
 void ClientPaho::connect() {
   try {
     client.connect(connOpts);
@@ -33,12 +59,20 @@ void ClientPaho::send(mqtt::string_ref topic, mqtt::binary_ref payload,
   send_msgs.put(pubmsg);
 }
 
-void ClientPaho::subscribe(std::string_view const &topic, int qos) {
-  mqtt::string mqtt_topic{topic};
-  topics.emplace_back(mqtt_topic);
+void ClientPaho::subscribe(std::string const &topic, int qos) {
+  topics.emplace_back(SubscribedTopic{topic, qos});
   if (client.is_connected()) {
-    client.subscribe(mqtt_topic, qos);
+    client.subscribe(topic, qos);
   }
+}
+
+void ClientPaho::resubscribe() {
+  for (auto const &subscribedTopic : topics) {
+    spdlog::info("Resubscribing to topic \"{}\" with QoS {}",
+                 subscribedTopic.topic, subscribedTopic.qos);
+    client.subscribe(subscribedTopic.topic, subscribedTopic.qos);
+  }
+  must_resubscribe = false;
 }
 
 mqtt::const_message_ptr ClientPaho::receive() {
@@ -46,7 +80,8 @@ mqtt::const_message_ptr ClientPaho::receive() {
   return msg.value_or(mqtt::const_message_ptr(nullptr));
 }
 
-void ClientPaho::reconnect() { client.reconnect(); }
+void ClientPaho::set_resubscribe() { must_resubscribe = true; }
+
 bool ClientPaho::is_connected() const { return client.is_connected(); }
 
 void ClientPaho::disconnect() {
@@ -73,15 +108,8 @@ void ClientPaho::recvWorkerFun() {
                    msg->get_payload(), msg->get_topic());
       recv_msgs.put(msg);
     }
-    if (!client.is_connected()) {
-      try {
-        spdlog::info("Trying to reconnect MQTT client.");
-        auto response = client.reconnect();
-        spdlog::info("MQTT retry result (session present): {}",
-                     response.is_session_present());
-      } catch (mqtt::exception const &exc) {
-        spdlog::error("could not reconnect MQTT client: {}", exc.what());
-      }
+    if (must_resubscribe) {
+      resubscribe();
     }
   }
 }

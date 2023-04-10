@@ -15,7 +15,11 @@ namespace MQTT {
 using Messages = HomeAutomation::circular_buffer<mqtt::message_ptr, 128>;
 using ConstMessages =
     HomeAutomation::circular_buffer<mqtt::const_message_ptr, 128>;
-using Topics = std::vector<std::string>;
+struct SubscribedTopic {
+  std::string const topic;
+  int qos;
+};
+using Topics = std::vector<SubscribedTopic>;
 
 class ClientPaho {
 public:
@@ -29,19 +33,13 @@ public:
         .keep_alive_interval(30s)
         .clean_session(true)
         .automatic_reconnect(500ms, 10s)
-        .clean_session(false)
         .finalize();
   }
 
   ClientPaho(std::string const &address, std::string const &clientID,
-             mqtt::connect_options connOpts)
-      : client(address, clientID), conntok{}, send_msgs{}, recv_msgs{},
-        quit_cond(false), topics{}, connOpts{connOpts}, send_worker{} {}
+             mqtt::connect_options connOpts);
   ClientPaho(std::string const &address, std::string const &clientID)
       : ClientPaho(address, clientID, getDefaultConnectOptions()) {}
-  ClientPaho(std::string const &address)
-      : ClientPaho(address, DFLT_CLIENT_ID) {}
-  ClientPaho() : ClientPaho(DFLT_SERVER_ADDRESS) {}
   virtual ~ClientPaho() {}
 
   void connect();
@@ -49,24 +47,29 @@ public:
   inline void send(mqtt::string_ref topic, mqtt::binary_ref payload) {
     send(topic, payload, DFLT_QOS);
   }
-  void subscribe(std::string_view const &topic, int qos);
-  inline void subscribe(std::string_view const &topic) {
+  void subscribe(std::string const &topic, int qos);
+  inline void subscribe(std::string const &topic) {
     subscribe(topic, DFLT_QOS);
   }
   mqtt::const_message_ptr receive();
-  void reconnect();
+  void set_resubscribe();
   bool is_connected() const;
   void disconnect();
 
 private:
+  ClientPaho(std::string const &address)
+      : ClientPaho(address, DFLT_CLIENT_ID) {}
+  ClientPaho() : ClientPaho(DFLT_SERVER_ADDRESS) {}
   ClientPaho(ClientPaho const &);
   ClientPaho &operator=(ClientPaho const &);
 
   void recvWorkerFun();
   void sendWorkerFun();
+  void resubscribe();
 
   mqtt::client client;
-  mqtt::token_ptr conntok;
+  std::shared_ptr<mqtt::callback> cb;
+  std::atomic_bool must_resubscribe;
   Messages send_msgs;
   ConstMessages recv_msgs;
   std::atomic_bool quit_cond;
