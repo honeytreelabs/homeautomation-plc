@@ -117,11 +117,11 @@ TEST_CASE("MQTT client") {
     for (std::size_t cnt = 5; cnt > 0; --cnt) {
       REQUIRE(compose_rm_mosquitto() == EXIT_SUCCESS);
       std::this_thread::sleep_for(1s);
-      auto payload = fmt::format("ignored payload {}", cnt);
+      auto disconnected_payload = fmt::format("disconnected payload {}", cnt);
       spdlog::info("Publishing message with payload \"{}\" to topic {}",
-                   payload, TOPIC);
-      client_first.send(TOPIC, payload);
-      std::this_thread::sleep_for(2s);
+                   disconnected_payload, TOPIC);
+      client_first.send(TOPIC, disconnected_payload);
+      std::this_thread::sleep_for(1s);
       REQUIRE(compose_up_mosquitto() == EXIT_SUCCESS);
       REQUIRE(TestUtil::poll_for_cond(
           [&client_first, &client_second]() {
@@ -129,7 +129,7 @@ TEST_CASE("MQTT client") {
           },
           10s, 100ms));
 
-      payload = fmt::format("message payload {}", cnt);
+      auto payload = fmt::format("message payload {}", cnt);
       spdlog::info("Publishing message with payload \"{}\" to topic {}",
                    payload, TOPIC);
       client_first.send(TOPIC, payload);
@@ -139,6 +139,12 @@ TEST_CASE("MQTT client") {
       REQUIRE(message);
       spdlog::info("Received message with payload \"{}\" to topic {}",
                    message->get_payload(), message->get_topic());
+      if (message->get_payload() == std::string(disconnected_payload)) {
+        message = client_second.receive();
+        REQUIRE(message);
+        spdlog::info("Received message with payload \"{}\" to topic {}",
+                     message->get_payload(), message->get_topic());
+      }
       REQUIRE(message->get_topic() == std::string(TOPIC));
       REQUIRE(message->get_payload() == std::string(payload));
     }
