@@ -14,9 +14,9 @@ namespace HomeAutomation {
 namespace IO {
 namespace MQTT {
 
-class ClientPahoCb final : public mqtt::callback {
+class ClientCb final : public mqtt::callback {
 public:
-  ClientPahoCb(ClientPaho &client) : pahoClient{client} {}
+  ClientCb(ClientPaho &client) : pahoClient{client} {}
   void connected(const std::string &cause) override {
     spdlog::info("Connected: {}", cause);
     if (cause == "automatic reconnect") {
@@ -34,9 +34,10 @@ private:
 
 ClientPaho::ClientPaho(std::string const &address, std::string const &clientID,
                        mqtt::connect_options connOpts)
-    : client(address, clientID), cb{std::make_shared<ClientPahoCb>(*this)},
+    : client(address, clientID), cb{std::make_shared<ClientCb>(*this)},
       must_resubscribe{false}, send_msgs{}, recv_msgs{},
-      quit_cond(false), topics{}, connOpts{connOpts}, send_worker{} {
+      quit_cond(false), topics{}, connOpts{connOpts}, send_worker{},
+      on_resubscribed{[]() {}} {
   client.set_callback(*cb);
 }
 
@@ -82,8 +83,6 @@ mqtt::const_message_ptr ClientPaho::receive() {
 
 void ClientPaho::set_resubscribe() { must_resubscribe = true; }
 
-bool ClientPaho::is_connected() const { return client.is_connected(); }
-
 void ClientPaho::disconnect() {
   quit_cond = true;
   if (send_worker.joinable()) {
@@ -110,6 +109,7 @@ void ClientPaho::recvWorkerFun() {
     }
     if (must_resubscribe) {
       resubscribe();
+      on_resubscribed();
     }
   }
 }

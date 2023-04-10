@@ -5,6 +5,7 @@
 #include <mqtt/client.h>
 
 #include <atomic>
+#include <functional>
 #include <thread>
 #include <vector>
 
@@ -23,16 +24,15 @@ using Topics = std::vector<SubscribedTopic>;
 
 class ClientPaho {
 public:
-  static constexpr const char *DFLT_SERVER_ADDRESS{"tcp://localhost:1883"};
   static constexpr const char *DFLT_CLIENT_ID{"publish"};
   static constexpr const int DFLT_QOS{1};
 
   static mqtt::connect_options getDefaultConnectOptions() {
     using namespace std::chrono_literals;
     return mqtt::connect_options_builder()
-        .keep_alive_interval(30s)
+        .keep_alive_interval(2s)
         .clean_session(true)
-        .automatic_reconnect(500ms, 10s)
+        .automatic_reconnect(500ms, 2s)
         .finalize();
   }
 
@@ -40,6 +40,8 @@ public:
              mqtt::connect_options connOpts);
   ClientPaho(std::string const &address, std::string const &clientID)
       : ClientPaho(address, clientID, getDefaultConnectOptions()) {}
+  ClientPaho(std::string const &address)
+      : ClientPaho(address, DFLT_CLIENT_ID) {}
   virtual ~ClientPaho() {}
 
   void connect();
@@ -53,13 +55,10 @@ public:
   }
   mqtt::const_message_ptr receive();
   void set_resubscribe();
-  bool is_connected() const;
+  void set_on_resubscribed(std::function<void()> cb) { on_resubscribed = cb; }
   void disconnect();
 
 private:
-  ClientPaho(std::string const &address)
-      : ClientPaho(address, DFLT_CLIENT_ID) {}
-  ClientPaho() : ClientPaho(DFLT_SERVER_ADDRESS) {}
   ClientPaho(ClientPaho const &);
   ClientPaho &operator=(ClientPaho const &);
 
@@ -78,6 +77,7 @@ private:
   // Callback cb;
   std::thread recv_worker;
   std::thread send_worker;
+  std::function<void()> on_resubscribed;
 };
 
 } // namespace MQTT

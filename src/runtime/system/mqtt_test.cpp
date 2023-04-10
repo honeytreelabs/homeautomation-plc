@@ -9,6 +9,9 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 
+#include <condition_variable>
+#include <mutex>
+
 using namespace std::chrono_literals;
 using namespace HomeAutomation::IO::MQTT;
 
@@ -83,7 +86,7 @@ TEST_CASE("MQTT client") {
     client_first.send(TOPIC, "sample payload");
 
     // let the MQTT stack do its things
-    std::this_thread::sleep_for(100ms);
+    std::this_thread::sleep_for(1s);
 
     auto message = client_second.receive();
     REQUIRE(message);
@@ -96,6 +99,8 @@ TEST_CASE("MQTT client") {
 
   SUBCASE("mqtt: publish/receive mqtt message with flaky broker") {
     using namespace std::chrono_literals;
+
+    spdlog::info("Start flaky broker subcase");
 
     ClientPaho client_first{"tcp://mosquitto:1883", "client-first"};
     ClientPaho client_second{"tcp://mosquitto:1883", "client-second"};
@@ -118,32 +123,34 @@ TEST_CASE("MQTT client") {
       REQUIRE(compose_rm_mosquitto() == EXIT_SUCCESS);
       std::this_thread::sleep_for(1s);
       auto disconnected_payload = fmt::format("disconnected payload {}", cnt);
-      spdlog::info("Publishing message with payload \"{}\" to topic {}",
-                   disconnected_payload, TOPIC);
       client_first.send(TOPIC, disconnected_payload);
       std::this_thread::sleep_for(1s);
+      std::mutex m;
+      std::unique_lock lk{m};
+      std::condition_variable cv;
+      std::atomic_bool has_subscribed{false};
+      client_second.set_on_resubscribed([&cv, &has_subscribed]() {
+        has_subscribed = true;
+        cv.notify_all();
+      });
       REQUIRE(compose_up_mosquitto() == EXIT_SUCCESS);
-      REQUIRE(TestUtil::poll_for_cond(
-          [&client_first, &client_second]() {
-            return client_first.is_connected() && client_second.is_connected();
-          },
-          10s, 100ms));
+
+      auto wait_result = cv.wait_for(
+          lk, 10s, [&has_subscribed]() -> bool { return has_subscribed; });
+      if (!wait_result) {
+        spdlog::info("MQTT client has not resubscribed.");
+      }
+      lk.unlock(); // lock is not needed for the following assertions
 
       auto payload = fmt::format("message payload {}", cnt);
-      spdlog::info("Publishing message with payload \"{}\" to topic {}",
-                   payload, TOPIC);
       client_first.send(TOPIC, payload);
       // let the MQTT stack do its things
       std::this_thread::sleep_for(300ms);
       message = client_second.receive();
       REQUIRE(message);
-      spdlog::info("Received message with payload \"{}\" to topic {}",
-                   message->get_payload(), message->get_topic());
       if (message->get_payload() == std::string(disconnected_payload)) {
         message = client_second.receive();
         REQUIRE(message);
-        spdlog::info("Received message with payload \"{}\" to topic {}",
-                     message->get_payload(), message->get_topic());
       }
       REQUIRE(message->get_topic() == std::string(TOPIC));
       REQUIRE(message->get_payload() == std::string(payload));
