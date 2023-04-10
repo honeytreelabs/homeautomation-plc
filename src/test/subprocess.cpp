@@ -22,9 +22,11 @@ int exec(const char *cmd) {
   return pclose(pipe);
 }
 
-bool poll_for_cond(std::function<bool()> cond, std::size_t tries,
+bool poll_for_cond(std::function<bool()> cond,
+                   std::chrono::milliseconds duration,
                    std::chrono::milliseconds wait_period) {
-  for (std::size_t cnt = tries; cnt > 0; --cnt) {
+  auto start = std::chrono::steady_clock::now();
+  while (std::chrono::steady_clock::now() - start < duration) {
     auto result = cond();
     if (result) {
       return true;
