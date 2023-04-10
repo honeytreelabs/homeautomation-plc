@@ -69,11 +69,16 @@ void ClientPaho::recvWorkerFun() {
   while (!quit_cond) {
     mqtt::const_message_ptr msg;
     if (client.try_consume_message_for(&msg, 100ms) && client.is_connected()) {
+      spdlog::info("Received message with payload \"{}\" on topic \"{}\"",
+                   msg->get_payload(), msg->get_topic());
       recv_msgs.put(msg);
     }
     if (!client.is_connected()) {
       try {
-        client.reconnect();
+        spdlog::info("Trying to reconnect MQTT client.");
+        auto response = client.reconnect();
+        spdlog::info("MQTT retry result (session present): {}",
+                     response.is_session_present());
       } catch (mqtt::exception const &exc) {
         spdlog::error("could not reconnect MQTT client: {}", exc.what());
       }
@@ -88,6 +93,8 @@ void ClientPaho::sendWorkerFun() {
       continue;
     }
     try {
+      spdlog::info("Publishing message with payload \"{}\" on topic \"{}\"",
+                   pubmsg.value()->get_payload(), pubmsg.value()->get_topic());
       client.publish(pubmsg.value());
     } catch (mqtt::exception &exc) {
       spdlog::error("Error publishing message: {}", exc.what());
