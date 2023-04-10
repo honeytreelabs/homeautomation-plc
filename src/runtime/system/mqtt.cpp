@@ -68,14 +68,16 @@ void ClientPaho::disconnect() {
 void ClientPaho::recvWorkerFun() {
   while (!quit_cond) {
     mqtt::const_message_ptr msg;
-    if (!client.try_consume_message_for(&msg, 100ms)) {
-      continue;
+    if (client.try_consume_message_for(&msg, 100ms) && client.is_connected()) {
+      recv_msgs.put(msg);
     }
     if (!client.is_connected()) {
-      std::this_thread::sleep_for(100ms);
-      continue;
+      try {
+        client.reconnect();
+      } catch (mqtt::exception const &exc) {
+        spdlog::error("could not reconnect MQTT client: {}", exc.what());
+      }
     }
-    recv_msgs.put(msg);
   }
 }
 
