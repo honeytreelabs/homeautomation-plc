@@ -46,18 +46,6 @@ public:
     return val;
   }
 
-  std::optional<T> peek_for(
-      std::chrono::duration<int, std::milli> const &rel_time) const noexcept {
-    using namespace std::chrono_literals;
-
-    std::unique_lock<std::mutex> lock(mutex);
-    if (!cv.wait_for(lock, rel_time, [this] { return !empty_unsafe(); })) {
-      return std::nullopt;
-    }
-
-    return buf[tail];
-  }
-
   std::optional<T> get_for(
       std::chrono::duration<int, std::milli> const &rel_time) const noexcept {
     using namespace std::chrono_literals;

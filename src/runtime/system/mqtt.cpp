@@ -81,17 +81,14 @@ void ClientPaho::recvWorkerFun() {
 
 void ClientPaho::sendWorkerFun() {
   while (!quit_cond) {
-    auto pubmsg = send_msgs.peek_for(100ms);
+    auto pubmsg = send_msgs.get_for(100ms);
     if (pubmsg == std::nullopt) {
       continue;
     }
     try {
       client.publish(pubmsg.value());
-      send_msgs.get();
     } catch (mqtt::exception &exc) {
-      if (exc.get_message() != "Disconnected") {
-        spdlog::error("Error publishing message: {}", exc.what());
-      }
+      spdlog::error("Error publishing message: {}", exc.what());
       std::this_thread::sleep_for(100ms);
     }
   }
