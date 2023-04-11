@@ -40,7 +40,7 @@ conan-install:
 
 .PHONY: conan-install-deps
 conan-install-deps:
-	if ! [ -d build.deps ]; then mkdir build.deps; fi
+	mkdir -p build.deps
 	-find deps -regex '.*test_package/build$$' -type d -exec rm -rf "{}" \;
 	conan create --profile:build=build --profile:host=$(profile) $(mkfile_path)/deps/libmodbus \
 		&& conan create --profile:build=build --profile:host=$(profile) $(mkfile_path)/deps/zlib \
@@ -70,7 +70,7 @@ prepare: conan-install-deps-native conan-install-deps-rpi3 conan-install-deps-rp
 .PHONY: native-prepare
 native-prepare: sourcedir=..
 native-prepare:
-	if ! [ -d build ]; then mkdir build; fi
+	mkdir -p build
 	cd build \
 		&& conan install $(mkfile_path) \
 		&& cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_TOOLCHAIN_FILE=$(sourcedir)/cmake/toolchain/toolchain-native.cmake -GNinja $(sourcedir)
@@ -106,7 +106,7 @@ test-failed:
 
 .PHONY: prepare-generic
 prepare-generic:
-	if ! [ -d build.$(name) ]; then mkdir build.$(name); fi
+	mkdir -p build.$(name)
 	cd build.$(name) \
 		&& conan install --profile=$(profile) $(sourcedir) \
 		&& cmake -DCMAKE_BUILD_TYPE=RelMinSize -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_TOOLCHAIN_FILE=$(sourcedir)/cmake/toolchain/toolchain-$(toolchain).cmake -GNinja $(sourcedir)
