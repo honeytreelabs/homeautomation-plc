@@ -18,6 +18,9 @@ build:
     - ./docker/ci_logic.sh run-build
 test:
   stage: test
+  artifacts:
+    paths:
+      - coverage
   dependencies:
     - build
   script:

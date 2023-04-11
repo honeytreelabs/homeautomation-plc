@@ -2,6 +2,11 @@ cmake_policy(SET CMP0048 NEW)
 project(homeautomation-cpp-reference)
 cmake_minimum_required(VERSION 3.20)
 
+if (ENABLE_COVERAGE)
+  include(deps/cmake-modules/CodeCoverage.cmake)
+  append_coverage_compiler_flags()
+endif ()
+
 # we want to build a statically linked binary only
 set(BUILD_SHARED_LIBS FALSE)
 

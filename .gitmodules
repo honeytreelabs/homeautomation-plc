@@ -13,3 +13,6 @@
 [submodule "deps/doctest"]
 	path = deps/doctest
 	url = https://github.com/doctest/doctest.git
+[submodule "deps/cmake-modules"]
+	path = deps/cmake-modules
+	url = https://github.com/bilke/cmake-modules.git

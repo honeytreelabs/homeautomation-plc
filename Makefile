@@ -73,7 +73,7 @@ native-prepare:
 	mkdir -p build
 	cd build \
 		&& conan install $(mkfile_path) \
-		&& cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_TOOLCHAIN_FILE=$(sourcedir)/cmake/toolchain/toolchain-native.cmake -GNinja $(sourcedir)
+		&& cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_TOOLCHAIN_FILE=$(sourcedir)/cmake/toolchain/toolchain-native.cmake -DENABLE_COVERAGE=True -GNinja $(sourcedir)
 	-ln -sf build/compile_commands.json $(sourcedir)
 
 .PHONY: native
@@ -89,6 +89,13 @@ test: testdir=build
 test:
 	ctest -j $$(nproc) --test-dir $(testdir) --verbose -E 'mqtt_test|mqtt_memchecked_test'
 	ctest --test-dir $(testdir) --verbose -R 'mqtt_test|mqtt_memchecked_test'
+
+.PHONY: coverage
+coverage: sourcedir=..
+coverage: testdir=build
+coverage:
+	mkdir -p coverage
+	gcovr --verbose --root $(sourcedir) --exclude deps --exclude examples --html-nested $(testdir)/coverage/coverage.html $(testdir)
 
 .PHONY: test-nomemcheck
 test-nomemcheck: export LUA_PATH=/usr/share/lua/5.4/?.lua

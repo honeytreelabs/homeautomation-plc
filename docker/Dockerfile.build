@@ -43,7 +43,7 @@ COPY deps deps
 COPY Makefile .
 
 RUN pip install --upgrade pip \
-    && pip install conan==1.59.0 \
+    && pip install conan==1.59.0 gcovr \
     && make conan-install
 RUN make conan-install-deps-native
 # currently, only the Raspberry Pi 3 platform is built automatically

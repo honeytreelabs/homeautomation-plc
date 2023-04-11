@@ -43,5 +43,7 @@ case "${1}" in
         docker compose cp build build-env:/
 
         exec_bg docker compose exec -T -w /build build-env make -f /source/Makefile test testdir=.
+        exec_bg docker compose exec -T -w /build build-env make -f /source/Makefile coverage sourcedir=/source testdir=.
+        docker compose cp build-env:/build/coverage ..
         ;;
 esac
