@@ -2,12 +2,15 @@
 
 trap cleanup TERM INT EXIT
 cleanup() {
-    echo "Cleaning up ..."
+    echo "Removing running containers."
     docker compose rm -sf
     for container_id in $(docker ps -a -f status=exited -q); do
         docker rm "${container_id}"
     done
+    echo "Remove unused docker networks."
     docker network prune -f
+    echo "Restore permissions."
+    sudo chown -R gitlab-runner:gitlab-runner ..
 }
 
 get_script_dir() {

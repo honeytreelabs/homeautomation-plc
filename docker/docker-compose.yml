@@ -8,7 +8,7 @@ services:
     image: homeautomation-plc-build:latest
     command: tail -f /dev/null
     volumes:
-      - ..:/source:ro
+      - ..:/source
       - /var/run/docker.sock:/var/run/docker.sock
   mosquitto:
     image: eclipse-mosquitto:2
