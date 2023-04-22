@@ -68,7 +68,7 @@ prepare: conan-install-deps-native conan-install-deps-rpi3 conan-install-deps-rp
 ### local development (non-optimized binaries with debug symbols)
 
 .PHONY: native-prepare
-native-prepare: sourcedir=..
+native-prepare: sourcedir=$(mkfile_path)
 native-prepare:
 	mkdir -p build
 	cd build \
@@ -77,7 +77,7 @@ native-prepare:
 	-ln -sf build/compile_commands.json $(sourcedir)
 
 .PHONY: native
-native: sourcedir=..
+native: sourcedir=$(mkfile_path)
 native:
 	$(MAKE) -f $(sourcedir)/Makefile native-prepare sourcedir=$(sourcedir)
 	cd build \
@@ -91,7 +91,7 @@ test:
 	ctest --test-dir $(testdir) --verbose -R 'mqtt_test|mqtt_memchecked_test'
 
 .PHONY: coverage
-coverage: sourcedir=..
+coverage: sourcedir=$(mkfile_path)
 coverage: testdir=build
 coverage:
 	mkdir -p coverage
