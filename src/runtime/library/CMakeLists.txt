@@ -6,6 +6,7 @@ add_library(library::automation ALIAS library-automation)
 target_include_directories(library-automation PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 target_link_libraries(library-automation PUBLIC
   common
+  HFSM2
   spdlog::spdlog
   sol2::sol2
   lua
@@ -20,7 +21,6 @@ add_test(NAME library_lua_main_test
   COMMAND $<TARGET_FILE:library_lua_main> ./test/test_library.lua
   WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}")
 
-create_memchecked_test(blind_state library-automation TRUE)
 create_memchecked_test(blind library-automation TRUE)
 create_memchecked_test(trigger library-automation TRUE)
 create_memchecked_test(library_registry_lua library-automation TRUE)

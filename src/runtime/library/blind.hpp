@@ -21,7 +21,7 @@ public:
   }
 
 private:
-  BlindFSM fsm;
+  BlindFSM::Instance fsm;
 };
 
 } // namespace Library

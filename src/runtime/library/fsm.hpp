@@ -21,7 +21,7 @@ public:
   virtual ~State() = default;
   virtual OptionalState execute(TimeStamp now, Types... args) = 0;
   virtual RetType const getStateData() const = 0;
-  virtual std::string const id() const = 0;
+  virtual std::string const &id() const = 0;
 };
 
 template <typename RetType, typename... Types> class FSM {

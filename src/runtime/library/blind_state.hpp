@@ -5,6 +5,7 @@
 #include <fsm.hpp>
 #include <trigger.hpp>
 
+#include <hfsm2/machine.hpp>
 #include <spdlog/spdlog.h>
 
 #include <cstdint>
@@ -13,15 +14,10 @@
 namespace HomeAutomation {
 namespace Library {
 
-using namespace std::literals;
-
-// https://ctrpeach.io/posts/cpp20-string-literal-template-parameters/
-template <size_t N> struct StringLiteral {
-  constexpr StringLiteral(const char (&str)[N]) { std::copy_n(str, N, value); }
-
-  char value[N];
+struct BlindIOs {
+  bool up;
+  bool down;
 };
-
 using BlindOutputs = std::tuple<bool, bool>;
 
 struct BlindConfig {
@@ -30,77 +26,104 @@ struct BlindConfig {
   std::chrono::milliseconds periodDown;
 };
 
+// TODO: use std::chrono types and create wrapper in Lua bindings
 BlindConfig BlindConfigFromMillis(std::uint32_t periodIdle,
                                   std::uint32_t periodUp,
                                   std::uint32_t periodDown);
 
-using BlindState = State<BlindOutputs, bool, bool>;
-using UniqueBlindState = std::unique_ptr<BlindState>;
-class BlindFSM : public FSM<BlindOutputs, bool, bool> {
-public:
-  BlindFSM(UniqueBlindState state) : FSM(std::move(state)) {}
-};
-using OptionalBlindState = std::optional<UniqueBlindState>;
-
-class BlindStateIdle : public BlindState {
-public:
-  BlindStateIdle(BlindConfig const &cfg, TimeStamp const &now)
-      : BlindStateIdle(cfg, now, false, false) {}
-  BlindStateIdle(BlindConfig const &cfg, TimeStamp const &now, bool up,
-                 bool down)
-      : cfg{cfg}, start{now}, up_trigger(up), down_trigger(down) {
-    spdlog::info("BlindStateIdle()");
-  }
-  OptionalBlindState execute(TimeStamp now, bool up, bool down) override;
-  BlindOutputs const getStateData() const override {
-    return BlindOutputs{false, false};
-  }
-  std::string const id() const override { return std::string("idle"); }
-
-private:
+struct BlindContext {
   BlindConfig const cfg;
-  TimeStamp start;
+  TimeStamp now;
+  BlindIOs inputs;
+  BlindIOs outputs;
+};
 
+struct BlindStateIdle;
+struct BlindStateUp;
+struct BlindStateDown;
+
+// convenience typedef
+using M = hfsm2::MachineT<hfsm2::Config::ContextT<BlindContext>>;
+
+using BlindFSM = M::PeerRoot<BlindStateIdle, BlindStateUp, BlindStateDown>;
+
+struct BlindState : BlindFSM::State {
+  BlindState() = default;
+  virtual ~BlindState() = default;
+  void enter(Control &control) noexcept {
+    start = control.context().now;
+    up_trigger = R_TRIG{control.context().inputs.up};
+    down_trigger = R_TRIG{control.context().inputs.down};
+  }
+  TimeStamp start;
   R_TRIG up_trigger;
   R_TRIG down_trigger;
 };
 
-template <BlindOutputs const &StateData, StringLiteral ID>
-class BlindStateMove : public BlindState {
-public:
-  BlindStateMove(BlindConfig const &cfg, TimeStamp const &now, bool up,
-                 bool down)
-      : cfg{cfg}, start{now}, up_trigger(up), down_trigger(down) {
-    spdlog::info("BlindStateMove({})", id());
-  }
-  OptionalBlindState execute(TimeStamp now, bool up, bool down) override {
-    spdlog::debug("BlindStateUp::execute");
+struct BlindStateIdle : BlindState {
+  BlindStateIdle() = default;
 
-    if (now - start > cfg.periodUp || up_trigger.execute(up) ||
-        down_trigger.execute(down)) {
-      // TODO periodDown must be considered as well here
-      // depending on the actual state
-      return std::make_unique<BlindStateIdle>(cfg, now, up, down);
+  void enter(Control &control) noexcept {
+    spdlog::info("BlindStateIdle()");
+    control.context().outputs = {false, false};
+    BlindState::enter(control);
+  }
+
+  void update(FullControl &control) noexcept {
+    auto up_triggered = up_trigger.execute(control.context().inputs.up);
+    auto down_triggered = up_trigger.execute(control.context().inputs.down);
+
+    auto diff = control.context().now - start;
+    if (diff < control.context().cfg.periodIdle) {
+      return;
     }
 
-    return NoTransition;
+    if (up_triggered) {
+      control.changeTo<BlindStateUp>();
+    } else if (down_triggered) {
+      control.changeTo<BlindStateDown>();
+    }
   }
-  BlindOutputs const getStateData() const override { return StateData; }
-  std::string const id() const override { return ID.value; }
-
-private:
-  BlindConfig const cfg;
-  TimeStamp start;
-
-  R_TRIG up_trigger;
-  R_TRIG down_trigger;
 };
 
-constexpr BlindOutputs const UpOutputs{true, false};
-using BlindStateUp = BlindStateMove<UpOutputs, "up">;
+struct BlindStateUp : BlindState {
+  BlindStateUp() = default;
 
-constexpr BlindOutputs const DownOutputs{false, true};
-using BlindStateDown = BlindStateMove<DownOutputs, "down">;
+  void enter(Control &control) noexcept {
+    spdlog::info("BlindStateUp()");
+    control.context().outputs = {true, false};
+    BlindState::enter(control);
+  }
+
+  void update(FullControl &control) noexcept {
+    if (control.context().now - start > control.context().cfg.periodUp ||
+        up_trigger.execute(control.context().inputs.up) ||
+        down_trigger.execute(control.context().inputs.down)) {
+      control.changeTo<BlindStateIdle>();
+    }
+  }
+};
+
+struct BlindStateDown : BlindState {
+  BlindStateDown() = default;
+
+  void enter(Control &control) noexcept {
+    spdlog::info("BlindStateDown()");
+    control.context().outputs = {false, true};
+    BlindState::enter(control);
+  }
+
+  void update(FullControl &control) noexcept {
+    if (control.context().now - start > control.context().cfg.periodDown ||
+        up_trigger.execute(control.context().inputs.up) ||
+        down_trigger.execute(control.context().inputs.down)) {
+      control.changeTo<BlindStateIdle>();
+    }
+  }
+};
+
+constexpr hfsm2::StateID const BlindStateIdleID = 1;
+static_assert(BlindFSM::stateId<BlindStateIdle>() == BlindStateIdleID, "");
 
 } // namespace Library
 } // namespace HomeAutomation
