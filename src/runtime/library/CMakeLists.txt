@@ -6,7 +6,6 @@ add_library(library::automation ALIAS library-automation)
 target_include_directories(library-automation PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 target_link_libraries(library-automation PUBLIC
   common
-  HFSM2
   spdlog::spdlog
   sol2::sol2
   lua

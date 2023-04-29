@@ -8,39 +8,37 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <variant>
 
 namespace HomeAutomation {
 
-template <typename RetType, typename... Types> class FSM;
-
-template <typename RetType, typename... Types> class State {
+template <class Context, class... States> class FSM {
 public:
-  using OptionalState = std::optional<std::unique_ptr<State>>;
-  constexpr static const auto NoTransition = std::nullopt;
+  virtual ~FSM() = default;
 
-  virtual ~State() = default;
-  virtual OptionalState execute(TimeStamp now, Types... args) = 0;
-  virtual RetType const getStateData() const = 0;
-  virtual std::string const &id() const = 0;
-};
+  using StateVariant = std::variant<States...>;
+  using OptionalStateVariant = std::optional<StateVariant>;
 
-template <typename RetType, typename... Types> class FSM {
-public:
-  using UniqueState = std::unique_ptr<State<RetType, Types...>>;
-
-  FSM(UniqueState initialState) : state(std::move(initialState)) {}
-  virtual ~FSM() {}
-  void execute(TimeStamp now, Types... args) {
-    auto nextState = state->execute(now, args...);
-    if (!nextState) {
-      return;
+  FSM(StateVariant &&initialState, Context &&context)
+      : curState{std::move(initialState)}, context_{std::move(context)} {}
+  void update(Context &context) {
+    auto newState = std::visit(
+        [&context](auto &state) -> OptionalStateVariant {
+          return transition(state, context);
+        },
+        curState);
+    if (newState) {
+      std::visit([&context](auto &state) { state.update(context); },
+                 newState.value());
+      curState = std::move(newState.value());
     }
-    state = std::move(nextState.value());
   }
-  RetType getStateData() { return state->getStateData(); }
+
+  Context &context() { return context_; }
 
 private:
-  UniqueState state;
+  StateVariant curState;
+  Context context_;
 };
 
 } // namespace HomeAutomation

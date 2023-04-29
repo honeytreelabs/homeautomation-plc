@@ -16,6 +16,3 @@
 [submodule "deps/cmake-modules"]
 	path = deps/cmake-modules
 	url = https://github.com/bilke/cmake-modules.git
-[submodule "deps/HFSM2"]
-	path = deps/HFSM2
-	url = https://github.com/andrew-gresyk/HFSM2

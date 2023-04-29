@@ -21,7 +21,7 @@ public:
   }
 
 private:
-  BlindFSM::Instance fsm;
+  FSM<BlindContext, BlindStateIdle, BlindStateUp, BlindStateDown> fsm;
 };
 
 } // namespace Library

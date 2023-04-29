@@ -2,9 +2,9 @@
 
 #include <common.hpp>
 
+#include <fsm.hpp>
 #include <trigger.hpp>
 
-#include <hfsm2/machine.hpp>
 #include <spdlog/spdlog.h>
 
 #include <cstdint>
@@ -17,6 +17,7 @@ struct BlindIOs {
   bool up;
   bool down;
 };
+// The BlindOutputs tuple exists in order for easier mapping to Lua data types
 using BlindOutputs = std::tuple<bool, bool>;
 
 struct BlindConfig {
@@ -31,98 +32,62 @@ BlindConfig BlindConfigFromMillis(std::uint32_t periodIdle,
                                   std::uint32_t periodDown);
 
 struct BlindContext {
-  BlindConfig const cfg;
+  BlindConfig const &cfg;
   TimeStamp now;
   BlindIOs inputs;
   BlindIOs outputs;
 };
 
-struct BlindStateIdle;
-struct BlindStateUp;
-struct BlindStateDown;
+struct BlindState {
+  BlindState(TimeStamp now, bool up, bool down)
+      : start{now}, up_trigger{up}, down_trigger{down} {}
 
-// convenience typedef
-using M = hfsm2::MachineT<hfsm2::Config::ContextT<BlindContext>>;
-
-using BlindFSM = M::PeerRoot<BlindStateIdle, BlindStateUp, BlindStateDown>;
-
-struct BlindState : BlindFSM::State {
-  BlindState() = default;
   virtual ~BlindState() = default;
-  void enter(Control &control) noexcept {
-    start = control.context().now;
-    up_trigger = R_TRIG{control.context().inputs.up};
-    down_trigger = R_TRIG{control.context().inputs.down};
-  }
+
   TimeStamp start;
   R_TRIG up_trigger;
   R_TRIG down_trigger;
 };
+struct BlindStateIdle;
+struct BlindStateUp;
+struct BlindStateDown;
 
-struct BlindStateIdle : BlindState {
-  BlindStateIdle() = default;
+using StateVariant = std::variant<BlindStateIdle, BlindStateUp, BlindStateDown>;
+using OptionalStateVariant = std::optional<StateVariant>;
 
-  void enter(Control &control) noexcept {
+struct BlindStateIdle : public BlindState {
+  BlindStateIdle(TimeStamp now) : BlindState(now, false, false) {
     spdlog::info("BlindStateIdle()");
-    control.context().outputs = {false, false};
-    BlindState::enter(control);
   }
-
-  void update(FullControl &control) noexcept {
-    auto up_triggered = up_trigger.execute(control.context().inputs.up);
-    auto down_triggered = up_trigger.execute(control.context().inputs.down);
-
-    auto diff = control.context().now - start;
-    if (diff < control.context().cfg.periodIdle) {
-      return;
-    }
-
-    if (up_triggered) {
-      control.changeTo<BlindStateUp>();
-    } else if (down_triggered) {
-      control.changeTo<BlindStateDown>();
-    }
+  void update(BlindContext &context) {
+    context.outputs.up = false;
+    context.outputs.down = false;
   }
 };
 
-struct BlindStateUp : BlindState {
-  BlindStateUp() = default;
-
-  void enter(Control &control) noexcept {
+struct BlindStateUp : public BlindState {
+  BlindStateUp(TimeStamp now, bool up, bool down) : BlindState(now, up, down) {
     spdlog::info("BlindStateUp()");
-    control.context().outputs = {true, false};
-    BlindState::enter(control);
   }
-
-  void update(FullControl &control) noexcept {
-    if (control.context().now - start > control.context().cfg.periodUp ||
-        up_trigger.execute(control.context().inputs.up) ||
-        down_trigger.execute(control.context().inputs.down)) {
-      control.changeTo<BlindStateIdle>();
-    }
+  void update(BlindContext &context) {
+    context.outputs.up = true;
+    context.outputs.down = false;
   }
 };
-
-struct BlindStateDown : BlindState {
-  BlindStateDown() = default;
-
-  void enter(Control &control) noexcept {
+struct BlindStateDown : public BlindState {
+  BlindStateDown(TimeStamp now, bool up, bool down)
+      : BlindState(now, up, down) {
     spdlog::info("BlindStateDown()");
-    control.context().outputs = {false, true};
-    BlindState::enter(control);
   }
-
-  void update(FullControl &control) noexcept {
-    if (control.context().now - start > control.context().cfg.periodDown ||
-        up_trigger.execute(control.context().inputs.up) ||
-        down_trigger.execute(control.context().inputs.down)) {
-      control.changeTo<BlindStateIdle>();
-    }
+  void update(BlindContext &context) {
+    context.outputs.up = false;
+    context.outputs.down = true;
   }
 };
 
-constexpr hfsm2::StateID const BlindStateIdleID = 1;
-static_assert(BlindFSM::stateId<BlindStateIdle>() == BlindStateIdleID, "");
+OptionalStateVariant transition(BlindStateIdle &idle, BlindContext &context);
+OptionalStateVariant transition(BlindStateUp &up, BlindContext &context);
+OptionalStateVariant transition(BlindStateDown &down, BlindContext &context);
 
 } // namespace Library
 } // namespace HomeAutomation
