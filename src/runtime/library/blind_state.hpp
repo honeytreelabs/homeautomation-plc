@@ -2,7 +2,6 @@
 
 #include <common.hpp>
 
-#include <fsm.hpp>
 #include <trigger.hpp>
 
 #include <hfsm2/machine.hpp>
