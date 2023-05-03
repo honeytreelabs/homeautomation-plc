@@ -32,7 +32,7 @@ OptionalStateVariant transition(BlindStateUp &up, BlindContext &context) {
   if (context.now - up.start > context.cfg.periodUp ||
       up.up_trigger.execute(context.inputs.up) ||
       up.down_trigger.execute(context.inputs.down)) {
-    return BlindStateIdle(context.now);
+    return BlindStateIdle(context.now, context.inputs.up, context.inputs.down);
   }
   return std::nullopt;
 }
@@ -41,7 +41,7 @@ OptionalStateVariant transition(BlindStateDown &down, BlindContext &context) {
   if (context.now - down.start > context.cfg.periodDown ||
       down.up_trigger.execute(context.inputs.up) ||
       down.down_trigger.execute(context.inputs.down)) {
-    return BlindStateIdle(context.now);
+    return BlindStateIdle(context.now, context.inputs.up, context.inputs.down);
   }
   return std::nullopt;
 }

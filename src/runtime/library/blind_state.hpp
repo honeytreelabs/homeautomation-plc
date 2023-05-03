@@ -56,9 +56,11 @@ using StateVariant = std::variant<BlindStateIdle, BlindStateUp, BlindStateDown>;
 using OptionalStateVariant = std::optional<StateVariant>;
 
 struct BlindStateIdle : public BlindState {
-  BlindStateIdle(TimeStamp now) : BlindState(now, false, false) {
+  BlindStateIdle(TimeStamp now, bool up, bool down)
+      : BlindState(now, up, down) {
     spdlog::info("BlindStateIdle()");
   }
+  BlindStateIdle(TimeStamp now) : BlindState(now, false, false) {}
   void update(BlindContext &context) {
     context.outputs.up = false;
     context.outputs.down = false;
