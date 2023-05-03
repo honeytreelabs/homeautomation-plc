@@ -12,11 +12,10 @@ BlindConfig BlindConfigFromMillis(std::uint32_t periodIdle,
 }
 
 OptionalStateVariant transition(BlindStateIdle &idle, BlindContext &context) {
-  auto up_triggered = idle.up_trigger.execute(context.inputs.up);
-  auto down_triggered = idle.down_trigger.execute(context.inputs.down);
+  auto const up_triggered = idle.up_trigger.execute(context.inputs.up);
+  auto const down_triggered = idle.down_trigger.execute(context.inputs.down);
 
-  auto diff = context.now - idle.start;
-  if (diff < context.cfg.periodIdle) {
+  if (context.now - idle.start < context.cfg.periodIdle) {
     return std::nullopt;
   }
   if (up_triggered) {

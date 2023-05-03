@@ -32,7 +32,7 @@ BlindConfig BlindConfigFromMillis(std::uint32_t periodIdle,
                                   std::uint32_t periodDown);
 
 struct BlindContext {
-  BlindConfig const &cfg;
+  BlindConfig const cfg;
   TimeStamp now;
   BlindIOs inputs;
   BlindIOs outputs;
