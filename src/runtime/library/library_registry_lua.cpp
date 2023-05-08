@@ -1,6 +1,7 @@
 #include <blind.hpp>
 #include <library_registry_lua.hpp>
 #include <light.hpp>
+#include <time.hpp>
 #include <trigger.hpp>
 
 namespace HomeAutomation {
@@ -12,6 +13,7 @@ void HomeAutomation::Library::LuaLibraryRegistry::RegisterComponents(
   R_TRIG::RegisterComponent(lua);
   F_TRIG::RegisterComponent(lua);
   Blind::RegisterComponent(lua);
+  Util::RegisterComponent(lua);
 }
 
 } // namespace Library
