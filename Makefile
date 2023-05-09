@@ -83,11 +83,16 @@ native:
 		&& ninja -v
 
 .PHONY: test
-test: export LUA_PATH=$(mkfile_path)/deps/luaunit/?.lua
+test: export LUA_PATH=$(mkfile_path)/deps/luaunit/?.lua;$(mkfile_path)/src/runtime/library/?.lua
 test: testdir=build
 test:
 	ctest -j $$(nproc) --test-dir $(testdir) --verbose -E 'mqtt_test|mqtt_memchecked_test'
 	ctest --test-dir $(testdir) --verbose -R 'mqtt_test|mqtt_memchecked_test'
+
+.PHONY: test-lua
+test-lua: export LUA_PATH=$(mkfile_path)/deps/luaunit/?.lua;$(mkfile_path)/src/runtime/library/?.lua
+test-lua:
+	lua5.4 $(mkfile_path)/src/runtime/library/test/test_lua_library.lua
 
 .PHONY: coverage
 coverage: sourcedir=$(mkfile_path)

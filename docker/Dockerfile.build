@@ -25,6 +25,7 @@ RUN echo "deb http://deb.debian.org/debian/ unstable main non-free contrib" >> /
       g++ \
       g++-aarch64-linux-gnu/unstable \
       g++-arm-linux-gnueabihf/unstable \
+      lua5.4 \
       make \
       ninja-build \
       python3 \
