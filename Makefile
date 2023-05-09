@@ -19,7 +19,6 @@ deps-install:
 		g++ \
 		g++-aarch64-linux-gnu \
 		g++-arm-linux-gnueabihf \
-		lua-unit \
 		make \
 		ninja-build \
 		python3 \
@@ -84,7 +83,7 @@ native:
 		&& ninja -v
 
 .PHONY: test
-test: export LUA_PATH=/usr/share/lua/5.4/?.lua
+test: export LUA_PATH=$(mkfile_path)/deps/luaunit/?.lua
 test: testdir=build
 test:
 	ctest -j $$(nproc) --test-dir $(testdir) --verbose -E 'mqtt_test|mqtt_memchecked_test'

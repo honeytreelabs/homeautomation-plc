@@ -16,3 +16,6 @@
 [submodule "deps/cmake-modules"]
 	path = deps/cmake-modules
 	url = https://github.com/bilke/cmake-modules.git
+[submodule "deps/luaunit"]
+	path = deps/luaunit
+	url = https://github.com/bluebird75/luaunit.git
