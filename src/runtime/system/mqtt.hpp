@@ -2,6 +2,7 @@
 
 #include <circular_buffer.hpp>
 
+#include <cstdint>
 #include <mqtt/client.h>
 
 #include <atomic>
@@ -21,8 +22,52 @@ struct SubscribedTopic {
   int qos;
 };
 using Topics = std::vector<SubscribedTopic>;
+using Topic = std::string;
+using Payload = std::vector<std::uint8_t>;
+using QoS = int;
 
-class ClientPaho {
+class Message {
+public:
+  Message(Topic &&topic, Payload &&payload, QoS qos)
+      : topic_{std::move(topic)}, payload_{std::move(payload)}, qos_{qos} {}
+  Message(Topic const &topic, Payload const &&payload, QoS qos)
+      : topic_{topic}, payload_{payload}, qos_{qos} {}
+
+  inline Topic const &topic() { return topic_; }
+  inline Payload const &payload() { return payload_; }
+  inline std::string payload_str() {
+    return std::string{payload_.begin(), payload_.end()};
+  }
+  inline int qos() { return qos_; }
+
+private:
+  Topic topic_;
+  Payload payload_;
+  QoS qos_;
+};
+
+using OptionalMessage = std::optional<Message>;
+
+class Client {
+public:
+  constexpr static QoS DEFAULT_QOS = 1;
+  virtual ~Client() = default;
+
+  virtual void connect() = 0;
+  virtual void send(Topic &topic, Payload &payload, QoS qos) = 0;
+  virtual void send(Topic &topic, Payload &payload) {
+    send(topic, payload, DEFAULT_QOS);
+  }
+  virtual void send(Topic const &topic, char const *payload);
+  virtual void send(Topic const &topic, std::string const &payload);
+  virtual void subscribe(Topic const &topic, QoS qos) = 0;
+  virtual void subscribe(Topic const &topic) { subscribe(topic, DEFAULT_QOS); }
+  virtual OptionalMessage receive() = 0;
+  virtual void disconnect() = 0;
+  virtual void set_on_resubscribed(std::function<void()> cb) = 0;
+};
+
+class ClientPaho : public Client {
 public:
   static constexpr const char *DFLT_CLIENT_ID{"publish"};
   static constexpr const int DFLT_QOS{1};
@@ -42,26 +87,18 @@ public:
       : ClientPaho(address, clientID, getDefaultConnectOptions()) {}
   ClientPaho(std::string const &address)
       : ClientPaho(address, DFLT_CLIENT_ID) {}
-  virtual ~ClientPaho() {}
 
-  void connect();
-  void send(mqtt::string_ref topic, mqtt::binary_ref payload, int qos);
-  inline void send(mqtt::string_ref topic, mqtt::binary_ref payload) {
-    send(topic, payload, DFLT_QOS);
-  }
-  void subscribe(std::string const &topic, int qos);
-  inline void subscribe(std::string const &topic) {
-    subscribe(topic, DFLT_QOS);
-  }
-  mqtt::const_message_ptr receive();
+  void connect() override;
+  void send(Topic &topic, Payload &payload, QoS qos) override;
+  void subscribe(Topic const &topic, QoS qos) override;
+  OptionalMessage receive() override;
   void set_resubscribe();
-  void set_on_resubscribed(std::function<void()> cb) { on_resubscribed = cb; }
-  void disconnect();
+  void set_on_resubscribed(std::function<void()> cb) override {
+    on_resubscribed = cb;
+  }
+  void disconnect() override;
 
 private:
-  ClientPaho(ClientPaho const &);
-  ClientPaho &operator=(ClientPaho const &);
-
   void recvWorkerFun();
   void sendWorkerFun();
   void resubscribe();

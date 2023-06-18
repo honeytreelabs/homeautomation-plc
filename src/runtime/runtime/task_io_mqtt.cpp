@@ -24,14 +24,14 @@ void MQTTIOLogic::before() {
   }
 
   while (auto msg = mqttClient->receive()) {
-    auto const inputIt = inputs.find(msg->get_topic());
+    auto const inputIt = inputs.find(msg.value().topic());
     if (inputIt == inputs.end()) {
       continue;
     }
     auto const &varName = inputIt->second;
-    if (msg->get_payload_str() == PAYLOAD_TRUE) {
+    if (msg.value().payload_str() == PAYLOAD_TRUE) {
       gv->inputs[varName] = true;
-    } else if (msg->get_payload_str() == PAYLOAD_FALSE) {
+    } else if (msg.value().payload_str() == PAYLOAD_FALSE) {
       gv->inputs[varName] = false;
     }
   }

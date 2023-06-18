@@ -9,7 +9,7 @@
 namespace HomeAutomation {
 namespace Runtime {
 
-static std::shared_ptr<HomeAutomation::IO::MQTT::ClientPaho>
+static std::shared_ptr<HomeAutomation::IO::MQTT::Client>
 generateClient(YAML::Node const &clientNode) {
   auto mqtt_options = IO::MQTT::ClientPaho::getDefaultConnectOptions();
   auto const &nodeUsername = clientNode["username"];

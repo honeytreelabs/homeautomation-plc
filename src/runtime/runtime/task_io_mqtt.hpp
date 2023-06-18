@@ -16,7 +16,7 @@ class MQTTIOLogic final : public HomeAutomation::Runtime::TaskIOLogic {
 public:
   MQTTIOLogic(InputMapping &&inputs, OutputMapping &&outputs,
               HomeAutomation::GV *gv,
-              std::shared_ptr<HomeAutomation::IO::MQTT::ClientPaho> mqttClient)
+              std::shared_ptr<HomeAutomation::IO::MQTT::Client> mqttClient)
       : inputs{std::move(inputs)}, outputs{std::move(outputs)}, gv{gv},
         mqttClient{mqttClient}, outputValues{} {}
 
@@ -29,7 +29,7 @@ private:
   InputMapping inputs;
   OutputMapping outputs;
   HomeAutomation::GV *gv;
-  std::shared_ptr<HomeAutomation::IO::MQTT::ClientPaho> mqttClient;
+  std::shared_ptr<HomeAutomation::IO::MQTT::Client> mqttClient;
   // as only changes in output values will be published,
   // previous values need to be remembered
   HomeAutomation::GvSegment outputValues;
