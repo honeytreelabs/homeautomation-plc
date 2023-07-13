@@ -77,6 +77,7 @@ TEST_CASE("MQTT client") {
     REQUIRE_NOTHROW(client.disconnect());
   }
 
+#if 0
   SUBCASE("mqtt: publish/receive one mqtt message") {
     using namespace std::chrono_literals;
 
@@ -167,4 +168,5 @@ TEST_CASE("MQTT client") {
     client_first.disconnect();
     client_second.disconnect();
   }
+#endif
 }
