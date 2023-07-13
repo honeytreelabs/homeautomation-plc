@@ -39,14 +39,14 @@ case "${1}" in
         ;;
     run-test)
         echo "Running test ..."
-        # exec_bg docker compose build
-        # exec_bg docker compose up -d --force-recreate
+        exec_bg docker compose build
+        exec_bg docker compose up -d --force-recreate
 
-        # exec_bg tar xzf ../build.tgz
-        # docker compose cp build.native build-env:/
+        exec_bg tar xzf ../build.tgz
+        docker compose cp build.native build-env:/
 
-        # exec_bg docker compose exec -T -w /build.native build-env make -f /source/Makefile test-lua
-        # exec_bg docker compose exec -T -w /build.native build-env make -f /source/Makefile test testdir=.
+        exec_bg docker compose exec -T -w /build.native build-env make -f /source/Makefile test-lua
+        exec_bg docker compose exec -T -w /build.native build-env make -f /source/Makefile test testdir=.
         # exec_bg docker compose exec -T -w /build.native build-env make -f /source/Makefile coverage sourcedir=/source testdir=.
         # docker compose cp build-env:/build.native/coverage ..
         ;;
