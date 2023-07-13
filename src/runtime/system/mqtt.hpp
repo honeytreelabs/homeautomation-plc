@@ -98,7 +98,9 @@ public:
       reconnecter.join();
     }
     topics.clear();
-    client_->disconnect();
+    if (client_->is_connected()) {
+      client_->disconnect();
+    }
   };
   virtual void set_on_resubscribed(SubscriptionCb cb) { cb_ = cb; }
 
