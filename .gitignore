@@ -2,6 +2,7 @@
 .conan
 build.venv
 build
+build.native
 build.deps
 build.rpi2
 build.rpi3
@@ -11,3 +12,5 @@ compile_commands.json
 build.tgz
 **/__pycache__/
 coverage/
+vcpkg_installed/
+Testing/

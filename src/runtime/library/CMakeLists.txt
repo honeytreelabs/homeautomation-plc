@@ -1,15 +1,19 @@
+find_package(Lua REQUIRED)
+
 add_library(library-automation STATIC
   blind_state.cpp
   blind.cpp
   library_registry_lua.cpp
   time.cpp)
 add_library(library::automation ALIAS library-automation)
-target_include_directories(library-automation PUBLIC ${CMAKE_CURRENT_LIST_DIR})
+target_include_directories(library-automation PUBLIC
+  ${CMAKE_CURRENT_LIST_DIR}
+  "${LUA_INCLUDE_DIR}")
 target_link_libraries(library-automation PUBLIC
   common
   spdlog::spdlog
   sol2::sol2
-  lua
+  "${LUA_LIBRARIES}"
   "${CMAKE_DL_LIBS}")
 
 add_executable(library_lua_main library_lua_main.cpp)

@@ -1,0 +1,8 @@
+{
+  "dependencies": [
+    "libuuid",
+    "lua",
+    "libmodbus",
+    "paho-mqtt"
+  ]
+}

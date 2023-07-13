@@ -1,6 +1,6 @@
 # note: parallel Make not supported for this Makefile
 
-all: native
+all: build-native
 
 ### dependency handling
 
@@ -26,65 +26,33 @@ deps-install:
 		python3-pip \
 		valgrind
 
-.PHONY: conan-install
-conan-install:
-	if ! conan profile show default > /dev/null 2>&1; then \
-			conan profile new default --detect; \
-	fi \
-		&& conan profile update settings.build_type=Debug default \
-		&& conan profile update settings.compiler.libcxx=libstdc++11 default \
-		&& cp $(mkfile_path)/conan/rpi3.profile ~/.conan/profiles/rpi3 \
-		&& cp $(mkfile_path)/conan/rpi2.profile ~/.conan/profiles/rpi2 \
-		&& cp $(mkfile_path)/conan/build.profile ~/.conan/profiles/build
-
-.PHONY: conan-install-deps
-conan-install-deps:
-	mkdir -p build.deps
-	-find deps -regex '.*test_package/build$$' -type d -exec rm -rf "{}" \;
-	conan create --profile:build=build --profile:host=$(profile) $(mkfile_path)/deps/libmodbus \
-		&& conan create --profile:build=build --profile:host=$(profile) $(mkfile_path)/deps/zlib \
-		&& conan create --profile:build=build --profile:host=$(profile) $(mkfile_path)/deps/openssl \
-		&& conan create --profile:build=build --profile:host=$(profile) $(mkfile_path)/deps/paho-mqtt-c \
-		&& conan create --profile:build=build --profile:host=$(profile) $(mkfile_path)/deps/paho-mqtt-cpp \
-		&& conan install --profile:build=build --profile:host=$(profile) -if build.deps -of build.deps --build=lua .
-	rm -rf build.deps
-
-.PHONY: conan-install-deps-native
-conan-install-deps-native: profile=default
-conan-install-deps-native: conan-install-deps
-
-.PHONY: conan-install-deps-rpi2
-conan-install-deps-rpi2: profile=rpi2
-conan-install-deps-rpi2: conan-install-deps
-
-.PHONY: conan-install-deps-rpi3
-conan-install-deps-rpi3: profile=rpi3
-conan-install-deps-rpi3: conan-install-deps
-
-.PHONY: prepare-all-deps
-prepare: conan-install-deps-native conan-install-deps-rpi3 conan-install-deps-rpi2
-
 ### local development (non-optimized binaries with debug symbols)
 
-.PHONY: native-prepare
-native-prepare: sourcedir=$(mkfile_path)
-native-prepare:
-	mkdir -p build
-	cd build \
-		&& conan install $(mkfile_path) \
-		&& cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_TOOLCHAIN_FILE=$(sourcedir)/cmake/toolchain/toolchain-native.cmake -DENABLE_COVERAGE=True -GNinja $(sourcedir)
-	-ln -sf build/compile_commands.json $(sourcedir)
+.PHONY: prepare-native
+prepare-native: export sourcedir=$(mkfile_path)
+prepare-native:
+	mkdir -p build.native
+	cd build.native \
+		&& if [ -x "${sourcedir}/vcpkg/vcpkg" ]; then export PATH="${PATH}:${sourcedir}/vcpkg"; else ${sourcedir}/vcpkg/bootstrap-vcpkg.sh; fi \
+		&& cmake \
+			-DCMAKE_BUILD_TYPE=Debug \
+			-DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+			-DCMAKE_TOOLCHAIN_FILE=$(sourcedir)/vcpkg/scripts/buildsystems/vcpkg.cmake \
+			-DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=$(sourcedir)/cmake/toolchain/toolchain-native.cmake \
+			-DENABLE_COVERAGE=True \
+			-GNinja $(sourcedir)
+	-ln -sf build.native/compile_commands.json $(sourcedir)
 
 .PHONY: native
-native: sourcedir=$(mkfile_path)
-native:
-	$(MAKE) -f $(sourcedir)/Makefile native-prepare sourcedir=$(sourcedir)
-	cd build \
+build-native: sourcedir=$(mkfile_path)
+build-native:
+	$(MAKE) -f $(sourcedir)/Makefile prepare-native sourcedir=$(sourcedir)
+	cd build.native \
 		&& ninja -v
 
 .PHONY: test
 test: export LUA_PATH=$(mkfile_path)/deps/luaunit/?.lua;$(mkfile_path)/src/runtime/library/?.lua
-test: testdir=build
+test: testdir=build.native
 test:
 	ctest -j $$(nproc) --test-dir $(testdir) --verbose -E 'mqtt_test|mqtt_memchecked_test'
 	ctest --test-dir $(testdir) --verbose -R 'mqtt_test|mqtt_memchecked_test'
@@ -96,59 +64,66 @@ test-lua:
 
 .PHONY: coverage
 coverage: sourcedir=$(mkfile_path)
-coverage: testdir=build
+coverage: testdir=build.native
 coverage:
 	mkdir -p coverage
 	gcovr --verbose --root $(sourcedir) --exclude deps --exclude examples --html-nested $(testdir)/coverage/coverage.html $(testdir)
 
 .PHONY: test-nomemcheck
 test-nomemcheck: export LUA_PATH=/usr/share/lua/5.4/?.lua
-test-nomemcheck: testdir=build
+test-nomemcheck: testdir=build.native
 test-nomemcheck:
 	ctest --test-dir $(testdir) --verbose -E '.*_memchecked_.*'
 
 .PHONY: test-failed
 test-failed: export LUA_PATH=/usr/share/lua/5.4/?.lua
-test-failed: testdir=build
+test-failed: testdir=build.native
 test-failed:
 	ctest --test-dir $(testdir) --verbose --rerun-failed --output-on-failure
 
 ### Raspberry Pi ports (optimized binaries)
 
 .PHONY: prepare-generic
+prepare-generic: sourcedir=$(mkfile_path)
 prepare-generic:
 	mkdir -p build.$(name)
 	cd build.$(name) \
-		&& conan install --profile=$(profile) $(sourcedir) \
-		&& cmake -DCMAKE_BUILD_TYPE=RelMinSize -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_TOOLCHAIN_FILE=$(sourcedir)/cmake/toolchain/toolchain-$(toolchain).cmake -GNinja $(sourcedir)
+		&& if [ -x "${sourcedir}/vcpkg/vcpkg" ]; then export PATH="${PATH}:${sourcedir}/vcpkg"; else ${sourcedir}/vcpkg/bootstrap-vcpkg.sh; fi \
+		&& cmake \
+			-DCMAKE_BUILD_TYPE=RelMinSize \
+			-DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+			-DCMAKE_TOOLCHAIN_FILE=$(sourcedir)/vcpkg/scripts/buildsystems/vcpkg.cmake \
+			-DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=$(sourcedir)/cmake/toolchain/toolchain-$(toolchain).cmake \
+			-DVCPKG_TARGET_TRIPLET=$(triplet) \
+			-GNinja $(sourcedir)
 
-.PHONY: generic
-generic: sourcedir=$(mkfile_path)
-generic:
-	$(MAKE) -f $(sourcedir)/Makefile prepare-generic name=$(name) profile=$(profile) toolchain=$(toolchain) sourcedir=$(sourcedir)
+.PHONY: build-generic
+build-generic: sourcedir=$(mkfile_path)
+build-generic:
+	$(MAKE) -f $(sourcedir)/Makefile prepare-generic name=$(name) triplet=$(triplet) toolchain=$(toolchain) sourcedir=$(sourcedir)
 	cd build.$(name) \
 		&& ninja -v
 
-.PHONY: rpi3-prepare
-rpi3-prepare: sourcedir=$(mkfile_path)
-rpi3-prepare:
-	$(MAKE) -f $(sourcedir)/Makefile prepare-generic name=rpi3 profile=rpi3 toolchain=aarch64-rpi3 sourcedir=$(sourcedir)
+.PHONY: prepare-rpi3
+prepare-rpi3: sourcedir=$(mkfile_path)
+prepare-rpi3:
+	$(MAKE) -f $(sourcedir)/Makefile prepare-generic name=rpi3 triplet=arm64-linux toolchain=aarch64-rpi3 sourcedir=$(sourcedir)
 
-.PHONY: rpi3
-rpi3: sourcedir=$(mkfile_path)
-rpi3:
-	$(MAKE) -f $(sourcedir)/Makefile generic sourcedir=$(sourcedir) name=rpi3 profile=rpi3 toolchain=aarch64-rpi3
+.PHONY: build-rpi3
+build-rpi3: sourcedir=$(mkfile_path)
+build-rpi3:
+	$(MAKE) -f $(sourcedir)/Makefile build-generic sourcedir=$(sourcedir) name=rpi3 triplet=arm64-linux toolchain=aarch64-rpi3
 
 .PHONY: rpi2-prepare
 rpi2-prepare: sourcedir=$(mkfile_path)
 rpi2-prepare:
-	$(MAKE) -f $(sourcedir)/Makefile prepare-generic name=rpi2 profile=rpi2 toolchain=armv7hf-rpi2 sourcedir=$(sourcedir)
+	$(MAKE) -f $(sourcedir)/Makefile prepare-generic name=rpi2 triplet=arm-linux toolchain=armv7hf-rpi2 sourcedir=$(sourcedir)
 
-.PHONY: rpi2
-rpi2: sourcedir=$(mkfile_path)
-rpi2:
-	$(MAKE) -f $(sourcedir)/Makefile generic sourcedir=$(sourcedir) name=rpi2 profile=rpi2 toolchain=armv7hf-rpi2
+.PHONY: build-rpi2
+build-rpi2: sourcedir=$(mkfile_path)
+build-rpi2:
+	$(MAKE) -f $(sourcedir)/Makefile build-generic sourcedir=$(sourcedir) name=rpi2 triplet=arm-linux toolchain=armv7hf-rpi2
 
 .PHONY: clean
 clean:
-	rm -rf build build.rpi3 build.rpi2
+	rm -rf build.native build.rpi3 build.rpi2

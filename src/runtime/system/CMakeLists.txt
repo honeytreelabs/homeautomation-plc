@@ -1,10 +1,22 @@
+find_package(libmodbus CONFIG REQUIRED)
+find_package(eclipse-paho-mqtt-c CONFIG REQUIRED)
+find_package(lua REQUIRED)
+find_package(unofficial-libuuid CONFIG REQUIRED)
+
 add_library(system STATIC
   modbus.cpp
   mqtt.cpp
+  mqtt_c.cpp
   signal.cpp)
 target_include_directories(system PUBLIC ${CMAKE_CURRENT_LIST_DIR})
+# https://stackoverflow.com/questions/52135983/cmake-target-link-libraries-include-as-system-to-suppress-compiler-warnings
 target_link_libraries(system PUBLIC
-  ${CONAN_LIBS}
+  modbus
+  eclipse-paho-mqtt-c::paho-mqtt3a-static
+  eclipse-paho-mqtt-c::paho-mqtt3c-static
+  eclipse-paho-mqtt-c::paho-mqtt3as-static
+  eclipse-paho-mqtt-c::paho-mqtt3cs-static
+  unofficial::UUID::uuid
   spdlog::spdlog)
 
 if(MSVC)

@@ -19,3 +19,6 @@
 [submodule "deps/luaunit"]
 	path = deps/luaunit
 	url = https://github.com/bluebird75/luaunit.git
+[submodule "vcpkg"]
+	path = vcpkg
+	url = https://github.com/Microsoft/vcpkg.git

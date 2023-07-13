@@ -22,6 +22,7 @@ RUN echo "deb http://deb.debian.org/debian/ unstable main non-free contrib" >> /
     && apt-get install -yy \
       build-essential \
       cmake/unstable \
+      curl \
       g++ \
       g++-aarch64-linux-gnu/unstable \
       g++-arm-linux-gnueabihf/unstable \
@@ -32,21 +33,11 @@ RUN echo "deb http://deb.debian.org/debian/ unstable main non-free contrib" >> /
       python-is-python3 \
       python3-pip \
       python3-venv \
-      valgrind
+      tar \
+      unzip \
+      valgrind \
+      zip
 
 WORKDIR /prepare
-
-# conan + dependencies
-COPY conan conan
-COPY conanfile.txt .
-COPY deps deps
-COPY Makefile .
-
-RUN pip install --upgrade pip \
-    && pip install conan==1.59.0 gcovr \
-    && make conan-install
-RUN make conan-install-deps-native
-# currently, only the Raspberry Pi 3 platform is built automatically
-RUN make conan-install-deps-rpi3
 
 CMD ["/bin/bash"]
