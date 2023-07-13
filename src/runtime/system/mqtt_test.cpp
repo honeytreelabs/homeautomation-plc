@@ -1,4 +1,4 @@
-#include <mqtt.hpp>
+#include <mqtt_c.hpp>
 
 #include <subprocess.hpp>
 
@@ -46,17 +46,20 @@ TEST_CASE("MQTT client") {
   std::this_thread::sleep_for(200ms);
 
   SUBCASE("mqtt: instantiate/destruct mqtt client") {
-    ClientPaho client{"tcp://localhost:1883"};
+    Client client{
+        std::make_unique<ClientPahoC>("tcp://localhost:1883", "testclient")};
   }
 
   SUBCASE("mqtt: connect/disconnect mqtt client") {
-    ClientPaho client{"tcp://localhost:1883"};
+    Client client{
+        std::make_unique<ClientPahoC>("tcp://localhost:1883", "testclient")};
     client.connect();
     client.disconnect();
   }
 
   SUBCASE("mqtt: receive no mqtt messages") {
-    ClientPaho client{"tcp://localhost:1883"};
+    Client client{
+        std::make_unique<ClientPahoC>("tcp://localhost:1883", "testclient")};
     client.connect();
 
     auto message = client.receive();
@@ -68,7 +71,8 @@ TEST_CASE("MQTT client") {
   SUBCASE("mqtt: connect/disconnect mqtt client, no broker listening") {
     // this test shows that we are currently depending on a working/reachable
     // broker
-    ClientPaho client{"tcp://localhost:1884"};
+    Client client{
+        std::make_unique<ClientPahoC>("tcp://localhost:1883", "testclient")};
     REQUIRE_NOTHROW(client.connect());
     REQUIRE_NOTHROW(client.disconnect());
   }
@@ -76,27 +80,27 @@ TEST_CASE("MQTT client") {
   SUBCASE("mqtt: publish/receive one mqtt message") {
     using namespace std::chrono_literals;
 
-    std::shared_ptr<Client> client_first =
-        std::make_shared<ClientPaho>("tcp://localhost:1883", "client-first");
-    std::shared_ptr<Client> client_second =
-        std::make_shared<ClientPaho>("tcp://localhost:1883", "client-second");
+    Client client_first{
+        std::make_unique<ClientPahoC>("tcp://localhost:1883", "client-first")};
+    Client client_second{
+        std::make_unique<ClientPahoC>("tcp://localhost:1883", "client-second")};
 
-    client_second->connect();
-    client_second->subscribe(TOPIC);
+    client_second.connect();
+    client_second.subscribe(TOPIC);
 
-    client_first->connect();
-    client_first->send(TOPIC, "sample payload");
+    client_first.connect();
+    client_first.send(TOPIC, "sample payload");
 
     // let the MQTT stack do its things
     std::this_thread::sleep_for(1s);
 
-    auto message = client_second->receive();
+    auto message = client_second.receive();
     REQUIRE(message);
     REQUIRE(message.value().topic() == std::string(TOPIC));
     REQUIRE(message.value().payload_str() == "sample payload");
 
-    client_first->disconnect();
-    client_second->disconnect();
+    client_first.disconnect();
+    client_second.disconnect();
   }
 
   SUBCASE("mqtt: publish/receive mqtt message with flaky broker") {
@@ -104,21 +108,21 @@ TEST_CASE("MQTT client") {
 
     spdlog::info("Start flaky broker subcase");
 
-    std::shared_ptr<Client> client_first =
-        std::make_shared<ClientPaho>("tcp://localhost:1883", "client-first");
-    std::shared_ptr<Client> client_second =
-        std::make_shared<ClientPaho>("tcp://localhost:1883", "client-second");
+    Client client_first{
+        std::make_unique<ClientPahoC>("tcp://localhost:1883", "client-first")};
+    Client client_second{
+        std::make_unique<ClientPahoC>("tcp://localhost:1883", "client-second")};
 
-    client_second->connect();
-    client_second->subscribe(TOPIC);
+    client_second.connect();
+    client_second.subscribe(TOPIC);
 
-    client_first->connect();
-    client_first->send(TOPIC, "sample payload");
+    client_first.connect();
+    client_first.send(TOPIC, "sample payload");
 
     // let the MQTT stack do its things
     std::this_thread::sleep_for(200ms);
 
-    auto message = client_second->receive();
+    auto message = client_second.receive();
     REQUIRE(message);
     REQUIRE(message.value().topic() == std::string(TOPIC));
     REQUIRE(message.value().payload_str() == "sample payload");
@@ -127,13 +131,13 @@ TEST_CASE("MQTT client") {
       REQUIRE(compose_rm_mosquitto() == EXIT_SUCCESS);
       std::this_thread::sleep_for(1s);
       auto disconnected_payload = fmt::format("disconnected payload {}", cnt);
-      client_first->send(TOPIC, disconnected_payload);
+      client_first.send(TOPIC, disconnected_payload);
       std::this_thread::sleep_for(1s);
       std::mutex m;
       std::unique_lock lk{m};
       std::condition_variable cv;
       std::atomic_bool has_subscribed{false};
-      client_second->set_on_resubscribed([&cv, &has_subscribed]() {
+      client_second.set_on_resubscribed([&cv, &has_subscribed]() {
         has_subscribed = true;
         cv.notify_all();
       });
@@ -147,20 +151,20 @@ TEST_CASE("MQTT client") {
       lk.unlock(); // lock is not needed for the following assertions
 
       auto payload = fmt::format("message payload {}", cnt);
-      client_first->send(TOPIC, payload);
+      client_first.send(TOPIC, payload);
       // let the MQTT stack do its things
       std::this_thread::sleep_for(300ms);
-      message = client_second->receive();
+      message = client_second.receive();
       REQUIRE(message);
       if (message.value().payload_str() == disconnected_payload) {
-        message = client_second->receive();
+        message = client_second.receive();
         REQUIRE(message);
       }
       REQUIRE(message.value().topic() == std::string(TOPIC));
       REQUIRE(message.value().payload_str() == payload);
     }
 
-    client_first->disconnect();
-    client_second->disconnect();
+    client_first.disconnect();
+    client_second.disconnect();
   }
 }

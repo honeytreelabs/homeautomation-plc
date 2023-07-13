@@ -2,7 +2,6 @@
 #include <runtime_factory.hpp>
 #include <signal.hpp>
 
-#include <mqtt/async_client.h>
 #include <spdlog/spdlog.h>
 #include <yaml-cpp/yaml.h>
 
@@ -31,10 +30,12 @@ int main(int argc, char *argv[]) {
   } catch (YAML::Exception const &exc) {
     spdlog::error("Could not parse configuration file: {}", exc.what());
     return 1;
+#if 0
   } catch (mqtt::exception const &exc) {
     spdlog::error(
         "Some error occurred when interacting with the MQTT broker: {}",
         exc.what());
     return 1;
+#endif
   }
 }

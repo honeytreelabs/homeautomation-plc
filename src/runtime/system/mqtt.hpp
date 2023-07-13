@@ -2,8 +2,9 @@
 
 #include <circular_buffer.hpp>
 
+#include <spdlog/spdlog.h>
+
 #include <cstdint>
-#include <mqtt/client.h>
 
 #include <atomic>
 #include <functional>
@@ -14,9 +15,6 @@ namespace HomeAutomation {
 namespace IO {
 namespace MQTT {
 
-using Messages = HomeAutomation::circular_buffer<mqtt::message_ptr, 128>;
-using ConstMessages =
-    HomeAutomation::circular_buffer<mqtt::const_message_ptr, 128>;
 struct SubscribedTopic {
   std::string const topic;
   int qos;
@@ -48,73 +46,86 @@ private:
 
 using OptionalMessage = std::optional<Message>;
 
+using SubscriptionCb = std::function<void()>;
+
+/**
+ * @brief A synchronous client that actually sends the messsages in a blocking
+ * fashion.
+ */
+class RawClient {
+public:
+  virtual ~RawClient() = default;
+
+  virtual bool connect() = 0;
+  virtual bool is_connected() const = 0;
+  virtual void send(Topic &topic, Payload &payload, QoS qos) = 0;
+  virtual bool subscribe(SubscribedTopic const &topic) = 0;
+  virtual OptionalMessage receive() = 0;
+  virtual void disconnect() = 0;
+};
+
+/**
+ * @brief A buffering client that asynchronously sends given messages. It wraps
+ * a synchronous client.
+ */
 class Client {
 public:
   constexpr static QoS DEFAULT_QOS = 1;
+
+  Client(std::unique_ptr<RawClient> client) : client_{std::move(client)} {}
   virtual ~Client() = default;
 
-  virtual void connect() = 0;
-  virtual void send(Topic &topic, Payload &payload, QoS qos) = 0;
-  virtual void send(Topic &topic, Payload &payload) {
+  virtual void connect() {
+    reconnecter = std::thread(&Client::reconnect_logic, this);
+  }
+  virtual void send(Topic &topic, Payload &payload, QoS qos) {
+    client_->send(topic, payload, qos);
+  }
+  void send(Topic &topic, Payload &payload) {
     send(topic, payload, DEFAULT_QOS);
   }
-  virtual void send(Topic const &topic, char const *payload);
+  void send(Topic const &topic, char const *payload);
   virtual void send(Topic const &topic, std::string const &payload);
-  virtual void subscribe(Topic const &topic, QoS qos) = 0;
-  virtual void subscribe(Topic const &topic) { subscribe(topic, DEFAULT_QOS); }
-  virtual OptionalMessage receive() = 0;
-  virtual void disconnect() = 0;
-  virtual void set_on_resubscribed(std::function<void()> cb) = 0;
-};
-
-class ClientPaho : public Client {
-public:
-  static constexpr const char *DFLT_CLIENT_ID{"publish"};
-  static constexpr const int DFLT_QOS{1};
-
-  static mqtt::connect_options getDefaultConnectOptions() {
-    using namespace std::chrono_literals;
-    return mqtt::connect_options_builder()
-        .keep_alive_interval(2s)
-        .clean_session(true)
-        .automatic_reconnect(500ms, 2s)
-        .finalize();
+  virtual void subscribe(Topic const &topic, QoS qos) {
+    topics.emplace_back(topic, qos);
+    client_->subscribe(SubscribedTopic{topic, qos});
   }
-
-  ClientPaho(std::string const &address, std::string const &clientID,
-             mqtt::connect_options connOpts);
-  ClientPaho(std::string const &address, std::string const &clientID)
-      : ClientPaho(address, clientID, getDefaultConnectOptions()) {}
-  ClientPaho(std::string const &address)
-      : ClientPaho(address, DFLT_CLIENT_ID) {}
-
-  void connect() override;
-  void send(Topic &topic, Payload &payload, QoS qos) override;
-  void subscribe(Topic const &topic, QoS qos) override;
-  OptionalMessage receive() override;
-  void set_resubscribe();
-  void set_on_resubscribed(std::function<void()> cb) override {
-    on_resubscribed = cb;
-  }
-  void disconnect() override;
+  void subscribe(Topic const &topic) { subscribe(topic, DEFAULT_QOS); }
+  virtual OptionalMessage receive() { return {}; }
+  virtual void disconnect() {
+    running = false;
+    if (reconnecter.joinable()) {
+      reconnecter.join();
+    }
+    topics.clear();
+    client_->disconnect();
+  };
+  virtual void set_on_resubscribed(SubscriptionCb cb) { cb_ = cb; }
 
 private:
-  void recvWorkerFun();
-  void sendWorkerFun();
-  void resubscribe();
+  void reconnect_logic() {
+    using namespace std::chrono_literals;
 
-  mqtt::client client;
-  std::shared_ptr<mqtt::callback> cb;
-  std::atomic_bool must_resubscribe;
-  Messages send_msgs;
-  ConstMessages recv_msgs;
-  std::atomic_bool quit_cond;
+    while (running) {
+      if (!client_->is_connected()) {
+        if (client_->connect()) {
+          std::for_each(
+              topics.begin(), topics.end(),
+              [this](auto const &topic) { client_->subscribe(topic); });
+        } else {
+          spdlog::warn("Could not connect to configured MQTT broker.");
+        }
+      }
+
+      std::this_thread::sleep_for(1s);
+    }
+  }
+
+  std::unique_ptr<RawClient> client_;
+  std::atomic_bool running = false;
+  std::thread reconnecter;
   Topics topics;
-  mqtt::connect_options connOpts;
-  // Callback cb;
-  std::thread recv_worker;
-  std::thread send_worker;
-  std::function<void()> on_resubscribed;
+  SubscriptionCb cb_;
 };
 
 } // namespace MQTT
