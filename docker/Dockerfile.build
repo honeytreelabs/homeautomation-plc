@@ -40,4 +40,7 @@ RUN echo "deb http://deb.debian.org/debian/ unstable main non-free contrib" >> /
 
 WORKDIR /prepare
 
+RUN pip install --upgrade pip \
+    && pip install gcovr
+
 CMD ["/bin/bash"]

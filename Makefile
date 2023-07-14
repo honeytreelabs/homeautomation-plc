@@ -14,17 +14,23 @@ deps-install:
 	fi
 	if ! command -v sudo; then echo "sudo must be available."; exit 1; fi
 	sudo apt update && sudo apt install -y \
-		build-essential \
-		cmake \
-		g++ \
-		g++-aarch64-linux-gnu \
-		g++-arm-linux-gnueabihf \
-		make \
-		ninja-build \
-		python3 \
-		python-is-python3 \
-		python3-pip \
-		valgrind
+        build-essential \
+        cmake \
+        curl \
+        g++ \
+        g++-aarch64-linux-gnu \
+        g++-arm-linux-gnueabihf \
+        lua5.4 \
+        make \
+        ninja-build \
+        python3 \
+        python-is-python3 \
+        python3-pip \
+        python3-venv \
+        tar \
+        unzip \
+        valgrind \
+        zip
 
 ### local development (non-optimized binaries with debug symbols)
 
