@@ -31,18 +31,17 @@ public:
 
   bool is_connected() const override { return MQTTClient_isConnected(client); }
 
-  void send(Topic &topic, Payload &payload, QoS qos) override {
-    (void)topic;
-    (void)payload;
-    (void)qos;
-  }
+  void send(Message const &message) override { (void)message; }
 
   bool subscribe(SubscribedTopic const &topic) override {
     (void)topic;
     return true;
   }
 
-  OptionalMessage receive() override { return std::nullopt; }
+  OptionalMessage receive(std::chrono::milliseconds timeout) override {
+    (void)timeout;
+    return {};
+  }
 
   void disconnect() override {
     MQTTClient_disconnect(&client, 2 /* seconds */);

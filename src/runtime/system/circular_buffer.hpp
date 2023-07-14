@@ -35,7 +35,7 @@ public:
     std::lock_guard<std::mutex> lock(mutex);
 
     if (empty_unsafe()) {
-      return std::nullopt;
+      return {};
     }
 
     // Read data and advance the tail (we now have a free space)
@@ -52,7 +52,7 @@ public:
 
     std::unique_lock<std::mutex> lock(mutex);
     if (!cv.wait_for(lock, rel_time, [this] { return !empty_unsafe(); })) {
-      return std::nullopt;
+      return {};
     }
 
     // Read data and advance the tail (we now have a free space)

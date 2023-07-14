@@ -22,7 +22,7 @@ void Client::send(Topic const &topic, char const *payload) {
     payload_fwd.push_back(static_cast<std::uint8_t>(payload[i]));
   }
   std::string topic_fwd{topic};
-  send(topic_fwd, payload_fwd);
+  send(Message{topic_fwd, std::move(payload_fwd)});
 }
 void Client::send(Topic const &topic, std::string const &payload) {
   send(topic, payload.c_str());
