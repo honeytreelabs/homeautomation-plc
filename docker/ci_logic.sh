@@ -47,7 +47,7 @@ case "${1}" in
 
         exec_bg docker compose exec -T -w /build.native build-env make -f /source/Makefile test-lua
         exec_bg docker compose exec -T -w /build.native build-env make -f /source/Makefile test testdir=.
-        # exec_bg docker compose exec -T -w /build.native build-env make -f /source/Makefile coverage sourcedir=/source testdir=.
-        # docker compose cp build-env:/build.native/coverage ..
+        exec_bg docker compose exec -T -w /build.native build-env make -f /source/Makefile coverage sourcedir=/source testdir=.
+        docker compose cp build-env:/build.native/coverage ..
         ;;
 esac
