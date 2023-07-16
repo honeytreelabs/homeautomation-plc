@@ -45,7 +45,7 @@ void MQTTIOLogic::after() {
     if (!std::get<bool>(outputValues[varName]) &&
         std::get<bool>(gv->outputs[varName])) {
       // send true
-      mqttClient->send(topic, PAYLOAD_TRUE);
+      mqttClient->publish(topic, PAYLOAD_TRUE);
     }
     outputValues[varName] = gv->outputs[varName];
   }
