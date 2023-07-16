@@ -48,19 +48,19 @@ TEST_CASE("MQTT client") {
 
   SUBCASE("mqtt: instantiate/destruct mqtt client") {
     Client client{
-        std::make_unique<ClientPahoC>("tcp://localhost:1883", "testclient")};
+        std::make_unique<ClientPahoC>("tcp://mosquitto:1883", "testclient")};
   }
 
   SUBCASE("mqtt: connect/disconnect mqtt client") {
     Client client{
-        std::make_unique<ClientPahoC>("tcp://localhost:1883", "testclient")};
+        std::make_unique<ClientPahoC>("tcp://mosquitto:1883", "testclient")};
     client.connect();
     client.disconnect();
   }
 
   SUBCASE("mqtt: receive no mqtt messages") {
     Client client{
-        std::make_unique<ClientPahoC>("tcp://localhost:1883", "testclient")};
+        std::make_unique<ClientPahoC>("tcp://mosquitto:1883", "testclient")};
     client.connect();
 
     auto message = client.receive();
@@ -73,7 +73,7 @@ TEST_CASE("MQTT client") {
     // this test shows that we are currently depending on a working/reachable
     // broker
     Client client{
-        std::make_unique<ClientPahoC>("tcp://localhost:1883", "testclient")};
+        std::make_unique<ClientPahoC>("tcp://mosquitto:1883", "testclient")};
     REQUIRE_NOTHROW(client.connect());
     REQUIRE_NOTHROW(client.disconnect());
   }
@@ -82,9 +82,9 @@ TEST_CASE("MQTT client") {
     using namespace std::chrono_literals;
 
     Client client_first{
-        std::make_unique<ClientPahoC>("tcp://localhost:1883", "client-first")};
+        std::make_unique<ClientPahoC>("tcp://mosquitto:1883", "client-first")};
     Client client_second{
-        std::make_unique<ClientPahoC>("tcp://localhost:1883", "client-second")};
+        std::make_unique<ClientPahoC>("tcp://mosquitto:1883", "client-second")};
 
     client_second.connect();
     client_second.subscribe(TOPIC);
@@ -114,9 +114,9 @@ TEST_CASE("MQTT client") {
                                     100ms) == true);
 
     Client client_first{
-        std::make_unique<ClientPahoC>("tcp://localhost:1883", "client-first")};
+        std::make_unique<ClientPahoC>("tcp://mosquitto:1883", "client-first")};
     Client client_second{
-        std::make_unique<ClientPahoC>("tcp://localhost:1883", "client-second")};
+        std::make_unique<ClientPahoC>("tcp://mosquitto:1883", "client-second")};
 
     client_second.connect();
     client_second.subscribe(TOPIC);
@@ -147,9 +147,9 @@ TEST_CASE("MQTT client") {
     spdlog::info("Start flaky broker subcase");
 
     Client client_first{
-        std::make_unique<ClientPahoC>("tcp://localhost:1883", "client-first")};
+        std::make_unique<ClientPahoC>("tcp://mosquitto:1883", "client-first")};
     Client client_second{
-        std::make_unique<ClientPahoC>("tcp://localhost:1883", "client-second")};
+        std::make_unique<ClientPahoC>("tcp://mosquitto:1883", "client-second")};
 
     client_second.connect();
     client_second.subscribe(TOPIC);
