@@ -38,7 +38,7 @@ public:
     MQTTAsync_destroy(&client);
   }
 
-  bool connect() override {
+  bool connect(ConnectOptions const &options) override {
     using namespace std::chrono_literals;
 
     std::lock_guard lock{mutex};
@@ -68,6 +68,12 @@ public:
     conn_opts.connectTimeout = 1;
     conn_opts.automaticReconnect =
         0; // we do it ourselves because then we have more control over it
+    if (options.user && options.pass) {
+      spdlog::info(
+          "Username and password have been set for the current connection.");
+      conn_opts.username = options.user.value().c_str();
+      conn_opts.password = options.pass.value().c_str();
+    }
     return MQTTAsync_connect(client, &conn_opts) == MQTTASYNC_SUCCESS;
   }
 

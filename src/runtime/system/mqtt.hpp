@@ -54,6 +54,11 @@ using Messages = HomeAutomation::circular_buffer<Message, 128>;
 
 using SubscriptionCb = std::function<void(SubscribedTopic const &topic)>;
 
+struct ConnectOptions {
+  std::optional<std::string> user;
+  std::optional<std::string> pass;
+};
+
 /**
  * @brief A synchronous client that actually sends the messsages in a blocking
  * fashion.
@@ -65,7 +70,7 @@ class RawClient {
 public:
   virtual ~RawClient() = default;
 
-  virtual bool connect() = 0;
+  virtual bool connect(ConnectOptions const &options) = 0;
   virtual bool is_connected() const = 0;
   virtual bool publish(Message const &message) = 0;
   virtual bool subscribe(SubscribedTopic const &topic) = 0;
@@ -80,7 +85,9 @@ public:
  */
 class Client {
 public:
-  Client(std::unique_ptr<RawClient> client) : client_{std::move(client)} {}
+  Client(std::unique_ptr<RawClient> client,
+         ConnectOptions const &options = ConnectOptions{})
+      : client_{std::move(client)}, options_{options} {}
   virtual ~Client() = default;
 
   virtual void connect() {
@@ -118,7 +125,7 @@ private:
 
     while (running) {
       if (!client_->is_connected()) {
-        client_->connect();
+        client_->connect(options_);
       }
       std::this_thread::sleep_for(100ms);
     }
@@ -127,6 +134,7 @@ private:
   std::unique_ptr<RawClient> client_;
   std::atomic_bool running;
   std::thread reconnecter;
+  ConnectOptions options_;
 };
 
 } // namespace MQTT

@@ -12,22 +12,20 @@ namespace Runtime {
 
 static std::shared_ptr<HomeAutomation::IO::MQTT::Client>
 generateClient(YAML::Node const &clientNode) {
-#if 0
-  auto mqtt_options = IO::MQTT::ClientPahoPP::getDefaultConnectOptions();
+  IO::MQTT::ConnectOptions options;
   auto const &nodeUsername = clientNode["username"];
   auto const &nodePassword = clientNode["password"];
   if (nodeUsername.IsDefined() && nodePassword.IsDefined()) {
-    mqtt_options.set_user_name(clientNode["username"].as<std::string>());
-    mqtt_options.set_password(clientNode["password"].as<std::string>());
+    options.user = clientNode["username"].as<std::string>();
+    options.pass = clientNode["password"].as<std::string>();
   }
-#endif
   auto address = Helper::getRequiredField<std::string>(clientNode, "address");
   auto client_id =
       Helper::getRequiredField<std::string>(clientNode, "client_id");
   auto raw_client = std::make_unique<HomeAutomation::IO::MQTT::ClientPahoC>(
       address, client_id);
   return std::make_shared<HomeAutomation::IO::MQTT::Client>(
-      std::move(raw_client));
+      std::move(raw_client), options);
 }
 
 void MQTTIOFactory::createIOs(

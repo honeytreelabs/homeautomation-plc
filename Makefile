@@ -58,6 +58,7 @@ build-native:
 
 .PHONY: test
 test: export LUA_PATH=$(mkfile_path)/deps/luaunit/?.lua;$(mkfile_path)/src/runtime/library/?.lua
+test: export SPDLOG_LEVEL=info
 test: testdir=build.native
 test:
 	ctest -j $$(nproc) --test-dir $(testdir) --verbose -E 'mqtt_test|mqtt_memchecked_test'
