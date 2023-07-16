@@ -52,7 +52,7 @@ private:
 using OptionalMessage = std::optional<Message>;
 using Messages = HomeAutomation::circular_buffer<Message, 128>;
 
-using SubscriptionCb = std::function<void()>;
+using SubscriptionCb = std::function<void(SubscribedTopic const &topic)>;
 
 /**
  * @brief A synchronous client that actually sends the messsages in a blocking
@@ -67,10 +67,10 @@ public:
 
   virtual bool connect() = 0;
   virtual bool is_connected() const = 0;
-  virtual bool publish(Message const &message,
-                       std::chrono::milliseconds const &timeout) = 0;
+  virtual bool publish(Message const &message) = 0;
   virtual bool subscribe(SubscribedTopic const &topic) = 0;
-  virtual OptionalMessage receive(std::chrono::milliseconds const &timeout) = 0;
+  virtual OptionalMessage receive() = 0;
+  virtual void set_on_resubscribe(SubscriptionCb cb) = 0;
   virtual void disconnect() = 0;
 };
 
@@ -85,85 +85,48 @@ public:
 
   virtual void connect() {
     running = true;
-    recv_worker = std::thread(&Client::recv_worker_logic, this);
-    send_worker = std::thread(&Client::send_worker_logic, this);
+    reconnecter = std::thread{&Client::reconnect_logic, this};
   }
-  virtual void publish(Message const &message) { send_msgs.put(message); }
+  virtual void publish(Message const &message) { client_->publish(message); }
   void publish(Topic const &topic, char const *payload) {
-    publish(
-        Message{topic, Payload{payload, payload + std::strlen(payload) + 1}});
+    publish(Message{topic, Payload{payload, payload + std::strlen(payload)}});
+  }
+  void publish(Topic const &topic, std::string const &payload) {
+    publish(topic, payload.c_str());
   }
   virtual void subscribe(Topic const &topic, QoS qos) {
-    topics.emplace_back(topic, qos);
     client_->subscribe(SubscribedTopic{topic, qos});
   }
   void subscribe(Topic const &topic) { subscribe(topic, Message::DEFAULT_QOS); }
-  virtual OptionalMessage receive() { return {}; }
+  virtual OptionalMessage receive() { return client_->receive(); }
   virtual void disconnect() {
     running = false;
-    if (recv_worker.joinable()) {
-      recv_worker.join();
-    }
-    topics.clear();
-    if (send_worker.joinable()) {
-      send_worker.join();
+    if (reconnecter.joinable()) {
+      reconnecter.join();
     }
     if (client_->is_connected()) {
       client_->disconnect();
     }
   };
-  virtual void set_on_resubscribed(SubscriptionCb cb) { cb_ = cb; }
-
-private:
-  void recv_worker_logic() {
-    using namespace std::chrono_literals;
-
-    while (running) {
-      if (client_->is_connected()) {
-        auto msg = client_->receive(
-            100ms); // TODO subscription must not occur at this time
-        if (!msg) {
-          continue;
-        }
-        spdlog::info("Received message: \"{}\"", msg.value().payload_str());
-        recv_msgs.put(msg.value()); // std::optimize: move message
-      } else {
-        if (client_->connect()) {
-          spdlog::info("MQTT client connected. Subscribing to topics ...");
-          std::for_each(topics.begin(), topics.end(),
-                        [this](auto const &topic) {
-                          spdlog::info("Subscribing to topic {}", topic.topic);
-                          client_->subscribe(topic);
-                        });
-        } else {
-          spdlog::warn("Could not connect to configured MQTT broker.");
-        }
-        std::this_thread::sleep_for(1s);
-      }
-    }
+  virtual void set_on_resubscribe(SubscriptionCb cb) {
+    client_->set_on_resubscribe(cb);
   }
 
-  void send_worker_logic() {
+private:
+  void reconnect_logic() {
     using namespace std::chrono_literals;
+
     while (running) {
-      auto pubmsg = send_msgs.get_for(100ms);
-      if (!pubmsg) {
-        continue;
+      if (!client_->is_connected()) {
+        client_->connect();
       }
-      spdlog::info("Publishing message with payload \"{}\" on topic \"{}\"",
-                   pubmsg.value().payload_str(), pubmsg.value().topic());
-      client_->publish(pubmsg.value(), 1s);
+      std::this_thread::sleep_for(100ms);
     }
   }
 
   std::unique_ptr<RawClient> client_;
-  std::atomic_bool running = false;
-  std::thread recv_worker;
-  std::thread send_worker;
-  Topics topics; // needs synchronization
-  SubscriptionCb cb_;
-  Messages send_msgs;
-  Messages recv_msgs;
+  std::atomic_bool running;
+  std::thread reconnecter;
 };
 
 } // namespace MQTT
