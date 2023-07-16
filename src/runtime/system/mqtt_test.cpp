@@ -90,11 +90,11 @@ TEST_CASE("MQTT client") {
     client_second.subscribe(TOPIC);
 
     client_first.connect();
-    std::this_thread::sleep_for(2s);
+    std::this_thread::sleep_for(1s);
     client_first.publish(TOPIC, "sample payload");
 
     // let the MQTT stack do its things
-    std::this_thread::sleep_for(2s);
+    std::this_thread::sleep_for(1s);
 
     auto message = client_second.receive();
     REQUIRE(message);
@@ -122,15 +122,15 @@ TEST_CASE("MQTT client") {
     client_second.subscribe(TOPIC);
 
     client_first.connect();
-    std::this_thread::sleep_for(2s);
+    std::this_thread::sleep_for(1s);
 
     REQUIRE(compose_up_mosquitto() == EXIT_SUCCESS);
-    std::this_thread::sleep_for(2s);
+    std::this_thread::sleep_for(1s);
 
     client_first.publish(TOPIC, "sample payload");
 
     // let the MQTT stack do its things
-    std::this_thread::sleep_for(2s);
+    std::this_thread::sleep_for(1s);
 
     auto message = client_second.receive();
     REQUIRE(message);
