@@ -46,19 +46,21 @@ public:
       return true;
     }
     connecting = true;
-    auto rc = MQTTAsync_setCallbacks(client, this, connlost_wrapper,
-                                     msgarrvd_wrapper /* message arrived */,
-                                     nullptr /* delivery complete */);
-    if (rc != MQTTASYNC_SUCCESS) {
-      spdlog::error("Could not register MQTT callbacks: {}",
-                    MQTTAsync_strerror(rc));
-      // return false;
-    }
-    rc = MQTTAsync_setConnected(client, this, onConnected_wrapper);
-    if (rc != MQTTASYNC_SUCCESS) {
-      spdlog::error("Could not register MQTT connected callback: {}",
-                    MQTTAsync_strerror(rc));
-      // return false;
+    if (!running) {
+      auto rc = MQTTAsync_setCallbacks(client, this, connlost_wrapper,
+                                       msgarrvd_wrapper /* message arrived */,
+                                       nullptr /* delivery complete */);
+      if (rc != MQTTASYNC_SUCCESS) {
+        spdlog::error("Could not register MQTT callbacks: {}",
+                      MQTTAsync_strerror(rc));
+        // return false;
+      }
+      rc = MQTTAsync_setConnected(client, this, onConnected_wrapper);
+      if (rc != MQTTASYNC_SUCCESS) {
+        spdlog::error("Could not register MQTT connected callback: {}",
+                      MQTTAsync_strerror(rc));
+        // return false;
+      }
     }
 
     MQTTAsync_connectOptions conn_opts = MQTTAsync_connectOptions_initializer;
