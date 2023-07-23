@@ -71,8 +71,6 @@ public:
     conn_opts.automaticReconnect =
         0; // we do it ourselves because then we have more control over it
     if (options.user && options.pass) {
-      spdlog::info(
-          "Username and password have been set for the current connection.");
       conn_opts.username = options.user.value().c_str();
       conn_opts.password = options.pass.value().c_str();
     }
