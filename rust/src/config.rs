@@ -57,7 +57,7 @@ pub struct IoConfig {
     #[serde(rename = "type")]
     pub io_type: String,
     #[serde(flatten)]
-    pub settings: serde_yaml::Mapping,
+    pub settings: toml::Table,
 }
 
 #[derive(Debug, Error)]
@@ -73,7 +73,7 @@ pub enum ConfigError {
 impl Config {
     pub fn from_path(path: impl AsRef<Path>) -> Result<Self, anyhow::Error> {
         let contents = fs::read_to_string(path)?;
-        Ok(serde_yaml::from_str(&contents)?)
+        Ok(toml::from_str(&contents)?)
     }
 
     pub fn validate(&self) -> Result<(), ConfigError> {
@@ -111,25 +111,26 @@ mod tests {
 
     #[test]
     fn parses_minimal_inline_lua_config() {
-        let config: Config = serde_yaml::from_str(
+        let config: Config = toml::from_str(
             r#"
-tasks:
-  - name: main
-    interval: 25000
-    programs:
-      - name: BlindLogic
-        type: Lua
-        script: |
-          function Init(gv) end
-          function Cycle(gv, now) end
-    io: []
-global_vars:
-  inputs:
-    some_input:
-      init_val: false
-  outputs:
-    some_output:
-      init_val: false
+[[tasks]]
+name = "main"
+interval = 25000
+io = []
+
+[[tasks.programs]]
+name = "BlindLogic"
+type = "Lua"
+script = '''
+function Init(gv) end
+function Cycle(gv, now) end
+'''
+
+[global_vars.inputs.some_input]
+init_val = false
+
+[global_vars.outputs.some_output]
+init_val = false
 "#,
         )
         .expect("config should parse");
@@ -147,18 +148,20 @@ global_vars:
 
     #[test]
     fn rejects_cpp_programs() {
-        let config: Config = serde_yaml::from_str(
+        let config: Config = toml::from_str(
             r#"
-tasks:
-  - name: main
-    interval: 25000
-    programs:
-      - name: NativeLogic
-        type: C++
-        script_path: ./logic.so
-global_vars:
-  inputs: {}
-  outputs: {}
+[[tasks]]
+name = "main"
+interval = 25000
+
+[[tasks.programs]]
+name = "NativeLogic"
+type = "C++"
+script_path = "./logic.so"
+
+[global_vars]
+inputs = {}
+outputs = {}
 "#,
         )
         .expect("config should parse");
@@ -171,17 +174,19 @@ global_vars:
 
     #[test]
     fn rejects_missing_lua_script_source() {
-        let config: Config = serde_yaml::from_str(
+        let config: Config = toml::from_str(
             r#"
-tasks:
-  - name: main
-    interval: 25000
-    programs:
-      - name: LuaLogic
-        type: Lua
-global_vars:
-  inputs: {}
-  outputs: {}
+[[tasks]]
+name = "main"
+interval = 25000
+
+[[tasks.programs]]
+name = "LuaLogic"
+type = "Lua"
+
+[global_vars]
+inputs = {}
+outputs = {}
 "#,
         )
         .expect("config should parse");
@@ -194,16 +199,17 @@ global_vars:
 
     #[test]
     fn accepts_configs_without_global_vars_for_reference_examples() {
-        let config: Config = serde_yaml::from_str(
+        let config: Config = toml::from_str(
             r#"
-tasks:
-  - name: main
-    interval: 25000
-    programs:
-      - name: LuaLogic
-        type: Lua
-        script_path: /opt/generic_main_lualogic.lua
-    io: []
+[[tasks]]
+name = "main"
+interval = 25000
+io = []
+
+[[tasks.programs]]
+name = "LuaLogic"
+type = "Lua"
+script_path = "/opt/generic_main_lualogic.lua"
 "#,
         )
         .expect("config should parse");

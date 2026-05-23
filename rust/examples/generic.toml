@@ -1,0 +1,36 @@
+[[tasks]]
+name = "main"
+interval = 25000
+
+[[tasks.programs]]
+name = "LuaLogic"
+type = "Lua"
+script_path = "/opt/generic_main_lualogic.lua"
+
+[[tasks.io]]
+type = "mqtt"
+
+[tasks.io.client]
+username = "user"
+password = "password"
+address = "tcp://localhost:1883"
+client_id = "generic::main"
+
+[tasks.io.inputs]
+"/homeautomation/light_remote" = "light_remote"
+
+[tasks.io.outputs]
+
+[[tasks.io]]
+type = "i2c"
+bus = "/dev/i2c-1"
+
+[tasks.io.components."0x3b"]
+type = "pcf8574"
+direction = "input"
+inputs = { 0 = "button_1_up", 1 = "button_1_down", 2 = "button_2_up", 3 = "button_2_down" }
+
+[tasks.io.components."0x20"]
+type = "max7311"
+direction = "output"
+outputs = { 0 = "blind_1_up", 1 = "blind_1_down", 2 = "blind_2_up", 3 = "blind_2_down", 4 = "light_a" }

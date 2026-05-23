@@ -4,12 +4,19 @@ This crate is the starting point for the Rust `homeautomation-plc` runtime.
 It is intentionally separate from the C/C++ reference implementation in the
 repository root.
 
+The Rust runtime uses TOML as its native configuration format. Existing YAML
+reference configs can be converted with Mike Farah's `yq` and then hand-polished:
+
+```sh
+yq -o toml '.' ../examples/generic-inline/generic-inline.yaml > examples/generic-inline.toml
+```
+
 ## Native
 
 ```sh
 cd rust
 cargo test
-cargo run -- --config ../examples/generic-inline/generic-inline.yaml
+cargo run -- --config examples/generic-inline.toml
 ```
 
 From the repository root, the same native checks are available through:
