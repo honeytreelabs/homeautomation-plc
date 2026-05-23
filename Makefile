@@ -131,6 +131,38 @@ build-rpi2: sourcedir=$(mkfile_path)
 build-rpi2:
 	$(MAKE) -f $(sourcedir)/Makefile build-generic sourcedir=$(sourcedir) name=rpi2 triplet=arm-linux toolchain=armv7hf-rpi2
 
+### Rust port
+
+.PHONY: rust-test
+rust-test: sourcedir=$(mkfile_path)
+rust-test:
+	cd $(sourcedir)/rust && cargo test
+
+.PHONY: rust-build
+rust-build: sourcedir=$(mkfile_path)
+rust-build:
+	cd $(sourcedir)/rust && cargo build
+
+.PHONY: rust-build-rpi2
+rust-build-rpi2: sourcedir=$(mkfile_path)
+rust-build-rpi2:
+	cd $(sourcedir)/rust && cargo build --release --target armv7-unknown-linux-musleabihf
+
+.PHONY: rust-build-rpi3
+rust-build-rpi3: sourcedir=$(mkfile_path)
+rust-build-rpi3:
+	cd $(sourcedir)/rust && cargo build --release --target aarch64-unknown-linux-musl
+
+.PHONY: rust-cross-rpi2
+rust-cross-rpi2: sourcedir=$(mkfile_path)
+rust-cross-rpi2:
+	cd $(sourcedir)/rust && cross build --release --target armv7-unknown-linux-musleabihf
+
+.PHONY: rust-cross-rpi3
+rust-cross-rpi3: sourcedir=$(mkfile_path)
+rust-cross-rpi3:
+	cd $(sourcedir)/rust && cross build --release --target aarch64-unknown-linux-musl
+
 .PHONY: clean
 clean:
-	rm -rf build.native build.rpi3 build.rpi2
+	rm -rf build.native build.rpi3 build.rpi2 rust/target

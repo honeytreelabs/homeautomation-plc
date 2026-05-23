@@ -1,0 +1,8 @@
+[build]
+target-dir = "target"
+
+[target.armv7-unknown-linux-musleabihf]
+linker = "rust-lld"
+
+[target.aarch64-unknown-linux-musl]
+linker = "rust-lld"
