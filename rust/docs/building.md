@@ -22,6 +22,7 @@ cargo run -- --config examples/generic-inline.toml
 From the repository root, the same native checks are available through:
 
 ```sh
+make rust-lock
 make rust-test
 make rust-build
 ```

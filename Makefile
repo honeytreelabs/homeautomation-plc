@@ -133,6 +133,11 @@ build-rpi2:
 
 ### Rust port
 
+.PHONY: rust-lock
+rust-lock: sourcedir=$(mkfile_path)
+rust-lock:
+	cd $(sourcedir)/rust && cargo update
+
 .PHONY: rust-test
 rust-test: sourcedir=$(mkfile_path)
 rust-test:
