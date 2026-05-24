@@ -137,6 +137,10 @@ function F_TRIG(last)
 
   return self
 end
+
+function to_millis_since_start(ts)
+  return ts // 1000
+end
 "#,
     )
     .exec()
@@ -326,6 +330,29 @@ end
 
         program.cycle(&mut gv, 3).expect("Cycle should run");
         assert_eq!(gv.outputs["edge"], VarValue::Bool(false));
+    }
+
+    #[test]
+    fn to_millis_since_start_converts_microseconds_to_milliseconds() {
+        let mut program = LuaProgram::from_inline(
+            r#"
+function Init(gv)
+  gv.outputs.started = true
+end
+
+function Cycle(gv, now)
+  gv.outputs.now_millis = to_millis_since_start(now)
+end
+"#,
+        )
+        .expect("Lua program should load");
+        let mut gv = Gv::default();
+
+        program.init(&mut gv).expect("Init should run");
+        assert_eq!(gv.outputs["started"], VarValue::Bool(true));
+
+        program.cycle(&mut gv, 123_456).expect("Cycle should run");
+        assert_eq!(gv.outputs["now_millis"], VarValue::Int(123));
     }
 
     fn temp_script_path() -> PathBuf {
