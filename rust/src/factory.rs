@@ -5,6 +5,7 @@ use thiserror::Error;
 use crate::{
     config::{Config, ProgramType},
     gv::Gv,
+    lua::LuaProgram,
     runtime::{Program, Task},
 };
 
@@ -17,8 +18,13 @@ pub struct Runtime {
 pub enum RuntimeFactoryError {
     #[error(transparent)]
     InvalidConfig(#[from] crate::config::ConfigError),
-    #[error("task '{task}' program '{program}' type Lua is not implemented yet")]
-    LuaProgramNotImplemented { task: String, program: String },
+    #[error("task '{task}' program '{program}' Lua program could not be created: {source}")]
+    LuaProgramBuild {
+        task: String,
+        program: String,
+        #[source]
+        source: crate::lua::LuaProgramError,
+    },
     #[error("task '{task}' program '{program}' is not registered")]
     RustProgramNotRegistered { task: String, program: String },
     #[error("task '{task}' IO backend '{io_type}' is not implemented yet")]
@@ -82,10 +88,20 @@ impl Runtime {
             for program in &task_config.programs {
                 match program.program_type {
                     ProgramType::Lua => {
-                        return Err(RuntimeFactoryError::LuaProgramNotImplemented {
+                        let lua_program = if let Some(script) = &program.script {
+                            LuaProgram::from_inline(script)
+                        } else if let Some(script_path) = &program.script_path {
+                            LuaProgram::from_path(script_path)
+                        } else {
+                            unreachable!("Config::validate requires a Lua script source")
+                        }
+                        .map_err(|source| RuntimeFactoryError::LuaProgramBuild {
                             task: task.name.clone(),
                             program: program.name.clone(),
-                        });
+                            source,
+                        })?;
+
+                        task.add_program(Box::new(lua_program));
                     }
                     ProgramType::Rust => {
                         let factory = registry.rust_program_factory(&program.name).ok_or_else(
@@ -222,7 +238,51 @@ init_val = false
     }
 
     #[test]
-    fn rejects_lua_programs_until_lua_runtime_is_implemented() {
+    fn attaches_inline_lua_programs_to_tasks() {
+        let config: Config = toml::from_str(
+            r#"
+[[tasks]]
+name = "main"
+interval = 25000
+
+[[tasks.programs]]
+name = "Logic"
+type = "Lua"
+script = '''
+function Init(gv)
+  gv.outputs.light = false
+end
+
+function Cycle(gv, now)
+  gv.outputs.light = gv.inputs.button
+  gv.outputs.last_cycle = now
+end
+'''
+
+[global_vars.inputs.button]
+init_val = true
+
+[global_vars.outputs.light]
+init_val = true
+"#,
+        )
+        .expect("config should parse");
+
+        let mut runtime = Runtime::from_config(config).expect("runtime should build");
+
+        assert_eq!(runtime.tasks.len(), 1);
+        assert_eq!(runtime.tasks[0].program_count(), 1);
+
+        runtime.init().expect("init should run");
+        assert_eq!(runtime.gv.outputs["light"], VarValue::Bool(false));
+
+        runtime.tick_once(123_456).expect("cycle should run");
+        assert_eq!(runtime.gv.outputs["light"], VarValue::Bool(true));
+        assert_eq!(runtime.gv.outputs["last_cycle"], VarValue::Int(123_456));
+    }
+
+    #[test]
+    fn rejects_invalid_lua_programs() {
         let config: Config = toml::from_str(
             r#"
 [[tasks]]
@@ -239,7 +299,7 @@ script = "function Init(gv) end"
 
         assert!(matches!(
             Runtime::from_config(config),
-            Err(RuntimeFactoryError::LuaProgramNotImplemented { .. })
+            Err(RuntimeFactoryError::LuaProgramBuild { .. })
         ));
     }
 

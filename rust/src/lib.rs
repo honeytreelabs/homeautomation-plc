@@ -1,6 +1,7 @@
 pub mod config;
 pub mod factory;
 pub mod gv;
+pub mod lua;
 pub mod runtime;
 pub mod scheduler;
 
