@@ -29,6 +29,7 @@ pub enum LuaProgramError {
 impl LuaProgram {
     pub fn from_inline(script: &str) -> Result<Self, LuaProgramError> {
         let lua = Lua::new();
+        register_builtin_library(&lua)?;
         lua.load(script).exec().map_err(lua_load_error)?;
         require_function(&lua, "Init")?;
         require_function(&lua, "Cycle")?;
@@ -108,6 +109,38 @@ fn require_function(lua: &Lua, name: &'static str) -> Result<(), LuaProgramError
         Value::Function(_) => Ok(()),
         _ => Err(LuaProgramError::MissingFunction(name)),
     }
+}
+
+fn register_builtin_library(lua: &Lua) -> Result<(), LuaProgramError> {
+    lua.load(
+        r#"
+function R_TRIG(last)
+  local self = { last = last or false }
+
+  function self:execute(cur)
+    local ret = (not self.last) and cur
+    self.last = cur
+    return ret
+  end
+
+  return self
+end
+
+function F_TRIG(last)
+  local self = { last = last or false }
+
+  function self:execute(cur)
+    local ret = self.last and (not cur)
+    self.last = cur
+    return ret
+  end
+
+  return self
+end
+"#,
+    )
+    .exec()
+    .map_err(lua_load_error)
 }
 
 fn lua_load_error(error: mlua::Error) -> LuaProgramError {
@@ -223,6 +256,76 @@ end
         };
 
         assert!(matches!(error, LuaProgramError::MissingFunction("Cycle")));
+    }
+
+    #[test]
+    fn r_trig_reports_rising_edges() {
+        let mut program = LuaProgram::from_inline(
+            r#"
+rising = R_TRIG()
+
+function Init(gv)
+  gv.outputs.edge = false
+end
+
+function Cycle(gv, now)
+  gv.outputs.edge = rising:execute(gv.inputs.signal)
+end
+"#,
+        )
+        .expect("Lua program should load");
+        let mut gv = Gv::default();
+        gv.inputs
+            .insert("signal".to_string(), VarValue::Bool(false));
+
+        program.init(&mut gv).expect("Init should run");
+        assert_eq!(gv.outputs["edge"], VarValue::Bool(false));
+
+        program.cycle(&mut gv, 1).expect("Cycle should run");
+        assert_eq!(gv.outputs["edge"], VarValue::Bool(false));
+
+        gv.inputs
+            .insert("signal".to_string(), VarValue::Bool(true));
+        program.cycle(&mut gv, 2).expect("Cycle should run");
+        assert_eq!(gv.outputs["edge"], VarValue::Bool(true));
+
+        program.cycle(&mut gv, 3).expect("Cycle should run");
+        assert_eq!(gv.outputs["edge"], VarValue::Bool(false));
+    }
+
+    #[test]
+    fn f_trig_reports_falling_edges() {
+        let mut program = LuaProgram::from_inline(
+            r#"
+falling = F_TRIG(true)
+
+function Init(gv)
+  gv.outputs.edge = false
+end
+
+function Cycle(gv, now)
+  gv.outputs.edge = falling:execute(gv.inputs.signal)
+end
+"#,
+        )
+        .expect("Lua program should load");
+        let mut gv = Gv::default();
+        gv.inputs
+            .insert("signal".to_string(), VarValue::Bool(true));
+
+        program.init(&mut gv).expect("Init should run");
+        assert_eq!(gv.outputs["edge"], VarValue::Bool(false));
+
+        program.cycle(&mut gv, 1).expect("Cycle should run");
+        assert_eq!(gv.outputs["edge"], VarValue::Bool(false));
+
+        gv.inputs
+            .insert("signal".to_string(), VarValue::Bool(false));
+        program.cycle(&mut gv, 2).expect("Cycle should run");
+        assert_eq!(gv.outputs["edge"], VarValue::Bool(true));
+
+        program.cycle(&mut gv, 3).expect("Cycle should run");
+        assert_eq!(gv.outputs["edge"], VarValue::Bool(false));
     }
 
     fn temp_script_path() -> PathBuf {
