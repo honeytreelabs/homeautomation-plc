@@ -113,6 +113,22 @@ impl Runtime {
 
         Ok(Self { gv, tasks })
     }
+
+    pub fn init(&mut self) -> anyhow::Result<()> {
+        for task in &mut self.tasks {
+            task.init(&mut self.gv)?;
+        }
+
+        Ok(())
+    }
+
+    pub fn tick_once(&mut self, now_micros: u64) -> anyhow::Result<()> {
+        for task in &mut self.tasks {
+            task.tick(&mut self.gv, now_micros)?;
+        }
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -139,6 +155,29 @@ mod tests {
             gv.outputs.insert("light".to_string(), input);
             gv.outputs
                 .insert("last_cycle".to_string(), VarValue::Int(now_micros as i64));
+            Ok(())
+        }
+    }
+
+    struct SetOutputProgram {
+        output: String,
+        value: VarValue,
+    }
+
+    impl Program for SetOutputProgram {
+        fn init(&mut self, gv: &mut Gv) -> anyhow::Result<()> {
+            gv.outputs
+                .insert(self.output.clone(), VarValue::Bool(false));
+            Ok(())
+        }
+
+        fn cycle(&mut self, gv: &mut Gv, _now_micros: u64) -> anyhow::Result<()> {
+            let output = gv
+                .outputs
+                .get_mut(&self.output)
+                .ok_or_else(|| anyhow::anyhow!("output '{}' was not initialized", self.output))?;
+
+            *output = self.value.clone();
             Ok(())
         }
     }
@@ -234,17 +273,13 @@ init_val = false
         assert_eq!(runtime.tasks.len(), 1);
         assert_eq!(runtime.tasks[0].program_count(), 1);
 
-        runtime.tasks[0]
-            .init(&mut runtime.gv)
-            .expect("init should run");
+        runtime.init().expect("init should run");
         assert_eq!(
             runtime.gv.outputs["initialized"],
             VarValue::Bool(true)
         );
 
-        runtime.tasks[0]
-            .tick(&mut runtime.gv, 123_456)
-            .expect("cycle should run");
+        runtime.tick_once(123_456).expect("cycle should run");
         assert_eq!(runtime.gv.outputs["light"], VarValue::Bool(true));
         assert_eq!(runtime.gv.outputs["last_cycle"], VarValue::Int(123_456));
     }
@@ -268,6 +303,58 @@ type = "Rust"
             Runtime::from_config_with_registry(config, &ProgramRegistry::new()),
             Err(RuntimeFactoryError::RustProgramNotRegistered { .. })
         ));
+    }
+
+    #[test]
+    fn tick_once_runs_all_tasks() {
+        let config: Config = toml::from_str(
+            r#"
+[[tasks]]
+name = "fast"
+interval = 25000
+
+[[tasks.programs]]
+name = "SetFast"
+type = "Rust"
+
+[[tasks]]
+name = "slow"
+interval = 1000000
+
+[[tasks.programs]]
+name = "SetSlow"
+type = "Rust"
+
+"#,
+        )
+        .expect("config should parse");
+
+        let mut registry = ProgramRegistry::new();
+        registry.register_rust_program("SetFast", || {
+            Box::new(SetOutputProgram {
+                output: "fast".to_string(),
+                value: VarValue::Bool(true),
+            })
+        });
+        registry.register_rust_program("SetSlow", || {
+            Box::new(SetOutputProgram {
+                output: "slow".to_string(),
+                value: VarValue::Bool(true),
+            })
+        });
+
+        let mut runtime =
+            Runtime::from_config_with_registry(config, &registry).expect("runtime should build");
+
+        runtime.init().expect("init should run");
+
+        assert_eq!(runtime.gv.outputs["fast"], VarValue::Bool(false));
+        assert_eq!(runtime.gv.outputs["slow"], VarValue::Bool(false));
+
+        runtime.tick_once(123_456).expect("cycle should run");
+
+        assert_eq!(runtime.gv.outputs["fast"], VarValue::Bool(true));
+        assert_eq!(runtime.gv.outputs["slow"], VarValue::Bool(true));
     }
 
     #[test]
