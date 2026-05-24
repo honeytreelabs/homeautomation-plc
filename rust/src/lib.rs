@@ -4,4 +4,4 @@ pub mod gv;
 pub mod runtime;
 
 pub use config::Config;
-pub use factory::{Runtime, RuntimeFactoryError};
+pub use factory::{ProgramRegistry, Runtime, RuntimeFactoryError};

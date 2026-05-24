@@ -1,9 +1,11 @@
+use std::collections::BTreeMap;
+
 use thiserror::Error;
 
 use crate::{
     config::{Config, ProgramType},
     gv::Gv,
-    runtime::Task,
+    runtime::{Program, Task},
 };
 
 pub struct Runtime {
@@ -17,12 +19,44 @@ pub enum RuntimeFactoryError {
     InvalidConfig(#[from] crate::config::ConfigError),
     #[error("task '{task}' program '{program}' type Lua is not implemented yet")]
     LuaProgramNotImplemented { task: String, program: String },
+    #[error("task '{task}' program '{program}' is not registered")]
+    RustProgramNotRegistered { task: String, program: String },
     #[error("task '{task}' IO backend '{io_type}' is not implemented yet")]
     IoBackendNotImplemented { task: String, io_type: String },
 }
 
+#[derive(Default)]
+pub struct ProgramRegistry {
+    rust_programs: BTreeMap<String, Box<dyn Fn() -> Box<dyn Program>>>,
+}
+
+impl ProgramRegistry {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn register_rust_program(
+        &mut self,
+        name: impl Into<String>,
+        factory: impl Fn() -> Box<dyn Program> + 'static,
+    ) {
+        self.rust_programs.insert(name.into(), Box::new(factory));
+    }
+
+    fn rust_program_factory(&self, name: &str) -> Option<&dyn Fn() -> Box<dyn Program>> {
+        self.rust_programs.get(name).map(Box::as_ref)
+    }
+}
+
 impl Runtime {
     pub fn from_config(config: Config) -> Result<Self, RuntimeFactoryError> {
+        Self::from_config_with_registry(config, &ProgramRegistry::default())
+    }
+
+    pub fn from_config_with_registry(
+        config: Config,
+        registry: &ProgramRegistry,
+    ) -> Result<Self, RuntimeFactoryError> {
         config.validate()?;
 
         let gv = Gv {
@@ -43,25 +77,38 @@ impl Runtime {
         let mut tasks = Vec::with_capacity(config.tasks.len());
 
         for task_config in config.tasks {
-            for program in &task_config.programs {
-                if program.program_type == ProgramType::Lua {
-                    return Err(RuntimeFactoryError::LuaProgramNotImplemented {
-                        task: task_config.name.clone(),
-                        program: program.name.clone(),
-                    });
-                }
+            let mut task = Task::new(task_config.name, task_config.interval);
 
-                unreachable!("Config::validate rejects C++ programs");
+            for program in &task_config.programs {
+                match program.program_type {
+                    ProgramType::Lua => {
+                        return Err(RuntimeFactoryError::LuaProgramNotImplemented {
+                            task: task.name.clone(),
+                            program: program.name.clone(),
+                        });
+                    }
+                    ProgramType::Rust => {
+                        let factory = registry.rust_program_factory(&program.name).ok_or_else(
+                            || RuntimeFactoryError::RustProgramNotRegistered {
+                                task: task.name.clone(),
+                                program: program.name.clone(),
+                            },
+                        )?;
+
+                        task.add_program(factory());
+                    }
+                    ProgramType::Cpp => unreachable!("Config::validate rejects C++ programs"),
+                }
             }
 
             if let Some(io) = task_config.io.first() {
                 return Err(RuntimeFactoryError::IoBackendNotImplemented {
-                    task: task_config.name.clone(),
+                    task: task.name.clone(),
                     io_type: io.io_type.clone(),
                 });
             }
 
-            tasks.push(Task::new(task_config.name, task_config.interval));
+            tasks.push(task);
         }
 
         Ok(Self { gv, tasks })
@@ -72,6 +119,29 @@ impl Runtime {
 mod tests {
     use super::*;
     use crate::gv::VarValue;
+
+    struct CopyInputProgram;
+
+    impl Program for CopyInputProgram {
+        fn init(&mut self, gv: &mut Gv) -> anyhow::Result<()> {
+            gv.outputs
+                .insert("initialized".to_string(), VarValue::Bool(true));
+            Ok(())
+        }
+
+        fn cycle(&mut self, gv: &mut Gv, now_micros: u64) -> anyhow::Result<()> {
+            let input = gv
+                .inputs
+                .get("button")
+                .cloned()
+                .unwrap_or(VarValue::Bool(false));
+
+            gv.outputs.insert("light".to_string(), input);
+            gv.outputs
+                .insert("last_cycle".to_string(), VarValue::Int(now_micros as i64));
+            Ok(())
+        }
+    }
 
     #[test]
     fn builds_gv_and_task_skeleton_from_config_without_programs_or_io() {
@@ -131,6 +201,72 @@ script = "function Init(gv) end"
         assert!(matches!(
             Runtime::from_config(config),
             Err(RuntimeFactoryError::LuaProgramNotImplemented { .. })
+        ));
+    }
+
+    #[test]
+    fn attaches_registered_rust_programs_to_tasks() {
+        let config: Config = toml::from_str(
+            r#"
+[[tasks]]
+name = "main"
+interval = 25000
+
+[[tasks.programs]]
+name = "CopyInput"
+type = "Rust"
+
+[global_vars.inputs.button]
+init_val = true
+
+[global_vars.outputs.light]
+init_val = false
+"#,
+        )
+        .expect("config should parse");
+
+        let mut registry = ProgramRegistry::new();
+        registry.register_rust_program("CopyInput", || Box::new(CopyInputProgram));
+
+        let mut runtime =
+            Runtime::from_config_with_registry(config, &registry).expect("runtime should build");
+
+        assert_eq!(runtime.tasks.len(), 1);
+        assert_eq!(runtime.tasks[0].program_count(), 1);
+
+        runtime.tasks[0]
+            .init(&mut runtime.gv)
+            .expect("init should run");
+        assert_eq!(
+            runtime.gv.outputs["initialized"],
+            VarValue::Bool(true)
+        );
+
+        runtime.tasks[0]
+            .tick(&mut runtime.gv, 123_456)
+            .expect("cycle should run");
+        assert_eq!(runtime.gv.outputs["light"], VarValue::Bool(true));
+        assert_eq!(runtime.gv.outputs["last_cycle"], VarValue::Int(123_456));
+    }
+
+    #[test]
+    fn rejects_unregistered_rust_programs() {
+        let config: Config = toml::from_str(
+            r#"
+[[tasks]]
+name = "main"
+interval = 25000
+
+[[tasks.programs]]
+name = "Missing"
+type = "Rust"
+"#,
+        )
+        .expect("config should parse");
+
+        assert!(matches!(
+            Runtime::from_config_with_registry(config, &ProgramRegistry::new()),
+            Err(RuntimeFactoryError::RustProgramNotRegistered { .. })
         ));
     }
 

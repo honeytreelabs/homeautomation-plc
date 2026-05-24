@@ -44,10 +44,12 @@ pub struct ProgramConfig {
     pub script_path: Option<String>,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Deserialize, PartialEq, Eq)]
 pub enum ProgramType {
     #[serde(rename = "Lua")]
     Lua,
+    #[serde(rename = "Rust")]
+    Rust,
     #[serde(rename = "C++")]
     Cpp,
 }
@@ -66,6 +68,8 @@ pub enum ConfigError {
     UnsupportedCppProgram { task: String, program: String },
     #[error("task '{task}' program '{program}' must define exactly one of script or script_path")]
     InvalidLuaScriptSource { task: String, program: String },
+    #[error("task '{task}' program '{program}' type Rust must not define script or script_path")]
+    InvalidRustScriptSource { task: String, program: String },
     #[error("task '{task}' interval must be greater than zero microseconds")]
     InvalidTaskInterval { task: String },
 }
@@ -92,8 +96,19 @@ impl Config {
                     });
                 }
 
-                if program.script.is_some() == program.script_path.is_some() {
+                if program.program_type == ProgramType::Lua
+                    && program.script.is_some() == program.script_path.is_some()
+                {
                     return Err(ConfigError::InvalidLuaScriptSource {
+                        task: task.name.clone(),
+                        program: program.name.clone(),
+                    });
+                }
+
+                if program.program_type == ProgramType::Rust
+                    && (program.script.is_some() || program.script_path.is_some())
+                {
+                    return Err(ConfigError::InvalidRustScriptSource {
                         task: task.name.clone(),
                         program: program.name.clone(),
                     });
@@ -217,5 +232,45 @@ script_path = "/opt/generic_main_lualogic.lua"
         assert!(config.global_vars.inputs.is_empty());
         assert!(config.global_vars.outputs.is_empty());
         config.validate().expect("config should be valid");
+    }
+
+    #[test]
+    fn accepts_rust_program_without_script_source() {
+        let config: Config = toml::from_str(
+            r#"
+[[tasks]]
+name = "main"
+interval = 25000
+
+[[tasks.programs]]
+name = "NativeLogic"
+type = "Rust"
+"#,
+        )
+        .expect("config should parse");
+
+        config.validate().expect("config should be valid");
+    }
+
+    #[test]
+    fn rejects_rust_program_with_script_source() {
+        let config: Config = toml::from_str(
+            r#"
+[[tasks]]
+name = "main"
+interval = 25000
+
+[[tasks.programs]]
+name = "NativeLogic"
+type = "Rust"
+script = "not used"
+"#,
+        )
+        .expect("config should parse");
+
+        assert!(matches!(
+            config.validate(),
+            Err(ConfigError::InvalidRustScriptSource { .. })
+        ));
     }
 }
