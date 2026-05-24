@@ -8,19 +8,22 @@ use crate::{factory::Runtime, runtime::Task};
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SchedulerEvent {
     TaskRan {
-        task: String,
+        task_index: usize,
         scheduled_micros: u64,
         started_micros: u64,
         finished_micros: u64,
     },
     TaskOverran {
-        task: String,
+        task_index: usize,
         interval_micros: u64,
         execution_micros: u64,
     },
     TaskSkipped {
-        task: String,
+        task_index: usize,
         skipped: u64,
+    },
+    EventBufferCapacityExceeded {
+        capacity: usize,
     },
 }
 
@@ -102,6 +105,14 @@ impl FixedRateScheduler {
             .min()
     }
 
+    pub fn event_capacity(&self) -> usize {
+        self.tasks.len().saturating_mul(3)
+    }
+
+    pub fn task_name(&self, task_index: usize) -> Option<&str> {
+        self.tasks.get(task_index).map(|task| task.name.as_str())
+    }
+
     pub fn task_next_due_micros(&self, task_index: usize) -> Option<u64> {
         self.tasks.get(task_index).map(|task| task.next_due_micros)
     }
@@ -112,22 +123,22 @@ impl FixedRateScheduler {
             .is_some_and(|task| now_micros >= task.next_due_micros)
     }
 
-    pub fn record_task_completion(
+    pub fn record_task_completion_into(
         &mut self,
         task_index: usize,
         started_micros: u64,
         finished_micros: u64,
-    ) -> anyhow::Result<Vec<SchedulerEvent>> {
+        events: &mut Vec<SchedulerEvent>,
+    ) -> anyhow::Result<()> {
         let task = self
             .tasks
             .get_mut(task_index)
             .ok_or_else(|| anyhow::anyhow!("scheduler task index {task_index} is out of bounds"))?;
         let execution_micros = finished_micros.saturating_sub(started_micros);
-        let mut events = Vec::new();
 
         if execution_micros > task.interval_micros {
-            events.push(SchedulerEvent::TaskOverran {
-                task: task.name.clone(),
+            push_event(events, SchedulerEvent::TaskOverran {
+                task_index,
                 interval_micros: task.interval_micros,
                 execution_micros,
             });
@@ -138,22 +149,23 @@ impl FixedRateScheduler {
             / task.interval_micros;
 
         if skipped > 0 {
-            events.push(SchedulerEvent::TaskSkipped {
-                task: task.name.clone(),
+            push_event(events, SchedulerEvent::TaskSkipped {
+                task_index,
                 skipped,
             });
         }
 
         task.next_due_micros += (skipped + 1) * task.interval_micros;
 
-        Ok(events)
+        Ok(())
     }
 
     pub fn tick_due<C: SchedulerClock>(
         &mut self,
         runtime: &mut Runtime,
         clock: &mut C,
-    ) -> anyhow::Result<Vec<SchedulerEvent>> {
+        events: &mut Vec<SchedulerEvent>,
+    ) -> anyhow::Result<()> {
         if self.tasks.len() != runtime.tasks.len() {
             anyhow::bail!(
                 "scheduler task count {} does not match runtime task count {}",
@@ -162,7 +174,7 @@ impl FixedRateScheduler {
             );
         }
 
-        let mut events = Vec::new();
+        events.clear();
 
         for task_index in 0..self.tasks.len() {
             let now_micros = clock.now_micros();
@@ -174,23 +186,31 @@ impl FixedRateScheduler {
             let started_micros = clock.now_micros();
             runtime.tasks[task_index].tick(&mut runtime.gv, started_micros)?;
             let finished_micros = clock.now_micros();
-            let task_name = self.tasks[task_index].name.clone();
 
-            events.push(SchedulerEvent::TaskRan {
-                task: task_name,
+            push_event(events, SchedulerEvent::TaskRan {
+                task_index,
                 scheduled_micros,
                 started_micros,
                 finished_micros,
             });
-            events.extend(self.record_task_completion(
+            self.record_task_completion_into(
                 task_index,
                 started_micros,
                 finished_micros,
-            )?);
+                events,
+            )?;
         }
 
-        Ok(events)
+        Ok(())
     }
+}
+
+fn push_event(events: &mut Vec<SchedulerEvent>, event: SchedulerEvent) {
+    let capacity = events.capacity();
+    if events.len() == capacity {
+        events.push(SchedulerEvent::EventBufferCapacityExceeded { capacity });
+    }
+    events.push(event);
 }
 
 pub fn run_scheduler<C, Stop, Events>(
@@ -205,8 +225,10 @@ where
     Stop: FnMut() -> bool,
     Events: FnMut(&[SchedulerEvent]),
 {
+    let mut events = Vec::with_capacity(scheduler.event_capacity());
+
     while !should_stop() {
-        let events = scheduler.tick_due(runtime, clock)?;
+        scheduler.tick_due(runtime, clock, &mut events)?;
         on_events(&events);
 
         let Some(next_due_micros) = scheduler.next_due_micros() else {
@@ -315,22 +337,23 @@ type = "Rust"
             now_micros: 0,
             sleeps: Vec::new(),
         };
+        let mut events = Vec::with_capacity(scheduler.event_capacity());
 
-        let events = scheduler
-            .tick_due(&mut runtime, &mut clock)
+        scheduler
+            .tick_due(&mut runtime, &mut clock, &mut events)
             .expect("scheduler should run");
 
         assert_eq!(
             events,
             vec![
                 SchedulerEvent::TaskRan {
-                    task: "fast".to_string(),
+                    task_index: 0,
                     scheduled_micros: 0,
                     started_micros: 0,
                     finished_micros: 0,
                 },
                 SchedulerEvent::TaskRan {
-                    task: "slow".to_string(),
+                    task_index: 1,
                     scheduled_micros: 0,
                     started_micros: 0,
                     finished_micros: 0,
@@ -351,19 +374,20 @@ type = "Rust"
             now_micros: 0,
             sleeps: Vec::new(),
         };
+        let mut events = Vec::with_capacity(scheduler.event_capacity());
         scheduler
-            .tick_due(&mut runtime, &mut clock)
+            .tick_due(&mut runtime, &mut clock, &mut events)
             .expect("initial cycle should run");
 
         clock.now_micros = 25_000;
-        let events = scheduler
-            .tick_due(&mut runtime, &mut clock)
+        scheduler
+            .tick_due(&mut runtime, &mut clock, &mut events)
             .expect("scheduler should run");
 
         assert_eq!(
             events,
             vec![SchedulerEvent::TaskRan {
-                task: "fast".to_string(),
+                task_index: 0,
                 scheduled_micros: 25_000,
                 started_micros: 25_000,
                 finished_micros: 25_000,
@@ -376,15 +400,16 @@ type = "Rust"
     fn completion_skips_missed_cycles_and_realigns_to_raster() {
         let runtime = runtime_with_two_tasks();
         let mut scheduler = FixedRateScheduler::from_runtime(&runtime, 0);
+        let mut events = Vec::with_capacity(scheduler.event_capacity());
 
-        let events = scheduler
-            .record_task_completion(0, 60_000, 70_000)
+        scheduler
+            .record_task_completion_into(0, 60_000, 70_000, &mut events)
             .expect("completion should record");
 
         assert_eq!(
             events,
             vec![SchedulerEvent::TaskSkipped {
-                task: "fast".to_string(),
+                task_index: 0,
                 skipped: 2,
             }]
         );
@@ -395,21 +420,22 @@ type = "Rust"
     fn completion_reports_overruns() {
         let runtime = runtime_with_two_tasks();
         let mut scheduler = FixedRateScheduler::from_runtime(&runtime, 0);
+        let mut events = Vec::with_capacity(scheduler.event_capacity());
 
-        let events = scheduler
-            .record_task_completion(0, 0, 30_000)
+        scheduler
+            .record_task_completion_into(0, 0, 30_000, &mut events)
             .expect("completion should record");
 
         assert_eq!(
             events,
             vec![
                 SchedulerEvent::TaskOverran {
-                    task: "fast".to_string(),
+                    task_index: 0,
                     interval_micros: 25_000,
                     execution_micros: 30_000,
                 },
                 SchedulerEvent::TaskSkipped {
-                    task: "fast".to_string(),
+                    task_index: 0,
                     skipped: 1,
                 },
             ]
@@ -478,10 +504,33 @@ type = "Rust"
         assert!(all_events.iter().any(|event| matches!(
             event,
             SchedulerEvent::TaskSkipped {
-                task,
+                task_index: 0,
                 skipped: 2,
-            } if task == "fast"
+            }
         )));
         assert_eq!(clock.sleeps, vec![75_000]);
+    }
+
+    #[test]
+    fn tick_due_reports_exhausted_event_buffer_capacity() {
+        let mut runtime = runtime_with_two_tasks();
+        runtime.init().expect("init should run");
+        let mut scheduler = FixedRateScheduler::from_runtime(&runtime, 0);
+        let mut clock = ManualClock {
+            now_micros: 0,
+            sleeps: Vec::new(),
+        };
+        let mut events = Vec::new();
+
+        scheduler
+            .tick_due(&mut runtime, &mut clock, &mut events)
+            .expect("scheduler should run");
+
+        assert!(events.contains(&SchedulerEvent::EventBufferCapacityExceeded {
+            capacity: 0,
+        }));
+        assert!(events
+            .iter()
+            .any(|event| matches!(event, SchedulerEvent::TaskRan { task_index: 0, .. })));
     }
 }
