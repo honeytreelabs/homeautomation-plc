@@ -152,3 +152,40 @@ function Cycle(gv, now)
     blind:execute(now, gv.inputs.button_up, gv.inputs.button_down)
 end
 ```
+
+## MQTT IO
+
+The first MQTT IO layer is implemented behind a Rust `MqttClient` trait and is
+covered with fake-client tests. A real network client is still pending.
+
+The backend preserves the C++ reference behavior:
+
+- subscribe to configured input topics during initialization
+- before each cycle, reset mapped MQTT inputs to `false`
+- drain received messages and map valid payloads into `gv.inputs`
+- after each cycle, publish only rising edges for configured outputs
+
+MQTT payloads are handled through an explicit codec:
+
+- `text-bool`: `true` is payload bytes `1`, `false` is payload bytes `0`
+- `binary-bool`: `true` is single byte `0x01`, `false` is single byte `0x00`
+
+`text-bool` is the compatibility default for the C++ reference behavior.
+
+The intended TOML shape is:
+
+```toml
+[[tasks.io]]
+type = "mqtt"
+payload_codec = "text-bool"
+
+[tasks.io.client]
+address = "tcp://localhost:1883"
+client_id = "generic::main"
+
+[tasks.io.inputs]
+"/homeautomation/light_remote" = "light_remote"
+
+[tasks.io.outputs]
+"/homeautomation/light" = "light"
+```
