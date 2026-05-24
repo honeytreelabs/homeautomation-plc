@@ -16,3 +16,6 @@ vcpkg_installed/
 Testing/
 /.agent-shell/
 /.agent-circus/
+/rust/target/
+/.lean-ctx/
+handoff*.md
