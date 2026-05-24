@@ -28,6 +28,22 @@ impl Task {
         }
     }
 
+    pub fn add_program(&mut self, program: Box<dyn Program>) {
+        self.programs.push(program);
+    }
+
+    pub fn add_io(&mut self, io: Box<dyn TaskIo>) {
+        self.io.push(io);
+    }
+
+    pub fn program_count(&self) -> usize {
+        self.programs.len()
+    }
+
+    pub fn io_count(&self) -> usize {
+        self.io.len()
+    }
+
     pub fn init(&mut self, gv: &mut Gv) -> anyhow::Result<()> {
         for io in &mut self.io {
             io.init(gv)?;
