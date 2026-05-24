@@ -118,6 +118,7 @@ function R_TRIG(last)
   local self = { last = last or false }
 
   function self:execute(cur)
+    cur = cur or false
     local ret = (not self.last) and cur
     self.last = cur
     return ret
@@ -130,6 +131,7 @@ function F_TRIG(last)
   local self = { last = last or false }
 
   function self:execute(cur)
+    cur = cur or false
     local ret = self.last and (not cur)
     self.last = cur
     return ret
@@ -140,6 +142,86 @@ end
 
 function to_millis_since_start(ts)
   return ts // 1000
+end
+
+function BlindConfigFromMillis(periodIdle, periodUp, periodDown)
+  return {
+    period_idle = periodIdle * 1000,
+    period_up = periodUp * 1000,
+    period_down = periodDown * 1000
+  }
+end
+
+Blind = {}
+
+function Blind.new(cfg)
+  local self = {
+    cfg = cfg,
+    state = "idle",
+    start = 0,
+    outputs_up = false,
+    outputs_down = false,
+    up_trigger = R_TRIG(false),
+    down_trigger = R_TRIG(false)
+  }
+
+  local function enter_idle(now, button_up, button_down)
+    self.state = "idle"
+    self.start = now
+    self.outputs_up = false
+    self.outputs_down = false
+    self.up_trigger = R_TRIG(button_up)
+    self.down_trigger = R_TRIG(button_down)
+  end
+
+  local function enter_up(now, button_up, button_down)
+    self.state = "up"
+    self.start = now
+    self.outputs_up = true
+    self.outputs_down = false
+    self.up_trigger = R_TRIG(button_up)
+    self.down_trigger = R_TRIG(button_down)
+  end
+
+  local function enter_down(now, button_up, button_down)
+    self.state = "down"
+    self.start = now
+    self.outputs_up = false
+    self.outputs_down = true
+    self.up_trigger = R_TRIG(button_up)
+    self.down_trigger = R_TRIG(button_down)
+  end
+
+  function self:execute(now, button_up, button_down)
+    if self.state == "idle" then
+      local up_triggered = self.up_trigger:execute(button_up)
+      local down_triggered = self.down_trigger:execute(button_down)
+
+      if now - self.start >= self.cfg.period_idle then
+        if up_triggered then
+          enter_up(now, button_up, button_down)
+        elseif down_triggered then
+          enter_down(now, button_up, button_down)
+        end
+      end
+    elseif self.state == "up" then
+      if now - self.start > self.cfg.period_up
+          or self.up_trigger:execute(button_up)
+          or self.down_trigger:execute(button_down) then
+        enter_idle(now, button_up, button_down)
+      end
+    elseif self.state == "down" then
+      if now - self.start > self.cfg.period_down
+          or self.up_trigger:execute(button_up)
+          or self.down_trigger:execute(button_down) then
+        enter_idle(now, button_up, button_down)
+      end
+    end
+
+    return self.outputs_up, self.outputs_down
+  end
+
+  return self
 end
 "#,
     )
@@ -353,6 +435,200 @@ end
 
         program.cycle(&mut gv, 123_456).expect("Cycle should run");
         assert_eq!(gv.outputs["now_millis"], VarValue::Int(123));
+    }
+
+    #[test]
+    fn blind_keeps_outputs_false_when_inputs_do_not_change() {
+        let mut program = blind_program();
+        let mut gv = blind_gv(false, false);
+
+        program.init(&mut gv).expect("Init should run");
+        program.cycle(&mut gv, 100_000).expect("Cycle should run");
+        assert_blind_outputs(&gv, false, false);
+
+        program.cycle(&mut gv, 200_000).expect("Cycle should run");
+        assert_blind_outputs(&gv, false, false);
+    }
+
+    #[test]
+    fn blind_moves_up_after_idle_period_and_rising_up_button() {
+        let mut program = blind_program();
+        let mut gv = blind_gv(false, false);
+
+        program.init(&mut gv).expect("Init should run");
+        program.cycle(&mut gv, 600_000).expect("Cycle should run");
+        assert_blind_outputs(&gv, false, false);
+
+        gv.inputs
+            .insert("button_up".to_string(), VarValue::Bool(true));
+        program.cycle(&mut gv, 700_000).expect("Cycle should run");
+        assert_blind_outputs(&gv, true, false);
+
+        program.cycle(&mut gv, 800_000).expect("Cycle should run");
+        assert_blind_outputs(&gv, true, false);
+    }
+
+    #[test]
+    fn blind_prioritizes_up_when_both_inputs_rise() {
+        let mut program = blind_program();
+        let mut gv = blind_gv(false, false);
+
+        program.init(&mut gv).expect("Init should run");
+        program.cycle(&mut gv, 600_000).expect("Cycle should run");
+        assert_blind_outputs(&gv, false, false);
+
+        gv.inputs
+            .insert("button_up".to_string(), VarValue::Bool(true));
+        gv.inputs
+            .insert("button_down".to_string(), VarValue::Bool(true));
+        program.cycle(&mut gv, 700_000).expect("Cycle should run");
+        assert_blind_outputs(&gv, true, false);
+
+        program.cycle(&mut gv, 800_000).expect("Cycle should run");
+        assert_blind_outputs(&gv, true, false);
+    }
+
+    #[test]
+    fn blind_complete_run_matches_reference_sequence() {
+        let mut program = blind_program();
+        let mut gv = blind_gv(false, false);
+
+        program.init(&mut gv).expect("Init should run");
+        program.cycle(&mut gv, 600_000).expect("Cycle should run");
+        assert_blind_outputs(&gv, false, false);
+
+        gv.inputs
+            .insert("button_up".to_string(), VarValue::Bool(true));
+        program.cycle(&mut gv, 700_000).expect("Cycle should run");
+        assert_blind_outputs(&gv, true, false);
+
+        program.cycle(&mut gv, 800_000).expect("Cycle should run");
+        assert_blind_outputs(&gv, true, false);
+
+        gv.inputs
+            .insert("button_up".to_string(), VarValue::Bool(false));
+        program.cycle(&mut gv, 900_000).expect("Cycle should run");
+        assert_blind_outputs(&gv, true, false);
+
+        gv.inputs
+            .insert("button_up".to_string(), VarValue::Bool(true));
+        program.cycle(&mut gv, 1_000_000).expect("Cycle should run");
+        assert_blind_outputs(&gv, false, false);
+
+        program.cycle(&mut gv, 1_100_000).expect("Cycle should run");
+        assert_blind_outputs(&gv, false, false);
+
+        gv.inputs
+            .insert("button_up".to_string(), VarValue::Bool(false));
+        program.cycle(&mut gv, 1_200_000).expect("Cycle should run");
+        assert_blind_outputs(&gv, false, false);
+
+        gv.inputs
+            .insert("button_up".to_string(), VarValue::Bool(true));
+        program.cycle(&mut gv, 1_300_000).expect("Cycle should run");
+        assert_blind_outputs(&gv, false, false);
+
+        gv.inputs
+            .insert("button_up".to_string(), VarValue::Bool(false));
+        gv.inputs
+            .insert("button_down".to_string(), VarValue::Bool(true));
+        program.cycle(&mut gv, 1_600_000).expect("Cycle should run");
+        assert_blind_outputs(&gv, false, true);
+
+        gv.inputs
+            .insert("button_up".to_string(), VarValue::Bool(true));
+        gv.inputs
+            .insert("button_down".to_string(), VarValue::Bool(false));
+        program
+            .cycle(&mut gv, 31_700_000)
+            .expect("Cycle should run");
+        assert_blind_outputs(&gv, false, false);
+    }
+
+    #[test]
+    fn blind_instances_keep_independent_state() {
+        let mut program = LuaProgram::from_inline(
+            r#"
+local blind_1
+local blind_2
+
+function Init(gv)
+  local cfg = BlindConfigFromMillis(500, 30000, 30000)
+  blind_1 = Blind.new(cfg)
+  blind_2 = Blind.new(cfg)
+end
+
+function Cycle(gv, now)
+  gv.outputs.blind_1_up, gv.outputs.blind_1_down =
+    blind_1:execute(now, gv.inputs.button_1_up, gv.inputs.button_1_down)
+  gv.outputs.blind_2_up, gv.outputs.blind_2_down =
+    blind_2:execute(now, gv.inputs.button_2_up, gv.inputs.button_2_down)
+end
+"#,
+        )
+        .expect("Lua program should load");
+        let mut gv = Gv::default();
+        gv.inputs
+            .insert("button_1_up".to_string(), VarValue::Bool(false));
+        gv.inputs
+            .insert("button_1_down".to_string(), VarValue::Bool(false));
+        gv.inputs
+            .insert("button_2_up".to_string(), VarValue::Bool(false));
+        gv.inputs
+            .insert("button_2_down".to_string(), VarValue::Bool(false));
+
+        program.init(&mut gv).expect("Init should run");
+        program.cycle(&mut gv, 600_000).expect("Cycle should run");
+
+        gv.inputs
+            .insert("button_1_up".to_string(), VarValue::Bool(true));
+        program.cycle(&mut gv, 700_000).expect("Cycle should run");
+        assert_eq!(gv.outputs["blind_1_up"], VarValue::Bool(true));
+        assert_eq!(gv.outputs["blind_1_down"], VarValue::Bool(false));
+        assert_eq!(gv.outputs["blind_2_up"], VarValue::Bool(false));
+        assert_eq!(gv.outputs["blind_2_down"], VarValue::Bool(false));
+
+        gv.inputs
+            .insert("button_2_down".to_string(), VarValue::Bool(true));
+        program.cycle(&mut gv, 1_200_000).expect("Cycle should run");
+        assert_eq!(gv.outputs["blind_1_up"], VarValue::Bool(true));
+        assert_eq!(gv.outputs["blind_1_down"], VarValue::Bool(false));
+        assert_eq!(gv.outputs["blind_2_up"], VarValue::Bool(false));
+        assert_eq!(gv.outputs["blind_2_down"], VarValue::Bool(true));
+    }
+
+    fn blind_program() -> LuaProgram {
+        LuaProgram::from_inline(
+            r#"
+local blind
+
+function Init(gv)
+  blind = Blind.new(BlindConfigFromMillis(500, 30000, 30000))
+  gv.outputs.blind_up = false
+  gv.outputs.blind_down = false
+end
+
+function Cycle(gv, now)
+  gv.outputs.blind_up, gv.outputs.blind_down =
+    blind:execute(now, gv.inputs.button_up, gv.inputs.button_down)
+end
+"#,
+        )
+        .expect("Lua program should load")
+    }
+
+    fn blind_gv(button_up: bool, button_down: bool) -> Gv {
+        let mut gv = Gv::default();
+        gv.inputs
+            .insert("button_up".to_string(), VarValue::Bool(button_up));
+        gv.inputs
+            .insert("button_down".to_string(), VarValue::Bool(button_down));
+        gv
+    }
+
+    fn assert_blind_outputs(gv: &Gv, up: bool, down: bool) {
+        assert_eq!(gv.outputs["blind_up"], VarValue::Bool(up));
+        assert_eq!(gv.outputs["blind_down"], VarValue::Bool(down));
     }
 
     fn temp_script_path() -> PathBuf {
