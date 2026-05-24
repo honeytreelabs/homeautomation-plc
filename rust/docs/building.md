@@ -88,3 +88,43 @@ make rust-cross-rpi3
 
 The first runtime milestone should verify these builds again after adding
 `mlua` with vendored Lua.
+
+## Raspberry Pi 2 Lua Smoke Test
+
+`examples/rpi-lua-smoke.toml` is a no-IO config for checking that the Rust
+runtime and embedded Lua interpreter run on a Raspberry Pi 2. It runs one Lua
+task per second, prints from `Init` and `Cycle`, and exercises `R_TRIG`,
+`F_TRIG`, and `to_millis_since_start`.
+
+Build the Pi 2 binary from the repository root:
+
+```sh
+make rust-build-rpi2
+```
+
+Copy the binary and config to the Pi:
+
+```sh
+scp rust/target/armv7-unknown-linux-musleabihf/release/homeautomation-plc \
+  root@raspberrypi:/tmp/homeautomation-plc
+scp rust/examples/rpi-lua-smoke.toml \
+  root@raspberrypi:/tmp/rpi-lua-smoke.toml
+```
+
+Run it on the Pi:
+
+```sh
+ssh root@raspberrypi
+chmod +x /tmp/homeautomation-plc
+RUST_LOG=info /tmp/homeautomation-plc --config /tmp/rpi-lua-smoke.toml
+```
+
+Expected output includes:
+
+```text
+Lua Init: embedded interpreter is running
+Lua Cycle: tick=1 now_ms=... signal=true rising=true falling=false
+Lua Cycle: tick=2 now_ms=... signal=false rising=false falling=true
+```
+
+Stop it with Ctrl-C.

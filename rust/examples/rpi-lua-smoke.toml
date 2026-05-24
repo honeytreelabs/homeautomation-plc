@@ -1,0 +1,54 @@
+[[tasks]]
+name = "lua_smoke"
+interval = 1000000
+
+[[tasks.programs]]
+name = "LuaSmoke"
+type = "Lua"
+script = '''
+local tick = 0
+local rising = R_TRIG()
+local falling = F_TRIG(true)
+
+function Init(gv)
+  print("Lua Init: embedded interpreter is running")
+  gv.outputs.tick_count = 0
+  gv.outputs.signal = false
+  gv.outputs.rising_edge = false
+  gv.outputs.falling_edge = false
+end
+
+function Cycle(gv, now)
+  tick = tick + 1
+
+  local signal = (tick % 2) == 1
+  local rising_edge = rising:execute(signal)
+  local falling_edge = falling:execute(signal)
+
+  gv.outputs.tick_count = tick
+  gv.outputs.signal = signal
+  gv.outputs.rising_edge = rising_edge
+  gv.outputs.falling_edge = falling_edge
+
+  print(
+    "Lua Cycle:",
+    "tick=" .. tick,
+    "now_ms=" .. to_millis_since_start(now),
+    "signal=" .. tostring(signal),
+    "rising=" .. tostring(rising_edge),
+    "falling=" .. tostring(falling_edge)
+  )
+end
+'''
+
+[global_vars.outputs.tick_count]
+init_val = 0
+
+[global_vars.outputs.signal]
+init_val = false
+
+[global_vars.outputs.rising_edge]
+init_val = false
+
+[global_vars.outputs.falling_edge]
+init_val = false

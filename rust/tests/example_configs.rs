@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use homeautomation_plc::{config::ProgramType, Config};
+use homeautomation_plc::{config::ProgramType, gv::VarValue, Config, Runtime};
 use toml::{Table, Value};
 
 fn example_path(name: &str) -> PathBuf {
@@ -110,4 +110,36 @@ fn parses_generic_external_lua_example() {
         string(table(table(components, "0x20"), "outputs"), "4"),
         "light_a"
     );
+}
+
+#[test]
+fn parses_and_runs_rpi2_lua_smoke_example() {
+    let config = load_example("rpi-lua-smoke.toml");
+
+    assert_eq!(config.tasks.len(), 1);
+
+    let task = &config.tasks[0];
+    assert_eq!(task.name, "lua_smoke");
+    assert_eq!(task.interval, 1_000_000);
+    assert_eq!(task.programs.len(), 1);
+    assert!(task.io.is_empty());
+
+    let program = &task.programs[0];
+    assert_eq!(program.name, "LuaSmoke");
+    assert_eq!(program.program_type, ProgramType::Lua);
+    assert!(program.script_path.is_none());
+    assert!(program
+        .script
+        .as_deref()
+        .is_some_and(|script| script.contains("to_millis_since_start")));
+
+    let mut runtime = Runtime::from_config(config).expect("runtime should build");
+    runtime.init().expect("init should run");
+    assert_eq!(runtime.gv.outputs["tick_count"], VarValue::Int(0));
+
+    runtime.tick_once(1_234_567).expect("cycle should run");
+    assert_eq!(runtime.gv.outputs["tick_count"], VarValue::Int(1));
+    assert_eq!(runtime.gv.outputs["signal"], VarValue::Bool(true));
+    assert_eq!(runtime.gv.outputs["rising_edge"], VarValue::Bool(true));
+    assert_eq!(runtime.gv.outputs["falling_edge"], VarValue::Bool(false));
 }
