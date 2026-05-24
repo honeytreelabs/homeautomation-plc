@@ -143,3 +143,35 @@ fn parses_and_runs_rpi2_lua_smoke_example() {
     assert_eq!(runtime.gv.outputs["rising_edge"], VarValue::Bool(true));
     assert_eq!(runtime.gv.outputs["falling_edge"], VarValue::Bool(false));
 }
+
+#[test]
+fn parses_mqtt_smoke_example() {
+    let config = load_example("mqtt-smoke.toml");
+
+    assert_eq!(config.tasks.len(), 1);
+
+    let task = &config.tasks[0];
+    assert_eq!(task.name, "main");
+    assert_eq!(task.interval, 1_000_000);
+    assert_eq!(task.programs.len(), 1);
+    assert_eq!(task.io.len(), 1);
+
+    let io = &task.io[0];
+    assert_eq!(io.io_type, "mqtt");
+    assert_eq!(string(&io.settings, "payload_codec"), "text-bool");
+    assert_eq!(
+        string(table(&io.settings, "client"), "address"),
+        "tcp://localhost:1883"
+    );
+    assert_eq!(
+        string(table(&io.settings, "inputs"), "/homeautomation/smoke/button"),
+        "button"
+    );
+    assert_eq!(
+        string(table(&io.settings, "outputs"), "/homeautomation/smoke/light"),
+        "light"
+    );
+
+    let runtime = Runtime::from_config(config).expect("runtime should build");
+    assert_eq!(runtime.tasks[0].io_count(), 1);
+}

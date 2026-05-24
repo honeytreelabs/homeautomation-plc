@@ -14,6 +14,7 @@ anyhow = "1.0"
 clap = { version = "4.5", features = ["derive"] }
 ctrlc = "3.5"
 mlua = { version = "0.11", features = ["lua54", "vendored"] }
+rumqttc = { version = "0.25", default-features = false }
 serde = { version = "1.0", features = ["derive"] }
 thiserror = "2.0"
 toml = "1.1"

@@ -155,8 +155,10 @@ end
 
 ## MQTT IO
 
-The first MQTT IO layer is implemented behind a Rust `MqttClient` trait and is
-covered with fake-client tests. A real network client is still pending.
+MQTT IO is implemented behind a Rust `MqttClient` trait and covered with
+fake-client tests. The generic runtime wires `type = "mqtt"` TOML entries to a
+real TCP MQTT client using `rumqttc` without its default TLS features, keeping
+the first network backend friendly to mostly static musl builds.
 
 The backend preserves the C++ reference behavior:
 
@@ -165,6 +167,11 @@ The backend preserves the C++ reference behavior:
 - drain received messages and map valid payloads into `gv.inputs`
 - after each cycle, publish only rising edges for configured outputs
 
+The real client runs the MQTT event loop on a background thread. Incoming
+publish packets are drained by the PLC task before each cycle; outgoing
+subscribe/publish requests are sent through the client handle. TCP broker URLs
+using `tcp://` or `mqtt://` are supported in the first version.
+
 MQTT payloads are handled through an explicit codec:
 
 - `text-bool`: `true` is payload bytes `1`, `false` is payload bytes `0`
@@ -172,7 +179,7 @@ MQTT payloads are handled through an explicit codec:
 
 `text-bool` is the compatibility default for the C++ reference behavior.
 
-The intended TOML shape is:
+The TOML shape is:
 
 ```toml
 [[tasks.io]]
@@ -182,6 +189,8 @@ payload_codec = "text-bool"
 [tasks.io.client]
 address = "tcp://localhost:1883"
 client_id = "generic::main"
+# username = "user"
+# password = "password"
 
 [tasks.io.inputs]
 "/homeautomation/light_remote" = "light_remote"
@@ -189,3 +198,27 @@ client_id = "generic::main"
 [tasks.io.outputs]
 "/homeautomation/light" = "light"
 ```
+
+Alternatively, the client can be configured as separate host/port fields:
+
+```toml
+[tasks.io.client]
+host = "localhost"
+port = 1883
+client_id = "generic::main"
+```
+
+For a local smoke test, start an MQTT broker and run:
+
+```sh
+homeautomation-plc --config rust/examples/mqtt-smoke.toml
+```
+
+Then publish an input edge from another shell:
+
+```sh
+mosquitto_pub -h localhost -t /homeautomation/smoke/button -m 1
+```
+
+The runtime should publish a rising output edge to
+`/homeautomation/smoke/light`.

@@ -6,6 +6,7 @@ use crate::{
     config::{Config, ProgramType},
     gv::Gv,
     lua::LuaProgram,
+    mqtt::MqttIoConfig,
     runtime::{Program, Task},
 };
 
@@ -29,6 +30,20 @@ pub enum RuntimeFactoryError {
     RustProgramNotRegistered { task: String, program: String },
     #[error("task '{task}' IO backend '{io_type}' is not implemented yet")]
     IoBackendNotImplemented { task: String, io_type: String },
+    #[error("task '{task}' IO backend '{io_type}' config is invalid: {source}")]
+    InvalidIoConfig {
+        task: String,
+        io_type: String,
+        #[source]
+        source: toml::de::Error,
+    },
+    #[error("task '{task}' IO backend '{io_type}' could not be created: {source}")]
+    MqttIoBuild {
+        task: String,
+        io_type: String,
+        #[source]
+        source: crate::mqtt::MqttConfigError,
+    },
 }
 
 #[derive(Default)]
@@ -117,11 +132,35 @@ impl Runtime {
                 }
             }
 
-            if let Some(io) = task_config.io.first() {
-                return Err(RuntimeFactoryError::IoBackendNotImplemented {
-                    task: task.name.clone(),
-                    io_type: io.io_type.clone(),
-                });
+            for io in task_config.io {
+                match io.io_type.as_str() {
+                    "mqtt" => {
+                        let io_type = io.io_type;
+                        let mqtt_config: MqttIoConfig =
+                            toml::Value::Table(io.settings).try_into().map_err(|source| {
+                                RuntimeFactoryError::InvalidIoConfig {
+                                    task: task.name.clone(),
+                                    io_type: io_type.clone(),
+                                    source,
+                                }
+                            })?;
+                        let mqtt_io = mqtt_config.into_io().map_err(|source| {
+                            RuntimeFactoryError::MqttIoBuild {
+                                task: task.name.clone(),
+                                io_type: io_type.clone(),
+                                source,
+                            }
+                        })?;
+
+                        task.add_io(Box::new(mqtt_io));
+                    }
+                    _ => {
+                        return Err(RuntimeFactoryError::IoBackendNotImplemented {
+                            task: task.name.clone(),
+                            io_type: io.io_type,
+                        });
+                    }
+                }
             }
 
             tasks.push(task);
@@ -418,7 +457,58 @@ type = "Rust"
     }
 
     #[test]
-    fn rejects_io_until_backends_are_implemented() {
+    fn attaches_mqtt_io_to_tasks() {
+        let config: Config = toml::from_str(
+            r#"
+[[tasks]]
+name = "main"
+interval = 25000
+
+[[tasks.io]]
+type = "mqtt"
+payload_codec = "binary-bool"
+
+[tasks.io.client]
+address = "tcp://localhost:1883"
+client_id = "test-client"
+
+[tasks.io.inputs]
+"/input" = "button"
+
+[tasks.io.outputs]
+"/output" = "light"
+"#,
+        )
+        .expect("config should parse");
+
+        let runtime = Runtime::from_config(config).expect("runtime should build");
+
+        assert_eq!(runtime.tasks.len(), 1);
+        assert_eq!(runtime.tasks[0].io_count(), 1);
+    }
+
+    #[test]
+    fn rejects_unknown_io_backends() {
+        let config: Config = toml::from_str(
+            r#"
+[[tasks]]
+name = "main"
+interval = 25000
+
+[[tasks.io]]
+type = "i2c"
+"#,
+        )
+        .expect("config should parse");
+
+        assert!(matches!(
+            Runtime::from_config(config),
+            Err(RuntimeFactoryError::IoBackendNotImplemented { .. })
+        ));
+    }
+
+    #[test]
+    fn rejects_invalid_mqtt_io_config() {
         let config: Config = toml::from_str(
             r#"
 [[tasks]]
@@ -433,7 +523,7 @@ type = "mqtt"
 
         assert!(matches!(
             Runtime::from_config(config),
-            Err(RuntimeFactoryError::IoBackendNotImplemented { .. })
+            Err(RuntimeFactoryError::InvalidIoConfig { .. })
         ));
     }
 }

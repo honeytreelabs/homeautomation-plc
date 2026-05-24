@@ -1,0 +1,40 @@
+[[tasks]]
+name = "main"
+interval = 1000000
+
+[[tasks.io]]
+type = "mqtt"
+payload_codec = "text-bool"
+
+[tasks.io.client]
+address = "tcp://localhost:1883"
+client_id = "homeautomation-plc-smoke"
+
+[tasks.io.inputs]
+"/homeautomation/smoke/button" = "button"
+
+[tasks.io.outputs]
+"/homeautomation/smoke/light" = "light"
+
+[[tasks.programs]]
+name = "MqttSmoke"
+type = "Lua"
+script = '''
+function Init(gv)
+  gv.outputs.light = false
+end
+
+function Cycle(gv, now)
+  gv.outputs.light = gv.inputs.button
+  print(string.format("MQTT Cycle: now_ms=%d button=%s light=%s",
+    to_millis_since_start(now),
+    tostring(gv.inputs.button),
+    tostring(gv.outputs.light)))
+end
+'''
+
+[global_vars.inputs.button]
+init_val = false
+
+[global_vars.outputs.light]
+init_val = false
