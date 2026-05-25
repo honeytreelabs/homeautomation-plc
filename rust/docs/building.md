@@ -287,9 +287,9 @@ outputs = { 0 = "blind_up", 1 = "blind_down" }
 ## Modbus RTU IO
 
 Modbus RTU IO is implemented behind a `ModbusClient` trait so device behavior
-can be tested with fake clients. The real serial client is intentionally pending;
-the first implementation wires config and device behavior through the runtime
-and returns a clear runtime error if the real backend is initialized.
+can be tested with fake clients. The runtime wires `type = "modbus-rtu"` TOML
+entries to a real serial RTU client implemented with the synchronous RTU API
+from `tokio-modbus`.
 
 Supported components:
 
@@ -304,6 +304,10 @@ The backend preserves the C++ reference behavior:
 - inputs are copied into `gv.inputs` before each cycle
 - outputs are copied from `gv.outputs` after each cycle
 - output coils are written only when their effective output array changed
+- serial data bits support `5`, `6`, `7`, and `8`
+- serial stop bits support `1` and `2`
+- operations use a positive 500 ms timeout by default so missing devices do not
+  block the scheduler indefinitely
 
 TOML shape:
 
@@ -315,6 +319,7 @@ baud = 9600
 data_bit = 8
 parity = "N"
 stop_bit = 1
+# timeout_millis = 500
 
 [[tasks.io.components]]
 type = "WP8026ADAM"
@@ -327,6 +332,7 @@ slave = 1
 outputs = { 0 = "relay_1", 1 = "relay_2" }
 ```
 
-The likely real backend direction is `tokio-modbus` with
+The dependency is configured as `tokio-modbus` with
 `default-features = false` and `features = ["rtu-sync"]`, so the PLC scheduler
-can keep its synchronous IO lifecycle.
+keeps its synchronous IO lifecycle without pulling in unrelated TCP or server
+features.

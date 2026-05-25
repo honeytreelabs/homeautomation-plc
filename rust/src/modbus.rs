@@ -1,7 +1,13 @@
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, time::Duration};
 
 use serde::Deserialize;
 use thiserror::Error;
+use tokio_modbus::{
+    client::sync::{rtu, Context as ModbusContext, Reader, Writer},
+    slave::SlaveContext,
+    Slave,
+};
+use tokio_serial::{DataBits, Parity, StopBits};
 
 use crate::{
     gv::{Gv, VarValue},
@@ -20,54 +26,121 @@ pub trait ModbusClient {
     fn close(&mut self) -> anyhow::Result<()>;
 }
 
-#[derive(Debug)]
-pub struct PendingModbusRtuClient {
+pub struct TokioModbusRtuClient {
     path: String,
     baud: u32,
     data_bit: u8,
     parity: ModbusParity,
     stop_bit: u8,
+    timeout_millis: u64,
+    context: Option<ModbusContext>,
 }
 
-impl PendingModbusRtuClient {
-    pub fn new(path: String, baud: u32, data_bit: u8, parity: ModbusParity, stop_bit: u8) -> Self {
+impl TokioModbusRtuClient {
+    pub fn new(
+        path: String,
+        baud: u32,
+        data_bit: u8,
+        parity: ModbusParity,
+        stop_bit: u8,
+        timeout_millis: u64,
+    ) -> Self {
         Self {
             path,
             baud,
             data_bit,
             parity,
             stop_bit,
+            timeout_millis,
+            context: None,
         }
+    }
+
+    fn context(&mut self) -> anyhow::Result<&mut ModbusContext> {
+        self.context
+            .as_mut()
+            .ok_or_else(|| anyhow::anyhow!("Modbus RTU client is not connected"))
     }
 }
 
-impl ModbusClient for PendingModbusRtuClient {
+impl ModbusClient for TokioModbusRtuClient {
     fn connect(&mut self) -> anyhow::Result<()> {
-        anyhow::bail!(
-            "real Modbus RTU client is not implemented yet for {} ({} baud, {}{:?}{})",
-            self.path,
-            self.baud,
-            self.data_bit,
-            self.parity,
-            self.stop_bit
-        )
+        let builder = tokio_serial::new(&self.path, self.baud)
+            .data_bits(to_tokio_data_bits(self.data_bit)?)
+            .parity(to_tokio_parity(self.parity))
+            .stop_bits(to_tokio_stop_bits(self.stop_bit)?);
+
+        let mut context = rtu::connect(&builder)?;
+        context.set_timeout(Duration::from_millis(self.timeout_millis));
+        self.context = Some(context);
+        Ok(())
     }
 
     fn read_input_bits(
         &mut self,
-        _slave: u8,
-        _address: u16,
-        _values: &mut [bool],
+        slave: u8,
+        address: u16,
+        values: &mut [bool],
     ) -> anyhow::Result<()> {
-        anyhow::bail!("real Modbus RTU client is not implemented yet")
+        let quantity = u16::try_from(values.len())
+            .map_err(|_| anyhow::anyhow!("Modbus read quantity exceeds u16"))?;
+        let context = self.context()?;
+        context.set_slave(Slave(slave));
+        let read_values = flatten_modbus_result(context.read_discrete_inputs(address, quantity))?;
+        if read_values.len() != values.len() {
+            anyhow::bail!(
+                "Modbus read returned {} value(s), expected {}",
+                read_values.len(),
+                values.len()
+            );
+        }
+        values.copy_from_slice(&read_values);
+        Ok(())
     }
 
-    fn write_bits(&mut self, _slave: u8, _address: u16, _values: &[bool]) -> anyhow::Result<()> {
-        anyhow::bail!("real Modbus RTU client is not implemented yet")
+    fn write_bits(&mut self, slave: u8, address: u16, values: &[bool]) -> anyhow::Result<()> {
+        let context = self.context()?;
+        context.set_slave(Slave(slave));
+        flatten_modbus_result(context.write_multiple_coils(address, values))
     }
 
     fn close(&mut self) -> anyhow::Result<()> {
+        self.context.take();
         Ok(())
+    }
+}
+
+fn flatten_modbus_result<T>(
+    result: tokio_modbus::Result<T>,
+) -> anyhow::Result<T> {
+    result
+        .map_err(|err| anyhow::anyhow!("Modbus transport error: {err}"))?
+        .map_err(|exception| anyhow::anyhow!("Modbus exception response: {exception:?}"))
+}
+
+fn to_tokio_data_bits(data_bit: u8) -> Result<DataBits, ModbusConfigError> {
+    match data_bit {
+        5 => Ok(DataBits::Five),
+        6 => Ok(DataBits::Six),
+        7 => Ok(DataBits::Seven),
+        8 => Ok(DataBits::Eight),
+        _ => Err(ModbusConfigError::InvalidDataBits(data_bit)),
+    }
+}
+
+fn to_tokio_parity(parity: ModbusParity) -> Parity {
+    match parity {
+        ModbusParity::N => Parity::None,
+        ModbusParity::E => Parity::Even,
+        ModbusParity::O => Parity::Odd,
+    }
+}
+
+fn to_tokio_stop_bits(stop_bit: u8) -> Result<StopBits, ModbusConfigError> {
+    match stop_bit {
+        1 => Ok(StopBits::One),
+        2 => Ok(StopBits::Two),
+        _ => Err(ModbusConfigError::InvalidStopBits(stop_bit)),
     }
 }
 
@@ -78,12 +151,18 @@ pub struct ModbusRtuIoConfig {
     pub data_bit: u8,
     pub parity: ModbusParity,
     pub stop_bit: u8,
+    #[serde(default = "default_modbus_timeout_millis")]
+    pub timeout_millis: u64,
     #[serde(default)]
     pub components: Vec<ModbusComponentConfig>,
 }
 
+const fn default_modbus_timeout_millis() -> u64 {
+    500
+}
+
 impl ModbusRtuIoConfig {
-    pub fn into_io(self) -> Result<ModbusIo<PendingModbusRtuClient>, ModbusConfigError> {
+    pub fn into_io(self) -> Result<ModbusIo<TokioModbusRtuClient>, ModbusConfigError> {
         self.validate_serial_config()?;
         let mut components = Vec::with_capacity(self.components.len());
         for component in self.components {
@@ -91,23 +170,25 @@ impl ModbusRtuIoConfig {
         }
 
         Ok(ModbusIo::new(
-            PendingModbusRtuClient::new(
+            TokioModbusRtuClient::new(
                 self.path,
                 self.baud,
                 self.data_bit,
                 self.parity,
                 self.stop_bit,
+                self.timeout_millis,
             ),
             components,
         ))
     }
 
     fn validate_serial_config(&self) -> Result<(), ModbusConfigError> {
-        if self.data_bit == 0 {
-            return Err(ModbusConfigError::InvalidDataBits(self.data_bit));
-        }
-        if self.stop_bit == 0 {
-            return Err(ModbusConfigError::InvalidStopBits(self.stop_bit));
+        to_tokio_data_bits(self.data_bit)?;
+        to_tokio_stop_bits(self.stop_bit)?;
+        if self.timeout_millis == 0 {
+            return Err(ModbusConfigError::InvalidTimeoutMillis(
+                self.timeout_millis,
+            ));
         }
         Ok(())
     }
@@ -157,6 +238,8 @@ pub enum ModbusConfigError {
     InvalidDataBits(u8),
     #[error("invalid Modbus stop bits setting '{0}'")]
     InvalidStopBits(u8),
+    #[error("invalid Modbus timeout_millis setting '{0}'")]
+    InvalidTimeoutMillis(u64),
 }
 
 fn parse_pin(pin: &str) -> Result<u8, ModbusConfigError> {
@@ -556,8 +639,73 @@ outputs = { 0 = "one", 1 = "two" }
 
         assert_eq!(config.path, "/dev/ttyUSB0");
         assert_eq!(config.baud, 9600);
+        assert_eq!(config.timeout_millis, 500);
         assert_eq!(config.components[0].inputs["0"], "one");
         assert_eq!(config.components[1].outputs["1"], "two");
+    }
+
+    #[test]
+    fn maps_supported_serial_settings_to_tokio_serial() {
+        assert_eq!(to_tokio_data_bits(5).expect("valid data bits"), DataBits::Five);
+        assert_eq!(to_tokio_data_bits(6).expect("valid data bits"), DataBits::Six);
+        assert_eq!(
+            to_tokio_data_bits(7).expect("valid data bits"),
+            DataBits::Seven
+        );
+        assert_eq!(
+            to_tokio_data_bits(8).expect("valid data bits"),
+            DataBits::Eight
+        );
+        assert_eq!(to_tokio_parity(ModbusParity::N), Parity::None);
+        assert_eq!(to_tokio_parity(ModbusParity::E), Parity::Even);
+        assert_eq!(to_tokio_parity(ModbusParity::O), Parity::Odd);
+        assert_eq!(to_tokio_stop_bits(1).expect("valid stop bits"), StopBits::One);
+        assert_eq!(to_tokio_stop_bits(2).expect("valid stop bits"), StopBits::Two);
+    }
+
+    #[test]
+    fn rejects_unsupported_serial_settings() {
+        let invalid_data_bits = ModbusRtuIoConfig {
+            path: "/dev/ttyUSB0".to_string(),
+            baud: 9600,
+            data_bit: 9,
+            parity: ModbusParity::N,
+            stop_bit: 1,
+            timeout_millis: 500,
+            components: Vec::new(),
+        };
+        assert!(matches!(
+            invalid_data_bits.into_io(),
+            Err(ModbusConfigError::InvalidDataBits(9))
+        ));
+
+        let invalid_stop_bits = ModbusRtuIoConfig {
+            path: "/dev/ttyUSB0".to_string(),
+            baud: 9600,
+            data_bit: 8,
+            parity: ModbusParity::N,
+            stop_bit: 3,
+            timeout_millis: 500,
+            components: Vec::new(),
+        };
+        assert!(matches!(
+            invalid_stop_bits.into_io(),
+            Err(ModbusConfigError::InvalidStopBits(3))
+        ));
+
+        let invalid_timeout = ModbusRtuIoConfig {
+            path: "/dev/ttyUSB0".to_string(),
+            baud: 9600,
+            data_bit: 8,
+            parity: ModbusParity::N,
+            stop_bit: 1,
+            timeout_millis: 0,
+            components: Vec::new(),
+        };
+        assert!(matches!(
+            invalid_timeout.into_io(),
+            Err(ModbusConfigError::InvalidTimeoutMillis(0))
+        ));
     }
 
     #[test]
