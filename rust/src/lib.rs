@@ -3,6 +3,7 @@ pub mod factory;
 pub mod gv;
 pub mod i2c;
 pub mod lua;
+pub mod modbus;
 pub mod mqtt;
 pub mod runtime;
 pub mod scheduler;

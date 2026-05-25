@@ -283,3 +283,50 @@ type = "max7311"
 direction = "output"
 outputs = { 0 = "blind_up", 1 = "blind_down" }
 ```
+
+## Modbus RTU IO
+
+Modbus RTU IO is implemented behind a `ModbusClient` trait so device behavior
+can be tested with fake clients. The real serial client is intentionally pending;
+the first implementation wires config and device behavior through the runtime
+and returns a clear runtime error if the real backend is initialized.
+
+Supported components:
+
+- `WP8026ADAM` input
+- `R4S8CRMB` output
+
+The backend preserves the C++ reference behavior:
+
+- `WP8026ADAM` reads 8 input bits starting at address `0x0008`
+- `R4S8CRMB` writes 8 output coils starting at address `0x0000`
+- missing mapped global variables are created as boolean values during IO init
+- inputs are copied into `gv.inputs` before each cycle
+- outputs are copied from `gv.outputs` after each cycle
+- output coils are written only when their effective output array changed
+
+TOML shape:
+
+```toml
+[[tasks.io]]
+type = "modbus-rtu"
+path = "/dev/ttyUSB0"
+baud = 9600
+data_bit = 8
+parity = "N"
+stop_bit = 1
+
+[[tasks.io.components]]
+type = "WP8026ADAM"
+slave = 1
+inputs = { 0 = "button_1", 1 = "button_2" }
+
+[[tasks.io.components]]
+type = "R4S8CRMB"
+slave = 1
+outputs = { 0 = "relay_1", 1 = "relay_2" }
+```
+
+The likely real backend direction is `tokio-modbus` with
+`default-features = false` and `features = ["rtu-sync"]`, so the PLC scheduler
+can keep its synchronous IO lifecycle.

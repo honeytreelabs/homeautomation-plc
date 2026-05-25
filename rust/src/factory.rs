@@ -7,6 +7,7 @@ use crate::{
     gv::Gv,
     i2c::I2cIoConfig,
     lua::LuaProgram,
+    modbus::ModbusRtuIoConfig,
     mqtt::MqttIoConfig,
     runtime::{Program, Task},
 };
@@ -51,6 +52,13 @@ pub enum RuntimeFactoryError {
         io_type: String,
         #[source]
         source: crate::i2c::I2cConfigError,
+    },
+    #[error("task '{task}' IO backend '{io_type}' could not be created: {source}")]
+    ModbusIoBuild {
+        task: String,
+        io_type: String,
+        #[source]
+        source: crate::modbus::ModbusConfigError,
     },
 }
 
@@ -182,6 +190,26 @@ impl Runtime {
                                 })?;
 
                         task.add_io(Box::new(i2c_io));
+                    }
+                    "modbus-rtu" => {
+                        let io_type = io.io_type;
+                        let modbus_config: ModbusRtuIoConfig =
+                            toml::Value::Table(io.settings).try_into().map_err(|source| {
+                                RuntimeFactoryError::InvalidIoConfig {
+                                    task: task.name.clone(),
+                                    io_type: io_type.clone(),
+                                    source,
+                                }
+                            })?;
+                        let modbus_io = modbus_config.into_io().map_err(|source| {
+                            RuntimeFactoryError::ModbusIoBuild {
+                                task: task.name.clone(),
+                                io_type: io_type.clone(),
+                                source,
+                            }
+                        })?;
+
+                        task.add_io(Box::new(modbus_io));
                     }
                     _ => {
                         return Err(RuntimeFactoryError::IoBackendNotImplemented {
@@ -556,7 +584,7 @@ name = "main"
 interval = 25000
 
 [[tasks.io]]
-type = "modbus-rtu"
+type = "unknown"
 "#,
         )
         .expect("config should parse");
@@ -565,6 +593,41 @@ type = "modbus-rtu"
             Runtime::from_config(config),
             Err(RuntimeFactoryError::IoBackendNotImplemented { .. })
         ));
+    }
+
+    #[test]
+    fn attaches_modbus_rtu_io_to_tasks() {
+        let config: Config = toml::from_str(
+            r#"
+[[tasks]]
+name = "main"
+interval = 25000
+
+[[tasks.io]]
+type = "modbus-rtu"
+path = "/dev/ttyUSB0"
+baud = 9600
+data_bit = 8
+parity = "N"
+stop_bit = 1
+
+[[tasks.io.components]]
+type = "WP8026ADAM"
+slave = 1
+inputs = { 0 = "button" }
+
+[[tasks.io.components]]
+type = "R4S8CRMB"
+slave = 1
+outputs = { 0 = "light" }
+"#,
+        )
+        .expect("config should parse");
+
+        let runtime = Runtime::from_config(config).expect("runtime should build");
+
+        assert_eq!(runtime.tasks.len(), 1);
+        assert_eq!(runtime.tasks[0].io_count(), 1);
     }
 
     #[test]
