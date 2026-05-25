@@ -1,6 +1,7 @@
 pub mod config;
 pub mod factory;
 pub mod gv;
+pub mod i2c;
 pub mod lua;
 pub mod mqtt;
 pub mod runtime;

@@ -5,6 +5,7 @@ use thiserror::Error;
 use crate::{
     config::{Config, ProgramType},
     gv::Gv,
+    i2c::I2cIoConfig,
     lua::LuaProgram,
     mqtt::MqttIoConfig,
     runtime::{Program, Task},
@@ -43,6 +44,13 @@ pub enum RuntimeFactoryError {
         io_type: String,
         #[source]
         source: crate::mqtt::MqttConfigError,
+    },
+    #[error("task '{task}' IO backend '{io_type}' could not be created: {source}")]
+    I2cIoBuild {
+        task: String,
+        io_type: String,
+        #[source]
+        source: crate::i2c::I2cConfigError,
     },
 }
 
@@ -153,6 +161,27 @@ impl Runtime {
                         })?;
 
                         task.add_io(Box::new(mqtt_io));
+                    }
+                    "i2c" => {
+                        let io_type = io.io_type;
+                        let i2c_config: I2cIoConfig =
+                            toml::Value::Table(io.settings).try_into().map_err(|source| {
+                                RuntimeFactoryError::InvalidIoConfig {
+                                    task: task.name.clone(),
+                                    io_type: io_type.clone(),
+                                    source,
+                                }
+                            })?;
+                        let i2c_io =
+                            i2c_config
+                                .into_io()
+                                .map_err(|source| RuntimeFactoryError::I2cIoBuild {
+                                    task: task.name.clone(),
+                                    io_type: io_type.clone(),
+                                    source,
+                                })?;
+
+                        task.add_io(Box::new(i2c_io));
                     }
                     _ => {
                         return Err(RuntimeFactoryError::IoBackendNotImplemented {
@@ -488,7 +517,7 @@ client_id = "test-client"
     }
 
     #[test]
-    fn rejects_unknown_io_backends() {
+    fn attaches_i2c_io_to_tasks() {
         let config: Config = toml::from_str(
             r#"
 [[tasks]]
@@ -497,6 +526,37 @@ interval = 25000
 
 [[tasks.io]]
 type = "i2c"
+bus = "/dev/i2c-1"
+
+[tasks.io.components."0x3b"]
+type = "pcf8574"
+direction = "input"
+inputs = { 0 = "button" }
+
+[tasks.io.components."0x20"]
+type = "max7311"
+direction = "output"
+outputs = { 0 = "light" }
+"#,
+        )
+        .expect("config should parse");
+
+        let runtime = Runtime::from_config(config).expect("runtime should build");
+
+        assert_eq!(runtime.tasks.len(), 1);
+        assert_eq!(runtime.tasks[0].io_count(), 1);
+    }
+
+    #[test]
+    fn rejects_unknown_io_backends() {
+        let config: Config = toml::from_str(
+            r#"
+[[tasks]]
+name = "main"
+interval = 25000
+
+[[tasks.io]]
+type = "modbus-rtu"
 "#,
         )
         .expect("config should parse");

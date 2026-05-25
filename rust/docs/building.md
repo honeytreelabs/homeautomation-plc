@@ -245,3 +245,41 @@ mosquitto_pub -h localhost -t /homeautomation/smoke/button -m 1
 
 The runtime should publish a rising output edge to
 `/homeautomation/smoke/light`.
+
+## I2C IO
+
+I2C IO is implemented behind an `I2cBus` trait so device behavior can be tested
+with fake buses. The runtime wires `type = "i2c"` TOML entries to a Linux
+`/dev/i2c-*` bus.
+
+Supported components:
+
+- `pcf8574` input
+- `pcf8574` output
+- `max7311` output
+
+The backend preserves the C++ reference behavior:
+
+- input and output device bits are inverted
+- missing mapped global variables are created as boolean values during IO init
+- inputs are copied into `gv.inputs` before each cycle
+- outputs are copied from `gv.outputs` after each cycle
+- output devices write only when their effective output byte changed
+
+TOML shape:
+
+```toml
+[[tasks.io]]
+type = "i2c"
+bus = "/dev/i2c-1"
+
+[tasks.io.components."0x3b"]
+type = "pcf8574"
+direction = "input"
+inputs = { 0 = "button_up", 1 = "button_down" }
+
+[tasks.io.components."0x20"]
+type = "max7311"
+direction = "output"
+outputs = { 0 = "blind_up", 1 = "blind_down" }
+```
