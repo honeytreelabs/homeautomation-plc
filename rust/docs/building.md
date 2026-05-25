@@ -27,6 +27,203 @@ make rust-test
 make rust-build
 ```
 
+## Custom Rust Program Binaries
+
+Setup repositories can use the framework as a library crate and build their
+Rust PLC logic into the final executable. In this model, `type = "Rust"` in
+TOML means "instantiate a program registered by this executable".
+
+The generic framework binary uses an empty `ProgramRegistry`, so it can run Lua
+programs and IO backends but cannot know about installation-specific Rust
+program types. A downstream crate should depend on the framework crate and wire
+its own registry:
+
+```toml
+[dependencies]
+homeautomation-plc = { path = "../homeautomation-plc/rust" }
+anyhow = "1.0"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+```
+
+```rust
+use std::path::PathBuf;
+
+use homeautomation_plc::{
+    run_with_registry, Gv, Program, ProgramRegistry, VarValue,
+};
+
+struct SetLight;
+
+impl Program for SetLight {
+    fn init(&mut self, gv: &mut Gv) -> anyhow::Result<()> {
+        gv.outputs
+            .entry("light".to_string())
+            .or_insert(VarValue::Bool(false));
+        Ok(())
+    }
+
+    fn cycle(&mut self, gv: &mut Gv, _now_micros: u64) -> anyhow::Result<()> {
+        gv.outputs.insert("light".to_string(), VarValue::Bool(true));
+        Ok(())
+    }
+}
+
+fn main() -> anyhow::Result<()> {
+    tracing_subscriber::fmt()
+        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+        .init();
+
+    let mut registry = ProgramRegistry::new();
+    registry.register_rust_program("SetLight", || Box::new(SetLight));
+
+    run_with_registry(PathBuf::from("config.toml"), &registry)
+}
+```
+
+For a single executable with no external config file, embed the TOML and run the
+parsed `Config` through the same registry:
+
+```rust
+use homeautomation_plc::{
+    run_config_with_registry_until, Config, Gv, Program, ProgramRegistry, VarValue,
+};
+
+struct SetLight;
+
+impl Program for SetLight {
+    fn init(&mut self, gv: &mut Gv) -> anyhow::Result<()> {
+        gv.outputs
+            .entry("light".to_string())
+            .or_insert(VarValue::Bool(false));
+        Ok(())
+    }
+
+    fn cycle(&mut self, gv: &mut Gv, _now_micros: u64) -> anyhow::Result<()> {
+        gv.outputs.insert("light".to_string(), VarValue::Bool(true));
+        Ok(())
+    }
+}
+
+fn main() -> anyhow::Result<()> {
+    tracing_subscriber::fmt()
+        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+        .init();
+
+    let mut registry = ProgramRegistry::new();
+    registry.register_rust_program("SetLight", || Box::new(SetLight));
+
+    run_config_with_registry_until(
+        toml::from_str::<Config>(
+            r#"
+[[tasks]]
+name = "main"
+interval = 25000
+
+[[tasks.programs]]
+name = "SetLight"
+type = "Rust"
+"#,
+        )?,
+        &registry,
+        || false,
+    )
+}
+```
+
+The matching TOML program entry is:
+
+```toml
+[[tasks.programs]]
+name = "SetLight"
+type = "Rust"
+```
+
+For custom shutdown handling or tests, use
+`run_config_with_registry_until(config, &registry, should_stop)` or
+`run_runtime_with_clock_until(&mut runtime, &mut clock, should_stop)` instead
+of `run_with_registry`.
+
+Registering multiple Rust programs is just multiple registry entries. Each
+factory creates a fresh program instance for the task that references it:
+
+```rust
+use homeautomation_plc::{Gv, Program, ProgramRegistry, VarValue};
+
+struct SetOutput {
+    output: String,
+    value: VarValue,
+}
+
+impl Program for SetOutput {
+    fn init(&mut self, gv: &mut Gv) -> anyhow::Result<()> {
+        gv.outputs
+            .entry(self.output.clone())
+            .or_insert(VarValue::Bool(false));
+        Ok(())
+    }
+
+    fn cycle(&mut self, gv: &mut Gv, _now_micros: u64) -> anyhow::Result<()> {
+        gv.outputs.insert(self.output.clone(), self.value.clone());
+        Ok(())
+    }
+}
+
+let mut registry = ProgramRegistry::new();
+registry.register_rust_program("SetKitchenLight", || {
+    Box::new(SetOutput {
+        output: "kitchen_light".to_string(),
+        value: VarValue::Bool(true),
+    })
+});
+registry.register_rust_program("SetHallLight", || {
+    Box::new(SetOutput {
+        output: "hall_light".to_string(),
+        value: VarValue::Bool(true),
+    })
+});
+```
+
+A small unit-test style check for program logic can avoid the scheduler and IO
+entirely:
+
+```rust
+use homeautomation_plc::{Gv, Program, VarValue};
+
+struct CopyButton;
+
+impl Program for CopyButton {
+    fn init(&mut self, gv: &mut Gv) -> anyhow::Result<()> {
+        gv.outputs
+            .entry("light".to_string())
+            .or_insert(VarValue::Bool(false));
+        Ok(())
+    }
+
+    fn cycle(&mut self, gv: &mut Gv, _now_micros: u64) -> anyhow::Result<()> {
+        let value = gv
+            .inputs
+            .get("button")
+            .cloned()
+            .unwrap_or(VarValue::Bool(false));
+        gv.outputs.insert("light".to_string(), value);
+        Ok(())
+    }
+}
+
+#[test]
+fn copy_button_logic() -> anyhow::Result<()> {
+    let mut gv = Gv::default();
+    gv.inputs.insert("button".to_string(), VarValue::Bool(true));
+
+    let mut program = CopyButton;
+    program.init(&mut gv)?;
+    program.cycle(&mut gv, 0)?;
+
+    assert_eq!(gv.outputs["light"], VarValue::Bool(true));
+    Ok(())
+}
+```
+
 ## Raspberry Pi / OpenWrt Targets
 
 The planned targets are:

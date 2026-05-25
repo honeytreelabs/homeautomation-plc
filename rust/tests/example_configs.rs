@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use homeautomation_plc::{config::ProgramType, gv::VarValue, Config, Runtime};
+use homeautomation_plc::{config::ProgramType, factory::Runtime, Config, VarValue};
 use toml::{Table, Value};
 
 fn example_path(name: &str) -> PathBuf {
