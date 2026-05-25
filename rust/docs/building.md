@@ -208,7 +208,30 @@ port = 1883
 client_id = "generic::main"
 ```
 
-For a local smoke test, start an MQTT broker and run:
+For automated native and QEMU smoke tests from the repository root, run:
+
+```sh
+make rust-mqtt-smoke
+```
+
+The target runs the parametrized pytest-based smoke test in `integration_test/`
+for native, Raspberry Pi 2 via `qemu-arm`, and Raspberry Pi 3 via
+`qemu-aarch64`. Each case starts Mosquitto in Docker or Podman, builds the Rust
+binary, starts the PLC with `rust/examples/mqtt-smoke.toml`, publishes `1` to
+`/homeautomation/smoke/button`, and verifies that the runtime publishes `1` to
+`/homeautomation/smoke/light`.
+
+Platform-specific targets are also available:
+
+```sh
+make rust-qemu-mqtt-smoke-rpi2
+make rust-qemu-mqtt-smoke-rpi3
+```
+
+The native case uses `cargo`. The QEMU cases use `cross` for building and
+require `qemu-arm` or `qemu-aarch64` on the host.
+
+For a manual smoke test, start an MQTT broker and run:
 
 ```sh
 homeautomation-plc --config rust/examples/mqtt-smoke.toml

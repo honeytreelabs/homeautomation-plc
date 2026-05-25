@@ -19,3 +19,4 @@ Testing/
 /rust/target/
 /.lean-ctx/
 handoff*.md
+.direnv/

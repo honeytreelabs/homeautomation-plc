@@ -1,0 +1,47 @@
+[project]
+name = "homeautomation-plc"
+version = "0.1.0"
+description = "Development tooling for the homeautomation-plc PLC runtime"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "ruff>=0.15.14",
+    "ty>=0.0.39",
+]
+
+[tool.pytest.ini_options]
+python_files = "test_*.py"
+python_functions = "test_*"
+python_classes = [
+    "*Test",
+    "*_test",
+]
+addopts = "--strict-markers"
+testpaths = [
+    "integration_test",
+    "tests",
+]
+log_cli = true
+log_cli_level = "INFO"
+junit_suite_name = "HomeAutomation PLC Tests"
+junit_log_passing_tests = true
+junit_logging = "out-err"
+markers = [
+    "smoketest: Minimum viable test job selection",
+]
+
+[tool.ruff]
+extend-exclude = [
+    "deps",
+    "vcpkg",
+]
+
+[tool.ty.src]
+exclude = [
+    "deps",
+    "vcpkg",
+]

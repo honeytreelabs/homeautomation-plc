@@ -148,6 +148,26 @@ rust-build: sourcedir=$(mkfile_path)
 rust-build:
 	cd $(sourcedir)/rust && cargo build
 
+.PHONY: rust-mqtt-smoke
+rust-mqtt-smoke: sourcedir=$(mkfile_path)
+rust-mqtt-smoke:
+	cd $(sourcedir) && uv run pytest tests/test_rust_mqtt_smoke.py
+
+.PHONY: rust-mqtt-smoke-native
+rust-mqtt-smoke-native: sourcedir=$(mkfile_path)
+rust-mqtt-smoke-native:
+	cd $(sourcedir) && uv run pytest tests/test_rust_mqtt_smoke.py -k native
+
+.PHONY: rust-mqtt-smoke-rpi2
+rust-mqtt-smoke-rpi2: sourcedir=$(mkfile_path)
+rust-mqtt-smoke-rpi2:
+	cd $(sourcedir) && uv run pytest tests/test_rust_mqtt_smoke.py -k qemu-rpi2
+
+.PHONY: rust-mqtt-smoke-rpi3
+rust-mqtt-smoke-rpi3: sourcedir=$(mkfile_path)
+rust-mqtt-smoke-rpi3:
+	cd $(sourcedir) && uv run pytest tests/test_rust_mqtt_smoke.py -k qemu-rpi3
+
 .PHONY: rust-build-rpi2
 rust-build-rpi2: sourcedir=$(mkfile_path)
 rust-build-rpi2:
