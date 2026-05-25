@@ -138,8 +138,8 @@ type = "Rust"
 ```
 
 `run_with_registry` and `run_config_with_registry` install the framework's
-default signal handler and stop cleanly on Ctrl-C. On Unix, SIGTERM is handled
-too when the `ctrlc` dependency is built with its `termination` feature. For
+default signal handler and stop cleanly on Ctrl-C/SIGINT. On Unix, SIGTERM and
+SIGHUP are handled through the `ctrlc` dependency's `termination` feature. For
 custom shutdown handling or tests, use
 `run_config_with_registry_until(config, &registry, should_stop)` or
 `run_runtime_with_clock_until(&mut runtime, &mut clock, should_stop)`.
