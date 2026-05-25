@@ -85,7 +85,7 @@ parsed `Config` through the same registry:
 
 ```rust
 use homeautomation_plc::{
-    run_config_with_registry_until, Config, Gv, Program, ProgramRegistry, VarValue,
+    run_config_with_registry, Config, Gv, Program, ProgramRegistry, VarValue,
 };
 
 struct SetLight;
@@ -112,7 +112,7 @@ fn main() -> anyhow::Result<()> {
     let mut registry = ProgramRegistry::new();
     registry.register_rust_program("SetLight", || Box::new(SetLight));
 
-    run_config_with_registry_until(
+    run_config_with_registry(
         toml::from_str::<Config>(
             r#"
 [[tasks]]
@@ -125,7 +125,6 @@ type = "Rust"
 "#,
         )?,
         &registry,
-        || false,
     )
 }
 ```
@@ -138,10 +137,12 @@ name = "SetLight"
 type = "Rust"
 ```
 
-For custom shutdown handling or tests, use
+`run_with_registry` and `run_config_with_registry` install the framework's
+default signal handler and stop cleanly on Ctrl-C. On Unix, SIGTERM is handled
+too when the `ctrlc` dependency is built with its `termination` feature. For
+custom shutdown handling or tests, use
 `run_config_with_registry_until(config, &registry, should_stop)` or
-`run_runtime_with_clock_until(&mut runtime, &mut clock, should_stop)` instead
-of `run_with_registry`.
+`run_runtime_with_clock_until(&mut runtime, &mut clock, should_stop)`.
 
 Registering multiple Rust programs is just multiple registry entries. Each
 factory creates a fresh program instance for the task that references it:

@@ -22,7 +22,20 @@ pub fn run_with_registry(
     let config_path = config_path.as_ref();
     let config = Config::from_path(config_path)
         .with_context(|| format!("failed to load config {}", config_path.display()))?;
+    run_config_with_registry(config, registry)
+}
 
+pub fn run_config_with_registry(
+    config: Config,
+    registry: &ProgramRegistry,
+) -> anyhow::Result<()> {
+    let stop_requested = install_stop_signal_handler()?;
+    run_config_with_registry_until(config, registry, || {
+        stop_requested.load(Ordering::SeqCst)
+    })
+}
+
+fn install_stop_signal_handler() -> anyhow::Result<Arc<AtomicBool>> {
     let stop_requested = Arc::new(AtomicBool::new(false));
     {
         let stop_requested = Arc::clone(&stop_requested);
@@ -31,10 +44,7 @@ pub fn run_with_registry(
         })
         .context("failed to install Ctrl-C handler")?;
     }
-
-    run_config_with_registry_until(config, registry, || {
-        stop_requested.load(Ordering::SeqCst)
-    })
+    Ok(stop_requested)
 }
 
 pub fn run_config_with_registry_until<Stop>(
@@ -166,22 +176,10 @@ mod tests {
 
     #[test]
     fn run_config_with_registry_runs_registered_rust_programs() {
-        let config: Config = toml::from_str(
-            r#"
-[[tasks]]
-name = "main"
-interval = 25000
-
-[[tasks.programs]]
-name = "SetOutput"
-type = "Rust"
-"#,
-        )
-        .expect("config should parse");
-
         let mut registry = ProgramRegistry::new();
         registry.register_rust_program("SetOutput", || Box::new(SetOutputProgram));
 
+        let config = rust_program_config();
         let mut runtime =
             Runtime::from_config_with_registry(config, &registry).expect("runtime should build");
         let mut clock = ManualClock::default();
@@ -194,5 +192,35 @@ type = "Rust"
         .expect("runtime should run");
 
         assert_eq!(runtime.gv.outputs["custom_ready"], VarValue::Bool(true));
+    }
+
+    #[test]
+    fn run_config_with_registry_until_accepts_custom_stop_source() {
+        let mut registry = ProgramRegistry::new();
+        registry.register_rust_program("SetOutput", || Box::new(SetOutputProgram));
+        let mut stop_calls = 0;
+
+        run_config_with_registry_until(rust_program_config(), &registry, || {
+            stop_calls += 1;
+            stop_calls > 1
+        })
+        .expect("runtime should run");
+
+        assert_eq!(stop_calls, 2);
+    }
+
+    fn rust_program_config() -> Config {
+        toml::from_str(
+            r#"
+[[tasks]]
+name = "main"
+interval = 25000
+
+[[tasks.programs]]
+name = "SetOutput"
+type = "Rust"
+"#,
+        )
+        .expect("config should parse")
     }
 }
