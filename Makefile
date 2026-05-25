@@ -138,9 +138,14 @@ rust-lock: sourcedir=$(mkfile_path)
 rust-lock:
 	cd $(sourcedir)/rust && cargo update
 
-.PHONY: rust-test
-rust-test: sourcedir=$(mkfile_path)
-rust-test:
+.PHONY: rust-test-all
+rust-test-all:
+	$(MAKE) rust-unit-test
+	$(MAKE) rust-integration-test
+
+.PHONY: rust-unit-test
+rust-unit-test: sourcedir=$(mkfile_path)
+rust-unit-test:
 	cd $(sourcedir)/rust && cargo test
 
 .PHONY: rust-build
@@ -148,10 +153,10 @@ rust-build: sourcedir=$(mkfile_path)
 rust-build:
 	cd $(sourcedir)/rust && cargo build
 
-.PHONY: rust-mqtt-smoke
-rust-mqtt-smoke: sourcedir=$(mkfile_path)
-rust-mqtt-smoke:
-	cd $(sourcedir) && uv run pytest tests/test_rust_mqtt_smoke.py
+.PHONY: rust-integration-test
+rust-integration-test: sourcedir=$(mkfile_path)
+rust-integration-test:
+	cd $(sourcedir) && uv run pytest
 
 .PHONY: rust-mqtt-smoke-native
 rust-mqtt-smoke-native: sourcedir=$(mkfile_path)
