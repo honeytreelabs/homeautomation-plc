@@ -35,6 +35,9 @@
               # Rust
               rust-analyzer
 
+              # utilities
+              yq-go
+
               stdenv.cc.cc.lib
             ];
 
