@@ -337,17 +337,25 @@ scripts:
 - `to_millis_since_start(now)`
 - `BlindConfigFromMillis(periodIdle, periodUp, periodDown)`
 - `Blind:new(config)`
+- `Light:new([name])`
+- `MultiClick:new(periodMillis)`
 
-`Blind` follows the C++ reference API shape:
+Lua standard-library blocks are embedded into the binary from one `.lua` source
+file per component under `rust/src/lua_std/`. Constructors use colon syntax:
 
 ```lua
 function Init(gv)
   blind = Blind:new(BlindConfigFromMillis(500, 30000, 30000))
+  light = Light:new("A")
+  clicks = MultiClick:new(500)
 end
 
 function Cycle(gv, now)
   gv.outputs.blind_up, gv.outputs.blind_down =
     blind:execute(now, gv.inputs.button_up, gv.inputs.button_down)
+  if clicks:execute(to_millis_since_start(now), gv.inputs.light_remote) == 1 then
+    gv.outputs.light_a = light:toggle()
+  end
 end
 ```
 

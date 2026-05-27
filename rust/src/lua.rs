@@ -112,125 +112,20 @@ fn require_function(lua: &Lua, name: &'static str) -> Result<(), LuaProgramError
 }
 
 fn register_builtin_library(lua: &Lua) -> Result<(), LuaProgramError> {
-    lua.load(
-        r#"
-function R_TRIG(last)
-  local self = { last = last or false }
+    load_lua_std(lua, "trigger", include_str!("lua_std/trigger.lua"))?;
+    load_lua_std(lua, "time", include_str!("lua_std/time.lua"))?;
+    load_lua_std(lua, "blind", include_str!("lua_std/blind.lua"))?;
+    load_lua_std(lua, "light", include_str!("lua_std/light.lua"))?;
+    load_lua_std(lua, "multiclick", include_str!("lua_std/multiclick.lua"))?;
+    Ok(())
+}
 
-  function self:execute(cur)
-    cur = cur or false
-    local ret = (not self.last) and cur
-    self.last = cur
-    return ret
-  end
-
-  return self
-end
-
-function F_TRIG(last)
-  local self = { last = last or false }
-
-  function self:execute(cur)
-    cur = cur or false
-    local ret = self.last and (not cur)
-    self.last = cur
-    return ret
-  end
-
-  return self
-end
-
-function to_millis_since_start(ts)
-  return ts // 1000
-end
-
-function BlindConfigFromMillis(periodIdle, periodUp, periodDown)
-  return {
-    period_idle = periodIdle * 1000,
-    period_up = periodUp * 1000,
-    period_down = periodDown * 1000
-  }
-end
-
-Blind = {}
-
-function Blind:new(cfg)
-  if cfg == nil and self ~= Blind then
-    cfg = self
-  end
-
-  local instance = {
-    cfg = cfg,
-    state = "idle",
-    start = 0,
-    outputs_up = false,
-    outputs_down = false,
-    up_trigger = R_TRIG(false),
-    down_trigger = R_TRIG(false)
-  }
-
-  local function enter_idle(now, button_up, button_down)
-    instance.state = "idle"
-    instance.start = now
-    instance.outputs_up = false
-    instance.outputs_down = false
-    instance.up_trigger = R_TRIG(button_up)
-    instance.down_trigger = R_TRIG(button_down)
-  end
-
-  local function enter_up(now, button_up, button_down)
-    instance.state = "up"
-    instance.start = now
-    instance.outputs_up = true
-    instance.outputs_down = false
-    instance.up_trigger = R_TRIG(button_up)
-    instance.down_trigger = R_TRIG(button_down)
-  end
-
-  local function enter_down(now, button_up, button_down)
-    instance.state = "down"
-    instance.start = now
-    instance.outputs_up = false
-    instance.outputs_down = true
-    instance.up_trigger = R_TRIG(button_up)
-    instance.down_trigger = R_TRIG(button_down)
-  end
-
-  function instance:execute(now, button_up, button_down)
-    if instance.state == "idle" then
-      local up_triggered = instance.up_trigger:execute(button_up)
-      local down_triggered = instance.down_trigger:execute(button_down)
-
-      if now - instance.start >= instance.cfg.period_idle then
-        if up_triggered then
-          enter_up(now, button_up, button_down)
-        elseif down_triggered then
-          enter_down(now, button_up, button_down)
-        end
-      end
-    elseif instance.state == "up" then
-      if now - instance.start > instance.cfg.period_up
-          or instance.up_trigger:execute(button_up)
-          or instance.down_trigger:execute(button_down) then
-        enter_idle(now, button_up, button_down)
-      end
-    elseif instance.state == "down" then
-      if now - instance.start > instance.cfg.period_down
-          or instance.up_trigger:execute(button_up)
-          or instance.down_trigger:execute(button_down) then
-        enter_idle(now, button_up, button_down)
-      end
-    end
-
-    return instance.outputs_up, instance.outputs_down
-  end
-
-  return instance
-end
-"#,
-    )
-    .exec()
-    .map_err(lua_load_error)
+fn load_lua_std(
+    lua: &Lua,
+    name: &'static str,
+    source: &'static str,
+) -> Result<(), LuaProgramError> {
+    lua.load(source).set_name(name).exec().map_err(lua_load_error)
 }
 
 fn lua_load_error(error: mlua::Error) -> LuaProgramError {
@@ -442,6 +337,134 @@ end
     }
 
     #[test]
+    fn trigger_std_file_reports_edges() {
+        let lua = Lua::new();
+        load_lua_std(&lua, "trigger", include_str!("lua_std/trigger.lua"))
+            .expect("trigger std file should load");
+
+        lua.load(
+            r#"
+rising = R_TRIG()
+falling = F_TRIG(true)
+rising_1 = rising:execute(false)
+rising_2 = rising:execute(true)
+rising_3 = rising:execute(true)
+falling_1 = falling:execute(true)
+falling_2 = falling:execute(false)
+falling_3 = falling:execute(false)
+"#,
+        )
+        .exec()
+        .expect("trigger script should run");
+        let globals = lua.globals();
+
+        assert!(!globals.get::<bool>("rising_1").expect("value should exist"));
+        assert!(globals.get::<bool>("rising_2").expect("value should exist"));
+        assert!(!globals.get::<bool>("rising_3").expect("value should exist"));
+        assert!(!globals.get::<bool>("falling_1").expect("value should exist"));
+        assert!(globals.get::<bool>("falling_2").expect("value should exist"));
+        assert!(!globals.get::<bool>("falling_3").expect("value should exist"));
+    }
+
+    #[test]
+    fn time_std_file_converts_microseconds_to_milliseconds() {
+        let lua = Lua::new();
+        load_lua_std(&lua, "time", include_str!("lua_std/time.lua"))
+            .expect("time std file should load");
+
+        lua.load("millis = to_millis_since_start(123456)")
+            .exec()
+            .expect("time script should run");
+
+        assert_eq!(
+            lua.globals()
+                .get::<i64>("millis")
+                .expect("value should exist"),
+            123
+        );
+    }
+
+    #[test]
+    fn light_std_file_toggles_independent_instances() {
+        let lua = Lua::new();
+        load_lua_std(&lua, "light", include_str!("lua_std/light.lua"))
+            .expect("light std file should load");
+
+        lua.load(
+            r#"
+light_a = Light:new("A")
+light_b = Light:new("B")
+a_1 = light_a:toggle()
+a_2 = light_a:toggle()
+b_1 = light_b:getState()
+"#,
+        )
+        .exec()
+        .expect("light script should run");
+        let globals = lua.globals();
+
+        assert!(globals.get::<bool>("a_1").expect("value should exist"));
+        assert!(!globals.get::<bool>("a_2").expect("value should exist"));
+        assert!(!globals.get::<bool>("b_1").expect("value should exist"));
+    }
+
+    #[test]
+    fn multiclick_std_file_counts_clicks_after_period() {
+        let lua = Lua::new();
+        load_lua_std(&lua, "trigger", include_str!("lua_std/trigger.lua"))
+            .expect("trigger std file should load");
+        load_lua_std(&lua, "multiclick", include_str!("lua_std/multiclick.lua"))
+            .expect("multiclick std file should load");
+
+        lua.load(
+            r#"
+clicks = MultiClick:new(500)
+c_1 = clicks:execute(0, false)
+c_2 = clicks:execute(10, true)
+c_3 = clicks:execute(20, false)
+c_4 = clicks:execute(100, true)
+c_5 = clicks:execute(200, false)
+c_6 = clicks:execute(600, false)
+"#,
+        )
+        .exec()
+        .expect("multiclick script should run");
+        let globals = lua.globals();
+
+        assert_eq!(globals.get::<i64>("c_1").expect("value should exist"), 0);
+        assert_eq!(globals.get::<i64>("c_2").expect("value should exist"), 0);
+        assert_eq!(globals.get::<i64>("c_3").expect("value should exist"), 0);
+        assert_eq!(globals.get::<i64>("c_4").expect("value should exist"), 0);
+        assert_eq!(globals.get::<i64>("c_5").expect("value should exist"), 0);
+        assert_eq!(globals.get::<i64>("c_6").expect("value should exist"), 2);
+    }
+
+    #[test]
+    fn blind_std_file_uses_colon_constructor() {
+        let lua = Lua::new();
+        load_lua_std(&lua, "trigger", include_str!("lua_std/trigger.lua"))
+            .expect("trigger std file should load");
+        load_lua_std(&lua, "blind", include_str!("lua_std/blind.lua"))
+            .expect("blind std file should load");
+
+        lua.load(
+            r#"
+blind = Blind:new(BlindConfigFromMillis(500, 30000, 30000))
+up_1, down_1 = blind:execute(600000, false, false)
+up_2, down_2 = blind:execute(700000, true, false)
+"#,
+        )
+        .exec()
+        .expect("blind script should run");
+        let globals = lua.globals();
+
+        assert!(!globals.get::<bool>("up_1").expect("value should exist"));
+        assert!(!globals.get::<bool>("down_1").expect("value should exist"));
+        assert!(globals.get::<bool>("up_2").expect("value should exist"));
+        assert!(!globals.get::<bool>("down_2").expect("value should exist"));
+    }
+
+    #[test]
     fn blind_keeps_outputs_false_when_inputs_do_not_change() {
         let mut program = blind_program();
         let mut gv = blind_gv(false, false);
@@ -599,35 +622,6 @@ end
         assert_eq!(gv.outputs["blind_1_down"], VarValue::Bool(false));
         assert_eq!(gv.outputs["blind_2_up"], VarValue::Bool(false));
         assert_eq!(gv.outputs["blind_2_down"], VarValue::Bool(true));
-    }
-
-    #[test]
-    fn blind_accepts_legacy_dot_constructor() {
-        let mut program = LuaProgram::from_inline(
-            r#"
-local blind
-
-function Init(gv)
-  blind = Blind.new(BlindConfigFromMillis(500, 30000, 30000))
-end
-
-function Cycle(gv, now)
-  gv.outputs.blind_up, gv.outputs.blind_down =
-    blind:execute(now, gv.inputs.button_up, gv.inputs.button_down)
-end
-"#,
-        )
-        .expect("Lua program should load");
-        let mut gv = blind_gv(false, false);
-
-        program.init(&mut gv).expect("Init should run");
-        program.cycle(&mut gv, 600_000).expect("Cycle should run");
-
-        gv.inputs
-            .insert("button_up".to_string(), VarValue::Bool(true));
-        program.cycle(&mut gv, 700_000).expect("Cycle should run");
-
-        assert_blind_outputs(&gv, true, false);
     }
 
     fn blind_program() -> LuaProgram {
