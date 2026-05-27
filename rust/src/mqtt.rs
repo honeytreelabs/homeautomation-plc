@@ -1,6 +1,10 @@
 use std::{
     collections::BTreeMap,
-    sync::mpsc::{self, Receiver},
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        mpsc::{self, Receiver},
+        Arc,
+    },
     thread::{self, JoinHandle},
     time::Duration,
 };
@@ -221,7 +225,8 @@ pub struct RumqttcClient {
     request_channel_capacity: usize,
     client: Option<Client>,
     received: Option<Receiver<MqttMessage>>,
-    _event_thread: Option<JoinHandle<()>>,
+    shutdown_requested: Arc<AtomicBool>,
+    event_thread: Option<JoinHandle<()>>,
 }
 
 impl RumqttcClient {
@@ -243,7 +248,8 @@ impl RumqttcClient {
             request_channel_capacity: config.request_channel_capacity,
             client: None,
             received: None,
-            _event_thread: None,
+            shutdown_requested: Arc::new(AtomicBool::new(false)),
+            event_thread: None,
         })
     }
 }
@@ -257,6 +263,8 @@ impl MqttClient for RumqttcClient {
         let (client, mut connection) =
             Client::new(self.options.clone(), self.request_channel_capacity);
         let (received_tx, received_rx) = mpsc::channel();
+        self.shutdown_requested.store(false, Ordering::SeqCst);
+        let shutdown_requested = Arc::clone(&self.shutdown_requested);
 
         let event_thread = thread::spawn(move || {
             for event in connection.iter() {
@@ -271,7 +279,10 @@ impl MqttClient for RumqttcClient {
                     }
                     Ok(_) => {}
                     Err(error) => {
-                        warn!(error = %error, "MQTT connection event failed");
+                        if should_log_mqtt_event_error(&shutdown_requested) {
+                            warn!(error = %error, "MQTT connection event failed");
+                        }
+                        break;
                     }
                 }
             }
@@ -279,7 +290,7 @@ impl MqttClient for RumqttcClient {
 
         self.client = Some(client);
         self.received = Some(received_rx);
-        self._event_thread = Some(event_thread);
+        self.event_thread = Some(event_thread);
         Ok(())
     }
 
@@ -308,10 +319,19 @@ impl MqttClient for RumqttcClient {
     }
 }
 
+fn should_log_mqtt_event_error(shutdown_requested: &AtomicBool) -> bool {
+    !shutdown_requested.load(Ordering::SeqCst)
+}
+
 impl Drop for RumqttcClient {
     fn drop(&mut self) {
-        if let Some(client) = &self.client {
+        self.shutdown_requested.store(true, Ordering::SeqCst);
+        if let Some(client) = self.client.take() {
             let _ = client.disconnect();
+        }
+        self.received.take();
+        if let Some(event_thread) = self.event_thread.take() {
+            let _ = event_thread.join();
         }
     }
 }
@@ -573,6 +593,15 @@ request_channel_capacity = 20
             RumqttcClient::new(config),
             Err(MqttConfigError::IncompleteCredentials)
         ));
+    }
+
+    #[test]
+    fn mqtt_event_errors_are_suppressed_after_shutdown_is_requested() {
+        let shutdown_requested = AtomicBool::new(false);
+        assert!(should_log_mqtt_event_error(&shutdown_requested));
+
+        shutdown_requested.store(true, Ordering::SeqCst);
+        assert!(!should_log_mqtt_event_error(&shutdown_requested));
     }
 
     #[test]
