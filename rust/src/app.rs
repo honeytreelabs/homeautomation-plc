@@ -57,12 +57,7 @@ where
 {
     config.validate()?;
 
-    info!(
-        "loaded {} task(s), {} input(s), {} output(s)",
-        config.tasks.len(),
-        config.global_vars.inputs.len(),
-        config.global_vars.outputs.len()
-    );
+    info!("loaded {}", count_label(config.tasks.len(), "task", "tasks"));
 
     let mut runtime = Runtime::from_config_with_registry(config, registry)?;
     let mut clock = StdClock::new();
@@ -79,6 +74,11 @@ where
     Stop: FnMut() -> bool,
 {
     runtime.init()?;
+    info!(
+        "initialized {}, {}",
+        count_label(runtime.gv.inputs.len(), "input", "inputs"),
+        count_label(runtime.gv.outputs.len(), "output", "outputs")
+    );
     let task_names: Vec<String> = runtime.tasks.iter().map(|task| task.name.clone()).collect();
 
     let start_micros = clock.now_micros();
@@ -133,6 +133,11 @@ fn task_name(task_names: &[String], task_index: usize) -> &str {
         .get(task_index)
         .map(String::as_str)
         .unwrap_or("<unknown>")
+}
+
+fn count_label(count: usize, singular: &str, plural: &str) -> String {
+    let label = if count == 1 { singular } else { plural };
+    format!("{count} {label}")
 }
 
 #[cfg(test)]
@@ -207,6 +212,13 @@ mod tests {
         .expect("runtime should run");
 
         assert_eq!(stop_calls, 2);
+    }
+
+    #[test]
+    fn count_label_uses_singular_only_for_one() {
+        assert_eq!(count_label(0, "task", "tasks"), "0 tasks");
+        assert_eq!(count_label(1, "task", "tasks"), "1 task");
+        assert_eq!(count_label(2, "task", "tasks"), "2 tasks");
     }
 
     fn rust_program_config() -> Config {
