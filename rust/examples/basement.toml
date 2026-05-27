@@ -1,0 +1,155 @@
+[[tasks]]
+name = "main"
+interval = 50000
+
+[[tasks.programs]]
+name = "BasementLogic"
+type = "Lua"
+script = '''
+Light = {}
+
+function Light.new(name)
+  local self = {
+    name = name or "",
+    state = false,
+  }
+
+  function self:toggle()
+    self.state = not self.state
+    return self.state
+  end
+
+  function self:getState()
+    return self.state
+  end
+
+  return self
+end
+
+MultiClick = {}
+
+function MultiClick:new(period)
+  return setmetatable({
+    period = period,
+    trigger = R_TRIG(),
+  }, { __index = self })
+end
+
+function MultiClick:execute(now, input)
+  if not self.start then
+    if not self.trigger:execute(input) then
+      return 0
+    end
+    self.start = now
+    self.count = 1
+    return 0
+  end
+
+  if now - self.start < self.period then
+    if self.trigger:execute(input) then
+      self.count = self.count + 1
+    end
+    return 0
+  end
+
+  self.start = nil
+  return self.count
+end
+
+local trigger_workshop_1, light_workshop_1
+local multiclick_workshop_2, light_workshop_2
+local trigger_room_1, light_room_1
+local trigger_room_2, light_room_2
+local trigger_room_3, light_room_3
+local trigger_room_4, light_room_4
+local trigger_room_5, light_room_5
+local trigger_room_6, light_room_6
+
+function Init(gv)
+  trigger_workshop_1 = R_TRIG()
+  light_workshop_1 = Light.new("Workshop 1")
+  multiclick_workshop_2 = MultiClick:new(500)
+  light_workshop_2 = Light.new("Workshop 2")
+  trigger_room_1 = R_TRIG()
+  light_room_1 = Light.new("Room 1")
+  trigger_room_2 = R_TRIG()
+  light_room_2 = Light.new("Room 2")
+  trigger_room_3 = R_TRIG()
+  light_room_3 = Light.new("Room 3")
+  trigger_room_4 = R_TRIG()
+  light_room_4 = Light.new("Room 4")
+  trigger_room_5 = R_TRIG()
+  light_room_5 = Light.new("Room 5")
+  trigger_room_6 = R_TRIG()
+  light_room_6 = Light.new("Room 6")
+end
+
+function Cycle(gv, now)
+  if trigger_workshop_1:execute(gv.inputs.workshop_1) then
+    gv.outputs.workshop_1 = light_workshop_1:toggle()
+  end
+
+  local num_clicks =
+    multiclick_workshop_2:execute(to_millis_since_start(now), gv.inputs.workshop_2)
+  if num_clicks == 1 then
+    gv.outputs.workshop_2 = light_workshop_2:toggle()
+  end
+  gv.outputs.basement_staircase = num_clicks == 2
+
+  if trigger_room_1:execute(gv.inputs.room_1) then
+    gv.outputs.room_1 = light_room_1:toggle()
+  end
+
+  if trigger_room_2:execute(gv.inputs.room_2) then
+    gv.outputs.room_2 = light_room_2:toggle()
+  end
+
+  if trigger_room_3:execute(gv.inputs.room_3) then
+    gv.outputs.room_3 = light_room_3:toggle()
+  end
+
+  if trigger_room_4:execute(gv.inputs.room_4) then
+    gv.outputs.room_4 = light_room_4:toggle()
+  end
+
+  if trigger_room_5:execute(gv.inputs.room_5) then
+    gv.outputs.room_5 = light_room_5:toggle()
+  end
+
+  if trigger_room_6:execute(gv.inputs.room_6) then
+    gv.outputs.room_6 = light_room_6:toggle()
+  end
+end
+'''
+
+[[tasks.io]]
+type = "mqtt"
+
+[tasks.io.client]
+username = "{{ username }}"
+password = "{{ password }}"
+address = "{{ mqtt_proto }}://{{ mqtt_hostname }}:{{ mqtt_port }}"
+client_id = "basement::main"
+
+[tasks.io.inputs]
+
+[tasks.io.outputs]
+"/homeautomation/basement_staircase" = "basement_staircase"
+
+[[tasks.io]]
+type = "modbus-rtu"
+path = "/dev/ttyUSB0"
+baud = 9600
+data_bit = 8
+parity = "N"
+stop_bit = 1
+
+[[tasks.io.components]]
+type = "WP8026ADAM"
+slave = 1
+inputs = { 0 = "workshop_1", 1 = "workshop_2", 2 = "room_1", 3 = "room_2", 4 = "room_3", 5 = "room_4", 6 = "room_5", 7 = "room_6" }
+
+[[tasks.io.components]]
+type = "R4S8CRMB"
+slave = 1
+outputs = { 0 = "workshop_1", 1 = "workshop_2", 2 = "room_1", 3 = "room_2", 4 = "room_3", 5 = "room_4", 6 = "room_5", 7 = "room_6" }

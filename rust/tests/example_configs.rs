@@ -175,3 +175,71 @@ fn parses_mqtt_smoke_example() {
     let runtime = Runtime::from_config(config).expect("runtime should build");
     assert_eq!(runtime.tasks[0].io_count(), 1);
 }
+
+#[test]
+fn parses_basement_example_with_embedded_lua() {
+    let config = load_example("basement.toml");
+
+    assert_eq!(config.tasks.len(), 1);
+
+    let task = &config.tasks[0];
+    assert_eq!(task.name, "main");
+    assert_eq!(task.interval, 50_000);
+    assert_eq!(task.programs.len(), 1);
+    assert_eq!(task.io.len(), 2);
+
+    let program = &task.programs[0];
+    assert_eq!(program.name, "BasementLogic");
+    assert_eq!(program.program_type, ProgramType::Lua);
+    assert!(program.script_path.is_none());
+    assert!(program
+        .script
+        .as_deref()
+        .is_some_and(|script| script.contains("function Cycle(gv, now)")));
+    assert!(program
+        .script
+        .as_deref()
+        .is_some_and(|script| script.contains("MultiClick:new")));
+
+    let mqtt = &task.io[0];
+    assert_eq!(mqtt.io_type, "mqtt");
+    assert_eq!(
+        string(table(&mqtt.settings, "client"), "address"),
+        "{{ mqtt_proto }}://{{ mqtt_hostname }}:{{ mqtt_port }}"
+    );
+    assert_eq!(
+        string(
+            table(&mqtt.settings, "outputs"),
+            "/homeautomation/basement_staircase"
+        ),
+        "basement_staircase"
+    );
+
+    let modbus = &task.io[1];
+    assert_eq!(modbus.io_type, "modbus-rtu");
+    assert_eq!(string(&modbus.settings, "path"), "/dev/ttyUSB0");
+
+    let components = modbus
+        .settings
+        .get("components")
+        .and_then(Value::as_array)
+        .expect("expected Modbus components array");
+    assert_eq!(components.len(), 2);
+    assert_eq!(
+        string(
+            components[0].as_table().expect("component should be table"),
+            "type"
+        ),
+        "WP8026ADAM"
+    );
+    assert_eq!(
+        string(
+            table(
+                components[1].as_table().expect("component should be table"),
+                "outputs"
+            ),
+            "7"
+        ),
+        "room_6"
+    );
+}
