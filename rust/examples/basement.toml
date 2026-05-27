@@ -8,22 +8,20 @@ type = "Lua"
 script = '''
 Light = {}
 
-function Light.new(name)
-  local self = {
+function Light:new(name)
+  return setmetatable({
     name = name or "",
     state = false,
-  }
+  }, { __index = self })
+end
 
-  function self:toggle()
-    self.state = not self.state
-    return self.state
-  end
+function Light:toggle()
+  self.state = not self.state
+  return self.state
+end
 
-  function self:getState()
-    return self.state
-  end
-
-  return self
+function Light:getState()
+  return self.state
 end
 
 MultiClick = {}
@@ -67,21 +65,21 @@ local trigger_room_6, light_room_6
 
 function Init(gv)
   trigger_workshop_1 = R_TRIG()
-  light_workshop_1 = Light.new("Workshop 1")
+  light_workshop_1 = Light:new("Workshop 1")
   multiclick_workshop_2 = MultiClick:new(500)
-  light_workshop_2 = Light.new("Workshop 2")
+  light_workshop_2 = Light:new("Workshop 2")
   trigger_room_1 = R_TRIG()
-  light_room_1 = Light.new("Room 1")
+  light_room_1 = Light:new("Room 1")
   trigger_room_2 = R_TRIG()
-  light_room_2 = Light.new("Room 2")
+  light_room_2 = Light:new("Room 2")
   trigger_room_3 = R_TRIG()
-  light_room_3 = Light.new("Room 3")
+  light_room_3 = Light:new("Room 3")
   trigger_room_4 = R_TRIG()
-  light_room_4 = Light.new("Room 4")
+  light_room_4 = Light:new("Room 4")
   trigger_room_5 = R_TRIG()
-  light_room_5 = Light.new("Room 5")
+  light_room_5 = Light:new("Room 5")
   trigger_room_6 = R_TRIG()
-  light_room_6 = Light.new("Room 6")
+  light_room_6 = Light:new("Room 6")
 end
 
 function Cycle(gv, now)

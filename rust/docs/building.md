@@ -336,13 +336,13 @@ scripts:
 - `F_TRIG([last])`
 - `to_millis_since_start(now)`
 - `BlindConfigFromMillis(periodIdle, periodUp, periodDown)`
-- `Blind.new(config)`
+- `Blind:new(config)`
 
 `Blind` follows the C++ reference API shape:
 
 ```lua
 function Init(gv)
-  blind = Blind.new(BlindConfigFromMillis(500, 30000, 30000))
+  blind = Blind:new(BlindConfigFromMillis(500, 30000, 30000))
 end
 
 function Cycle(gv, now)

@@ -154,8 +154,12 @@ end
 
 Blind = {}
 
-function Blind.new(cfg)
-  local self = {
+function Blind:new(cfg)
+  if cfg == nil and self ~= Blind then
+    cfg = self
+  end
+
+  local instance = {
     cfg = cfg,
     state = "idle",
     start = 0,
@@ -166,62 +170,62 @@ function Blind.new(cfg)
   }
 
   local function enter_idle(now, button_up, button_down)
-    self.state = "idle"
-    self.start = now
-    self.outputs_up = false
-    self.outputs_down = false
-    self.up_trigger = R_TRIG(button_up)
-    self.down_trigger = R_TRIG(button_down)
+    instance.state = "idle"
+    instance.start = now
+    instance.outputs_up = false
+    instance.outputs_down = false
+    instance.up_trigger = R_TRIG(button_up)
+    instance.down_trigger = R_TRIG(button_down)
   end
 
   local function enter_up(now, button_up, button_down)
-    self.state = "up"
-    self.start = now
-    self.outputs_up = true
-    self.outputs_down = false
-    self.up_trigger = R_TRIG(button_up)
-    self.down_trigger = R_TRIG(button_down)
+    instance.state = "up"
+    instance.start = now
+    instance.outputs_up = true
+    instance.outputs_down = false
+    instance.up_trigger = R_TRIG(button_up)
+    instance.down_trigger = R_TRIG(button_down)
   end
 
   local function enter_down(now, button_up, button_down)
-    self.state = "down"
-    self.start = now
-    self.outputs_up = false
-    self.outputs_down = true
-    self.up_trigger = R_TRIG(button_up)
-    self.down_trigger = R_TRIG(button_down)
+    instance.state = "down"
+    instance.start = now
+    instance.outputs_up = false
+    instance.outputs_down = true
+    instance.up_trigger = R_TRIG(button_up)
+    instance.down_trigger = R_TRIG(button_down)
   end
 
-  function self:execute(now, button_up, button_down)
-    if self.state == "idle" then
-      local up_triggered = self.up_trigger:execute(button_up)
-      local down_triggered = self.down_trigger:execute(button_down)
+  function instance:execute(now, button_up, button_down)
+    if instance.state == "idle" then
+      local up_triggered = instance.up_trigger:execute(button_up)
+      local down_triggered = instance.down_trigger:execute(button_down)
 
-      if now - self.start >= self.cfg.period_idle then
+      if now - instance.start >= instance.cfg.period_idle then
         if up_triggered then
           enter_up(now, button_up, button_down)
         elseif down_triggered then
           enter_down(now, button_up, button_down)
         end
       end
-    elseif self.state == "up" then
-      if now - self.start > self.cfg.period_up
-          or self.up_trigger:execute(button_up)
-          or self.down_trigger:execute(button_down) then
+    elseif instance.state == "up" then
+      if now - instance.start > instance.cfg.period_up
+          or instance.up_trigger:execute(button_up)
+          or instance.down_trigger:execute(button_down) then
         enter_idle(now, button_up, button_down)
       end
-    elseif self.state == "down" then
-      if now - self.start > self.cfg.period_down
-          or self.up_trigger:execute(button_up)
-          or self.down_trigger:execute(button_down) then
+    elseif instance.state == "down" then
+      if now - instance.start > instance.cfg.period_down
+          or instance.up_trigger:execute(button_up)
+          or instance.down_trigger:execute(button_down) then
         enter_idle(now, button_up, button_down)
       end
     end
 
-    return self.outputs_up, self.outputs_down
+    return instance.outputs_up, instance.outputs_down
   end
 
-  return self
+  return instance
 end
 "#,
     )
@@ -554,8 +558,8 @@ local blind_2
 
 function Init(gv)
   local cfg = BlindConfigFromMillis(500, 30000, 30000)
-  blind_1 = Blind.new(cfg)
-  blind_2 = Blind.new(cfg)
+  blind_1 = Blind:new(cfg)
+  blind_2 = Blind:new(cfg)
 end
 
 function Cycle(gv, now)
@@ -597,13 +601,42 @@ end
         assert_eq!(gv.outputs["blind_2_down"], VarValue::Bool(true));
     }
 
+    #[test]
+    fn blind_accepts_legacy_dot_constructor() {
+        let mut program = LuaProgram::from_inline(
+            r#"
+local blind
+
+function Init(gv)
+  blind = Blind.new(BlindConfigFromMillis(500, 30000, 30000))
+end
+
+function Cycle(gv, now)
+  gv.outputs.blind_up, gv.outputs.blind_down =
+    blind:execute(now, gv.inputs.button_up, gv.inputs.button_down)
+end
+"#,
+        )
+        .expect("Lua program should load");
+        let mut gv = blind_gv(false, false);
+
+        program.init(&mut gv).expect("Init should run");
+        program.cycle(&mut gv, 600_000).expect("Cycle should run");
+
+        gv.inputs
+            .insert("button_up".to_string(), VarValue::Bool(true));
+        program.cycle(&mut gv, 700_000).expect("Cycle should run");
+
+        assert_blind_outputs(&gv, true, false);
+    }
+
     fn blind_program() -> LuaProgram {
         LuaProgram::from_inline(
             r#"
 local blind
 
 function Init(gv)
-  blind = Blind.new(BlindConfigFromMillis(500, 30000, 30000))
+  blind = Blind:new(BlindConfigFromMillis(500, 30000, 30000))
   gv.outputs.blind_up = false
   gv.outputs.blind_down = false
 end
