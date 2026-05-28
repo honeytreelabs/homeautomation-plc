@@ -153,7 +153,10 @@ init_val = false
         assert_eq!(config.tasks.len(), 1);
         assert_eq!(config.tasks[0].name, "main");
         assert_eq!(config.tasks[0].interval, 25_000);
-        assert_eq!(config.global_vars.inputs["some_input"].init_val, VarValue::Bool(false));
+        assert_eq!(
+            config.global_vars.inputs["some_input"].init_val,
+            VarValue::Bool(false)
+        );
         assert_eq!(
             config.global_vars.outputs["some_output"].init_val,
             VarValue::Bool(false)

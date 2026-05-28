@@ -423,9 +423,7 @@ impl<C: MqttClient> TaskIo for MqttIo<C> {
             let current = match gv.outputs.get(var_name) {
                 Some(VarValue::Bool(value)) => *value,
                 Some(other) => {
-                    anyhow::bail!(
-                        "MQTT output variable '{var_name}' must be bool, got {other:?}"
-                    )
+                    anyhow::bail!("MQTT output variable '{var_name}' must be bool, got {other:?}")
                 }
                 None => anyhow::bail!("MQTT output variable '{var_name}' is missing"),
             };
@@ -627,8 +625,7 @@ request_channel_capacity = 20
     fn before_cycle_resets_inputs_and_maps_received_messages() {
         let mut io = text_io();
         let mut gv = Gv::default();
-        gv.inputs
-            .insert("button".to_string(), VarValue::Bool(true));
+        gv.inputs.insert("button".to_string(), VarValue::Bool(true));
         io.client_mut().push_received("/input", b"0".to_vec());
 
         io.before_cycle(&mut gv).expect("before cycle should run");
@@ -664,8 +661,7 @@ request_channel_capacity = 20
         io.after_cycle(&mut gv).expect("after cycle should run");
         assert!(io.client().published.is_empty());
 
-        gv.outputs
-            .insert("light".to_string(), VarValue::Bool(true));
+        gv.outputs.insert("light".to_string(), VarValue::Bool(true));
         io.after_cycle(&mut gv).expect("after cycle should run");
         assert_eq!(
             io.client().published,
@@ -692,8 +688,7 @@ request_channel_capacity = 20
         let mut gv = Gv::default();
 
         io.init(&mut gv).expect("init should run");
-        gv.outputs
-            .insert("light".to_string(), VarValue::Bool(true));
+        gv.outputs.insert("light".to_string(), VarValue::Bool(true));
         io.after_cycle(&mut gv).expect("after cycle should run");
 
         assert_eq!(

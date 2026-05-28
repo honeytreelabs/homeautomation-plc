@@ -99,10 +99,7 @@ impl FixedRateScheduler {
     }
 
     pub fn next_due_micros(&self) -> Option<u64> {
-        self.tasks
-            .iter()
-            .map(|task| task.next_due_micros)
-            .min()
+        self.tasks.iter().map(|task| task.next_due_micros).min()
     }
 
     pub fn event_capacity(&self) -> usize {
@@ -137,22 +134,26 @@ impl FixedRateScheduler {
         let execution_micros = finished_micros.saturating_sub(started_micros);
 
         if execution_micros > task.interval_micros {
-            push_event(events, SchedulerEvent::TaskOverran {
-                task_index,
-                interval_micros: task.interval_micros,
-                execution_micros,
-            });
+            push_event(
+                events,
+                SchedulerEvent::TaskOverran {
+                    task_index,
+                    interval_micros: task.interval_micros,
+                    execution_micros,
+                },
+            );
         }
 
-        let skipped = finished_micros
-            .saturating_sub(task.next_due_micros)
-            / task.interval_micros;
+        let skipped = finished_micros.saturating_sub(task.next_due_micros) / task.interval_micros;
 
         if skipped > 0 {
-            push_event(events, SchedulerEvent::TaskSkipped {
-                task_index,
-                skipped,
-            });
+            push_event(
+                events,
+                SchedulerEvent::TaskSkipped {
+                    task_index,
+                    skipped,
+                },
+            );
         }
 
         task.next_due_micros += (skipped + 1) * task.interval_micros;
@@ -187,18 +188,16 @@ impl FixedRateScheduler {
             runtime.tasks[task_index].tick(&mut runtime.gv, started_micros)?;
             let finished_micros = clock.now_micros();
 
-            push_event(events, SchedulerEvent::TaskRan {
-                task_index,
-                scheduled_micros,
-                started_micros,
-                finished_micros,
-            });
-            self.record_task_completion_into(
-                task_index,
-                started_micros,
-                finished_micros,
+            push_event(
                 events,
-            )?;
+                SchedulerEvent::TaskRan {
+                    task_index,
+                    scheduled_micros,
+                    started_micros,
+                    finished_micros,
+                },
+            );
+            self.record_task_completion_into(task_index, started_micros, finished_micros, events)?;
         }
 
         Ok(())
@@ -526,9 +525,7 @@ type = "Rust"
             .tick_due(&mut runtime, &mut clock, &mut events)
             .expect("scheduler should run");
 
-        assert!(events.contains(&SchedulerEvent::EventBufferCapacityExceeded {
-            capacity: 0,
-        }));
+        assert!(events.contains(&SchedulerEvent::EventBufferCapacityExceeded { capacity: 0 }));
         assert!(events
             .iter()
             .any(|event| matches!(event, SchedulerEvent::TaskRan { task_index: 0, .. })));

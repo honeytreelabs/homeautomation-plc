@@ -125,7 +125,10 @@ fn load_lua_std(
     name: &'static str,
     source: &'static str,
 ) -> Result<(), LuaProgramError> {
-    lua.load(source).set_name(name).exec().map_err(lua_load_error)
+    lua.load(source)
+        .set_name(name)
+        .exec()
+        .map_err(lua_load_error)
 }
 
 fn lua_load_error(error: mlua::Error) -> LuaProgramError {
@@ -175,10 +178,8 @@ end
         )
         .expect("Lua program should load");
         let mut gv = Gv::default();
-        gv.inputs
-            .insert("button".to_string(), VarValue::Bool(true));
-        gv.outputs
-            .insert("light".to_string(), VarValue::Bool(true));
+        gv.inputs.insert("button".to_string(), VarValue::Bool(true));
+        gv.outputs.insert("light".to_string(), VarValue::Bool(true));
 
         program.init(&mut gv).expect("Init should run");
         assert_eq!(gv.outputs["light"], VarValue::Bool(false));
@@ -269,8 +270,7 @@ end
         program.cycle(&mut gv, 1).expect("Cycle should run");
         assert_eq!(gv.outputs["edge"], VarValue::Bool(false));
 
-        gv.inputs
-            .insert("signal".to_string(), VarValue::Bool(true));
+        gv.inputs.insert("signal".to_string(), VarValue::Bool(true));
         program.cycle(&mut gv, 2).expect("Cycle should run");
         assert_eq!(gv.outputs["edge"], VarValue::Bool(true));
 
@@ -295,8 +295,7 @@ end
         )
         .expect("Lua program should load");
         let mut gv = Gv::default();
-        gv.inputs
-            .insert("signal".to_string(), VarValue::Bool(true));
+        gv.inputs.insert("signal".to_string(), VarValue::Bool(true));
 
         program.init(&mut gv).expect("Init should run");
         assert_eq!(gv.outputs["edge"], VarValue::Bool(false));
@@ -361,9 +360,15 @@ falling_3 = falling:execute(false)
         assert!(!globals.get::<bool>("rising_1").expect("value should exist"));
         assert!(globals.get::<bool>("rising_2").expect("value should exist"));
         assert!(!globals.get::<bool>("rising_3").expect("value should exist"));
-        assert!(!globals.get::<bool>("falling_1").expect("value should exist"));
-        assert!(globals.get::<bool>("falling_2").expect("value should exist"));
-        assert!(!globals.get::<bool>("falling_3").expect("value should exist"));
+        assert!(!globals
+            .get::<bool>("falling_1")
+            .expect("value should exist"));
+        assert!(globals
+            .get::<bool>("falling_2")
+            .expect("value should exist"));
+        assert!(!globals
+            .get::<bool>("falling_3")
+            .expect("value should exist"));
     }
 
     #[test]

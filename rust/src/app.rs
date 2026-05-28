@@ -25,14 +25,9 @@ pub fn run_with_registry(
     run_config_with_registry(config, registry)
 }
 
-pub fn run_config_with_registry(
-    config: Config,
-    registry: &ProgramRegistry,
-) -> anyhow::Result<()> {
+pub fn run_config_with_registry(config: Config, registry: &ProgramRegistry) -> anyhow::Result<()> {
     let stop_requested = install_stop_signal_handler()?;
-    run_config_with_registry_until(config, registry, || {
-        stop_requested.load(Ordering::SeqCst)
-    })
+    run_config_with_registry_until(config, registry, || stop_requested.load(Ordering::SeqCst))
 }
 
 fn install_stop_signal_handler() -> anyhow::Result<Arc<AtomicBool>> {
@@ -57,7 +52,10 @@ where
 {
     config.validate()?;
 
-    info!("loaded {}", count_label(config.tasks.len(), "task", "tasks"));
+    info!(
+        "loaded {}",
+        count_label(config.tasks.len(), "task", "tasks")
+    );
 
     let mut runtime = Runtime::from_config_with_registry(config, registry)?;
     let mut clock = StdClock::new();
@@ -85,13 +83,9 @@ where
     let mut scheduler = FixedRateScheduler::from_runtime(runtime, start_micros);
 
     info!("starting scheduler");
-    run_scheduler(
-        runtime,
-        &mut scheduler,
-        clock,
-        should_stop,
-        |events| log_scheduler_events(&task_names, events),
-    )?;
+    run_scheduler(runtime, &mut scheduler, clock, should_stop, |events| {
+        log_scheduler_events(&task_names, events)
+    })?;
     info!("scheduler stopped");
 
     Ok(())

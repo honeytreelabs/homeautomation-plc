@@ -94,7 +94,10 @@ fn parses_generic_external_lua_example() {
         "tcp://localhost:1883"
     );
     assert_eq!(
-        string(table(&mqtt.settings, "inputs"), "/homeautomation/light_remote"),
+        string(
+            table(&mqtt.settings, "inputs"),
+            "/homeautomation/light_remote"
+        ),
         "light_remote"
     );
     assert!(table(&mqtt.settings, "outputs").is_empty());
@@ -164,11 +167,17 @@ fn parses_mqtt_smoke_example() {
         "tcp://localhost:1883"
     );
     assert_eq!(
-        string(table(&io.settings, "inputs"), "/homeautomation/smoke/button"),
+        string(
+            table(&io.settings, "inputs"),
+            "/homeautomation/smoke/button"
+        ),
         "button"
     );
     assert_eq!(
-        string(table(&io.settings, "outputs"), "/homeautomation/smoke/light"),
+        string(
+            table(&io.settings, "outputs"),
+            "/homeautomation/smoke/light"
+        ),
         "light"
     );
 

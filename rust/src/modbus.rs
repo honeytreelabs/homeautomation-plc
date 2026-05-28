@@ -110,9 +110,7 @@ impl ModbusClient for TokioModbusRtuClient {
     }
 }
 
-fn flatten_modbus_result<T>(
-    result: tokio_modbus::Result<T>,
-) -> anyhow::Result<T> {
+fn flatten_modbus_result<T>(result: tokio_modbus::Result<T>) -> anyhow::Result<T> {
     result
         .map_err(|err| anyhow::anyhow!("Modbus transport error: {err}"))?
         .map_err(|exception| anyhow::anyhow!("Modbus exception response: {exception:?}"))
@@ -186,9 +184,7 @@ impl ModbusRtuIoConfig {
         to_tokio_data_bits(self.data_bit)?;
         to_tokio_stop_bits(self.stop_bit)?;
         if self.timeout_millis == 0 {
-            return Err(ModbusConfigError::InvalidTimeoutMillis(
-                self.timeout_millis,
-            ));
+            return Err(ModbusConfigError::InvalidTimeoutMillis(self.timeout_millis));
         }
         Ok(())
     }
@@ -646,8 +642,14 @@ outputs = { 0 = "one", 1 = "two" }
 
     #[test]
     fn maps_supported_serial_settings_to_tokio_serial() {
-        assert_eq!(to_tokio_data_bits(5).expect("valid data bits"), DataBits::Five);
-        assert_eq!(to_tokio_data_bits(6).expect("valid data bits"), DataBits::Six);
+        assert_eq!(
+            to_tokio_data_bits(5).expect("valid data bits"),
+            DataBits::Five
+        );
+        assert_eq!(
+            to_tokio_data_bits(6).expect("valid data bits"),
+            DataBits::Six
+        );
         assert_eq!(
             to_tokio_data_bits(7).expect("valid data bits"),
             DataBits::Seven
@@ -659,8 +661,14 @@ outputs = { 0 = "one", 1 = "two" }
         assert_eq!(to_tokio_parity(ModbusParity::N), Parity::None);
         assert_eq!(to_tokio_parity(ModbusParity::E), Parity::Even);
         assert_eq!(to_tokio_parity(ModbusParity::O), Parity::Odd);
-        assert_eq!(to_tokio_stop_bits(1).expect("valid stop bits"), StopBits::One);
-        assert_eq!(to_tokio_stop_bits(2).expect("valid stop bits"), StopBits::Two);
+        assert_eq!(
+            to_tokio_stop_bits(1).expect("valid stop bits"),
+            StopBits::One
+        );
+        assert_eq!(
+            to_tokio_stop_bits(2).expect("valid stop bits"),
+            StopBits::Two
+        );
     }
 
     #[test]

@@ -125,10 +125,12 @@ impl I2cComponentConfig {
                 device: Max7311Output::new(address),
                 outputs: parse_pin_map(self.outputs)?,
             }),
-            ("max7311", I2cDirection::Input) => Err(I2cConfigError::UnsupportedComponentDirection {
-                component_type: self.component_type,
-                direction: I2cDirection::Input,
-            }),
+            ("max7311", I2cDirection::Input) => {
+                Err(I2cConfigError::UnsupportedComponentDirection {
+                    component_type: self.component_type,
+                    direction: I2cDirection::Input,
+                })
+            }
             _ => Err(I2cConfigError::UnknownComponentType(self.component_type)),
         }
     }
@@ -526,7 +528,9 @@ mod tests {
         output.init(&mut bus).expect("init should read state");
         output.set_output(0, true);
         output.write(&mut bus).expect("write should run");
-        output.write(&mut bus).expect("unchanged write should be skipped");
+        output
+            .write(&mut bus)
+            .expect("unchanged write should be skipped");
 
         assert_eq!(
             bus.calls,
@@ -569,7 +573,9 @@ mod tests {
         output.init(&mut bus).expect("init should run");
         output.set_output(1, true);
         output.write(&mut bus).expect("write should run");
-        output.write(&mut bus).expect("unchanged write should be skipped");
+        output
+            .write(&mut bus)
+            .expect("unchanged write should be skipped");
 
         assert_eq!(
             bus.calls,
@@ -617,8 +623,7 @@ mod tests {
         io.before_cycle(&mut gv).expect("before cycle should run");
         assert_eq!(gv.inputs["button"], VarValue::Bool(true));
 
-        gv.outputs
-            .insert("light".to_string(), VarValue::Bool(true));
+        gv.outputs.insert("light".to_string(), VarValue::Bool(true));
         io.after_cycle(&mut gv).expect("after cycle should run");
 
         assert_eq!(

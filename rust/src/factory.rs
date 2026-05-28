@@ -126,21 +126,24 @@ impl Runtime {
                         } else {
                             unreachable!("Config::validate requires a Lua script source")
                         }
-                        .map_err(|source| RuntimeFactoryError::LuaProgramBuild {
-                            task: task.name.clone(),
-                            program: program.name.clone(),
-                            source,
+                        .map_err(|source| {
+                            RuntimeFactoryError::LuaProgramBuild {
+                                task: task.name.clone(),
+                                program: program.name.clone(),
+                                source,
+                            }
                         })?;
 
                         task.add_program(Box::new(lua_program));
                     }
                     ProgramType::Rust => {
-                        let factory = registry.rust_program_factory(&program.name).ok_or_else(
-                            || RuntimeFactoryError::RustProgramNotRegistered {
-                                task: task.name.clone(),
-                                program: program.name.clone(),
-                            },
-                        )?;
+                        let factory =
+                            registry
+                                .rust_program_factory(&program.name)
+                                .ok_or_else(|| RuntimeFactoryError::RustProgramNotRegistered {
+                                    task: task.name.clone(),
+                                    program: program.name.clone(),
+                                })?;
 
                         task.add_program(factory());
                     }
@@ -152,13 +155,12 @@ impl Runtime {
                 match io.io_type.as_str() {
                     "mqtt" => {
                         let io_type = io.io_type;
-                        let mqtt_config: MqttIoConfig =
-                            toml::Value::Table(io.settings).try_into().map_err(|source| {
-                                RuntimeFactoryError::InvalidIoConfig {
-                                    task: task.name.clone(),
-                                    io_type: io_type.clone(),
-                                    source,
-                                }
+                        let mqtt_config: MqttIoConfig = toml::Value::Table(io.settings)
+                            .try_into()
+                            .map_err(|source| RuntimeFactoryError::InvalidIoConfig {
+                                task: task.name.clone(),
+                                io_type: io_type.clone(),
+                                source,
                             })?;
                         let mqtt_io = mqtt_config.into_io().map_err(|source| {
                             RuntimeFactoryError::MqttIoBuild {
@@ -172,34 +174,31 @@ impl Runtime {
                     }
                     "i2c" => {
                         let io_type = io.io_type;
-                        let i2c_config: I2cIoConfig =
-                            toml::Value::Table(io.settings).try_into().map_err(|source| {
-                                RuntimeFactoryError::InvalidIoConfig {
-                                    task: task.name.clone(),
-                                    io_type: io_type.clone(),
-                                    source,
-                                }
+                        let i2c_config: I2cIoConfig = toml::Value::Table(io.settings)
+                            .try_into()
+                            .map_err(|source| RuntimeFactoryError::InvalidIoConfig {
+                                task: task.name.clone(),
+                                io_type: io_type.clone(),
+                                source,
                             })?;
-                        let i2c_io =
-                            i2c_config
-                                .into_io()
-                                .map_err(|source| RuntimeFactoryError::I2cIoBuild {
-                                    task: task.name.clone(),
-                                    io_type: io_type.clone(),
-                                    source,
-                                })?;
+                        let i2c_io = i2c_config.into_io().map_err(|source| {
+                            RuntimeFactoryError::I2cIoBuild {
+                                task: task.name.clone(),
+                                io_type: io_type.clone(),
+                                source,
+                            }
+                        })?;
 
                         task.add_io(Box::new(i2c_io));
                     }
                     "modbus-rtu" => {
                         let io_type = io.io_type;
-                        let modbus_config: ModbusRtuIoConfig =
-                            toml::Value::Table(io.settings).try_into().map_err(|source| {
-                                RuntimeFactoryError::InvalidIoConfig {
-                                    task: task.name.clone(),
-                                    io_type: io_type.clone(),
-                                    source,
-                                }
+                        let modbus_config: ModbusRtuIoConfig = toml::Value::Table(io.settings)
+                            .try_into()
+                            .map_err(|source| RuntimeFactoryError::InvalidIoConfig {
+                                task: task.name.clone(),
+                                io_type: io_type.clone(),
+                                source,
                             })?;
                         let modbus_io = modbus_config.into_io().map_err(|source| {
                             RuntimeFactoryError::ModbusIoBuild {
@@ -430,10 +429,7 @@ init_val = false
         assert_eq!(runtime.tasks[0].program_count(), 1);
 
         runtime.init().expect("init should run");
-        assert_eq!(
-            runtime.gv.outputs["initialized"],
-            VarValue::Bool(true)
-        );
+        assert_eq!(runtime.gv.outputs["initialized"], VarValue::Bool(true));
 
         runtime.tick_once(123_456).expect("cycle should run");
         assert_eq!(runtime.gv.outputs["light"], VarValue::Bool(true));
