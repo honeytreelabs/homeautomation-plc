@@ -1,0 +1,94 @@
+name: Rust Release Builds
+
+on:
+  push:
+    branches: [dev-rust-port]
+    tags:
+      - "v*"
+      - "rust-v*"
+    paths:
+      - ".github/workflows/rust-release.yml"
+      - "rust/**"
+      - "Makefile"
+  pull_request:
+    paths:
+      - ".github/workflows/rust-release.yml"
+      - "rust/**"
+      - "Makefile"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy,rustfmt
+
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2.9.1
+        with:
+          workspaces: rust -> target
+
+      - name: Test
+        working-directory: rust
+        run: cargo test
+
+  cross-build:
+    runs-on: ubuntu-latest
+    needs: native-checks
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: rpi2
+            target: armv7-unknown-linux-musleabihf
+          - name: rpi3
+            target: aarch64-unknown-linux-musl
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2.9.1
+        with:
+          workspaces: rust -> target
+          key: ${{ matrix.target }}
+
+      - name: Install cross
+        run: cargo install cross --locked
+
+      - name: Build ${{ matrix.name }}
+        working-directory: rust
+        run: cross build --release --target ${{ matrix.target }}
+
+      - name: Stage artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist/${{ matrix.name }}
+          cp rust/target/${{ matrix.target }}/release/homeautomation-plc \
+            dist/${{ matrix.name }}/homeautomation-plc
+          chmod 0755 dist/${{ matrix.name }}/homeautomation-plc
+          (
+            cd dist/${{ matrix.name }}
+            sha256sum homeautomation-plc > SHA256SUMS
+          )
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: homeautomation-plc-${{ matrix.name }}-${{ matrix.target }}
+          path: dist/${{ matrix.name }}/
+          if-no-files-found: error
